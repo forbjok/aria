@@ -44,6 +44,9 @@ System.config({
     "core-js": "npm:core-js@1.2.1",
     "fetch": "github:github/fetch@0.9.0",
     "font-awesome": "npm:font-awesome@4.4.0",
+    "jquery": "github:components/jquery@2.1.4",
+    "moment": "github:moment/moment@2.10.6",
+    "socket.io-client": "github:socketio/socket.io-client@1.3.7",
     "text": "github:systemjs/plugin-text@0.0.2",
     "github:aurelia/animator-css@0.17.0": {
       "aurelia-metadata": "github:aurelia/metadata@0.9.0",

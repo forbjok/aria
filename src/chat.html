@@ -1,0 +1,56 @@
+<template>
+  <require from="/styles/chat.css"></require>
+  <require from="./valueconverters/dateformat"></require>
+  <require from="./resizechat"></require>
+  <div class="mainContainer">
+    <div>
+      <div id="chatContainer" class="chatContainer">
+        <div id="postContainer" class="postContainer">
+          <ul style="list-style-type: none; padding: 0px; margin: 0px;">
+            <li class="post" style="" repeat.for="post of posts" ng-class-even="'post-even'" ng-class-odd="'post-odd'">
+              <div class="postHeader">
+                <span class="time">${post.time | dateFormat}</span>
+                <span class="name">${post.name}:</span>
+              </div>
+              <div class="postBody">
+              <a if.bind="post.image" class="image" href.bind="post.image" target="_blank">
+                <img class="thumbnail" src.bind="post.thumbnail" alt="Image">
+              </a>
+              <span class="message" innerHTML.bind="post.message"></span>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div id="chatControls" class="chatControls">
+          <form id="postForm" method="post" action="http://localhost:8080/post" enctype="multipart/form-data" target="postframe">
+            <iframe name="postframe" style="display: none;"></iframe>
+            <table>
+              <tr>
+                <td>Name</td>
+                <td><input name="name" type="text" placeholder="Anonymous"></td>
+              </tr>
+              <tr>
+                <td>Message</td>
+                <td><textarea name="message" cols="36" rows="4" wrap="soft"></textarea></td>
+              </tr>
+              <tr>
+                <td>Image</td>
+                <td><input name="image" type="file"></td>
+              </tr>
+              <tr>
+                <td></td>
+                <td><input type="submit" value="Post"></td>
+              </tr>
+            </table>
+          </form>
+        </div>
+      </div>
+      <div id="contentContainer" class="contentContainer">
+        <iframe src="http://www.twitch.tv/forbjok/embed" frameborder="0" scrolling="no" height="100%" width="100%"></iframe><a href="http://www.twitch.tv/forbjok?tt_medium=live_embed&tt_content=text_link" style="padding:2px 0px 4px; display:block; width:345px; font-weight:normal; font-size:10px;text-decoration:underline;">Watch live video from ForbJok on www.twitch.tv</a>
+        <!--<iframe width="100%" height="100%" src="http://www.ustream.tv/embed/16698010?html5ui" allowfullscreen webkitallowfullscreen scrolling="no" frameborder="0" style="border: 0 none transparent;"></iframe>-->
+        <!--<iframe width="100%" height="100%" src="http://cdn.livestream.com/embed/darylspageoffun?layout=4&amp;height=340&amp;width=560&amp;autoplay=false" style="border:0;outline:0" frameborder="0" scrolling="no"></iframe><div style="font-size: 11px;padding-top:10px;text-align:center;width:560px">Watch <a href="http://original.livestream.com/?utm_source=lsplayer&amp;utm_medium=embed&amp;utm_campaign=footerlinks" title="live streaming video">live streaming video</a> from <a href="http://original.livestream.com/darylspageoffun?utm_source=lsplayer&amp;utm_medium=embed&amp;utm_campaign=footerlinks" title="Watch darylspageoffun at livestream.com">darylspageoffun</a> at livestream.com</div>-->
+      </div>
+    </div>
+  </div>
+</template>
