@@ -1,13 +1,29 @@
+import $ from "jquery";
+
 export class App {
   configureRouter(config, router) {
-    config.title = 'Aurelia';
+    config.title = 'Aria';
     config.map([
-      { route: ['', 'welcome'], name: 'welcome',      moduleId: 'welcome',      nav: true, title: 'Welcome' },
-      { route: 'users',         name: 'users',        moduleId: 'users',        nav: true, title: 'Github Users' },
-      { route: 'child-router',  name: 'child-router', moduleId: 'child-router', nav: true, title: 'Child Router' },
-      { route: 'chat',          name: 'chat',         moduleId: 'chat',         nav: true, title: 'Chat' }
+      { route: ['', 'content'], name: 'content', moduleId: 'content', nav: true, title: 'Content' },
     ]);
 
     this.router = router;
+  }
+
+  attached() {
+    var chatFrame = $("#chatFrame");
+    var contentContainer = $("#contentContainer");
+
+    function resize() {
+      var chatFrameWidth = chatFrame.width();
+
+      contentContainer.css("left", chatFrameWidth);
+    }
+
+    resize();
+
+    $(window).resize(() => {
+      resize();
+    });
   }
 }

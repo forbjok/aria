@@ -5,6 +5,9 @@
   <nav-bar router.bind="router"></nav-bar>
 
   <div class="page-host">
-    <router-view></router-view>
+    <iframe id="chatFrame" src="/chat.html" frameborder="0" scrolling="no" height="100%" width="350px"></iframe>
+    <div id="contentContainer" class="contentContainer">
+      <router-view></router-view>
+    </div>
   </div>
 </template>
