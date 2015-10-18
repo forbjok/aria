@@ -15,8 +15,6 @@ var imagesUrl = "/images";
 // Serve static shit
 app.use(imagesUrl, express.static(imagesPath));
 
-var posts = [];
-
 // Get file extension based on mimetype
 function getExtensionByMimetype(mimetype) {
   switch (mimetype) {
@@ -52,8 +50,23 @@ function getUrl(req) {
   return req.protocol + "://" + req.get("host");
 }
 
-function emitPost(res, post) {
-  posts.push(post);
+class ChatRoom {
+  constructor() {
+    this.posts = [];
+  }
+
+  getRecentPosts() {
+    return this.posts.slice(-50, -0)
+  }
+}
+var rooms = {};
+
+function getRoom(name) {
+  if()
+}
+
+function emitPost(res, room, post) {
+  rooms[room].posts.push(post);
 
   io.emit("post", post);
   res.send({
@@ -98,9 +111,17 @@ app.post(postUrl, upload.single("image"), (req, res) => {
 io.on("connection", (socket) => {
   console.log("Connected!");
 
-  for (post of posts) {
-    socket.emit("post", value);
-  }
+  socket.on("join", (room) => {
+    socket.join(room);
+
+    for (post of posts) {
+      socket.emit("post", post);
+    }
+  });
+
+  socket.on("leave", (room) => {
+    socket.leave(room);
+  });
 
   socket.on("disconnect", () => {
     console.log("Disconnected!");

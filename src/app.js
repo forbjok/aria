@@ -9,21 +9,4 @@ export class App {
 
     this.router = router;
   }
-
-  attached() {
-    var chatFrame = $("#chatFrame");
-    var contentContainer = $("#contentContainer");
-
-    function resize() {
-      var chatFrameWidth = chatFrame.width();
-
-      contentContainer.css("left", chatFrameWidth);
-    }
-
-    resize();
-
-    $(window).resize(() => {
-      resize();
-    });
-  }
 }
