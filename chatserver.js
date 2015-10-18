@@ -1,73 +1,109 @@
-var express = require('express');
-var multer = require('multer');
+var express = require("express");
+var multer = require("multer");
 var app = express();
-var http = require('http').Server(app);
-var io = require('socket.io')(http);
+var http = require("http").Server(app);
+var io = require("socket.io")(http);
+var easyimg = require("easyimage");
+var moment = require("moment");
 
-var easyimg = require('easyimage');
+var uploadsPath = __dirname + "/uploads";
+var imagesPath = uploadsPath + "/images";
+
+var postUrl = "/post";
+var imagesUrl = "/images";
 
 // Serve static shit
-app.use('/', express.static(__dirname + '/wwwroot'));
-app.use('/images', express.static(__dirname + '/images'));
+app.use(imagesUrl, express.static(imagesPath));
 
 var posts = [];
 
-var upload = multer({
-  dest: __dirname + '/images'
+// Get file extension based on mimetype
+function getExtensionByMimetype(mimetype) {
+  switch (mimetype) {
+    case "image/png":
+      return ".png";
+    case "image/jpeg":
+      return ".jpg";
+    case "image/gif":
+      return ".gif";
+    default:
+      return "";
+  }
+}
+
+// Set up multer storage for uploaded images
+var storage = multer.diskStorage({
+  destination: imagesPath,
+  filename: (req, file, cb) => {
+    var extension = getExtensionByMimetype(file.mimetype);
+    var filename = moment().utc().valueOf().toString() + extension;
+
+    cb(null, filename);
+  }
 });
 
-app.post('/post', upload.single('image'), function(req, res) {
-  console.log('Got post');
+// Set up multer uploader
+var upload = multer({
+  storage: storage
+});
+
+// Get the base URL of a request
+function getUrl(req) {
+  return req.protocol + "://" + req.get("host");
+}
+
+function emitPost(res, post) {
+  posts.push(post);
+
+  io.emit("post", post);
+  res.send({
+    result: 1
+  });
+}
+
+app.post(postUrl, upload.single("image"), (req, res) => {
+  console.log("Got post");
 
   var post = {
-    time: new Date().getTime(),
-    name: ('name' in req.body ? req.body.name : 'Anonymous'),
+    time: moment().utc().toISOString(),
+    name: (req.body.name ? req.body.name : "Anonymous"),
     message: req.body.message,
   };
-
-  function emitPost() {
-    posts.push(post);
-
-    io.emit('post', post);
-    res.send({
-      result: 1
-    });
-  }
 
   var imageFile = req.file;
 
   if (imageFile) {
     if (imageFile.mimetype.match(/^image\//)) {
       var fileName = imageFile.filename;
-      var thumbName = '/images/thumb-' + fileName;
+      var thumbName = "thumb-" + fileName;
 
       easyimg.resize({
         src: imageFile.path,
-        dst: __dirname + thumbName,
+        dst: imagesPath + "/" + thumbName,
         width: 50,
         height: 50
-      }).then(function(file) {
+      }).then((file) => {
         //console.dir(file);
-        post.image = req.protocol + '://' + req.get('host') + '/images/' + fileName;
-        post.thumbnail = req.protocol + '://' + req.get('host') + thumbName;
+        post.image = getUrl(req) + imagesUrl + "/" + fileName;
+        post.thumbnail = getUrl(req) + imagesUrl + "/" + thumbName;
 
-        emitPost();
+        emitPost(res, post);
       });
     }
   } else {
-    emitPost();
+    emitPost(res, post);
   }
 });
 
-io.on('connection', function(socket) {
-  console.log('Connected!');
+io.on("connection", (socket) => {
+  console.log("Connected!");
 
-  posts.forEach(function(value, index, array) {
-    socket.emit('post', value);
-  });
+  for (post of posts) {
+    socket.emit("post", value);
+  }
 
-  socket.on('disconnect', function() {
-    console.log('Disconnected!');
+  socket.on("disconnect", () => {
+    console.log("Disconnected!");
   });
 });
 
