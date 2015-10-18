@@ -50,15 +50,25 @@ function getUrl(req) {
   return req.protocol + "://" + req.get("host");
 }
 
+class Notifier {
+  constructor() {
+
+  }
+}
 class ChatRoom {
   constructor() {
     this.posts = [];
   }
 
   getRecentPosts() {
-    return this.posts.slice(-50, -0)
+    return this.posts.slice(-50);
+  }
+
+  post(post) {
+
   }
 }
+
 var rooms = {};
 
 function getRoom(name) {
@@ -96,7 +106,6 @@ app.post(postUrl, upload.single("image"), (req, res) => {
         width: 50,
         height: 50
       }).then((file) => {
-        //console.dir(file);
         post.image = getUrl(req) + imagesUrl + "/" + fileName;
         post.thumbnail = getUrl(req) + imagesUrl + "/" + thumbName;
 
