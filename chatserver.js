@@ -1,3 +1,5 @@
+"use strict";
+
 var express = require("express");
 var multer = require("multer");
 var app = express();
@@ -50,13 +52,10 @@ function getUrl(req) {
   return req.protocol + "://" + req.get("host");
 }
 
-class Notifier {
-  constructor() {
-
-  }
-}
 class ChatRoom {
-  constructor() {
+  constructor(postReceived) {
+    this.postReceived = postReceived;
+
     this.posts = [];
   }
 
@@ -65,14 +64,26 @@ class ChatRoom {
   }
 
   post(post) {
-
+    this.posts.push(post);
+    this.postReceived(post);
   }
 }
 
 var rooms = {};
 
 function getRoom(name) {
-  if()
+  if(!name in rooms){
+    let room = new ChatRoom({
+      postReceived: (post) => {
+        io.to(name).emit(post);
+      }
+    });
+
+    rooms.push(room);
+    return room;
+  }
+
+  return rooms[name];
 }
 
 function emitPost(res, room, post) {
@@ -120,16 +131,19 @@ app.post(postUrl, upload.single("image"), (req, res) => {
 io.on("connection", (socket) => {
   console.log("Connected!");
 
-  socket.on("join", (room) => {
-    socket.join(room);
+  socket.on("join", (roomName) => {
+    console.log(`Joining room ${roomName}!`);
+    let room = getRoom(roomName);
+    socket.join(roomName);
 
-    for (post of posts) {
+    for (post of room.getRecentPosts()) {
       socket.emit("post", post);
     }
   });
 
-  socket.on("leave", (room) => {
-    socket.leave(room);
+  socket.on("leave", (roomName) => {
+    console.log(`Leaving room ${roomName}!`);
+    socket.leave(roomName);
   });
 
   socket.on("disconnect", () => {
