@@ -17,6 +17,7 @@ export class Chat {
   }
 
   attached() {
+    this.postForm = $("#postForm");
     var postContainer = $("#postContainer");
     var chatControls = $("#chatControls");
 
@@ -30,6 +31,16 @@ export class Chat {
 
     $(window).resize(() => {
       resize();
+    });
+  }
+
+  post(){
+    console.log("pots!");
+    var formData = new FormData(this.postForm);
+
+    console.log("Posting jquey");
+    $.ajax("http://localhost:8080/testing/post", { data: formData, contentType: false, processData: false }).done(() => {
+      console.log("Posted!");
     });
   }
 }

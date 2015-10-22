@@ -21,7 +21,7 @@
     </div>
 
     <div id="chatControls" class="chatControls">
-      <form id="postForm" method="post" action="http://localhost:8080/testing/post" enctype="multipart/form-data" target="postframe">
+      <form id="postForm" submit.delegate="post()">
         <iframe name="postframe" style="display: none;"></iframe>
         <table class="postTable">
           <tr>
