@@ -1,13 +1,17 @@
-import io from 'socket.io-client';
+import io from "socket.io-client";
 import $ from "jquery";
 
 export class Chat {
   activate() {
     this.posts = [];
 
-    var socket = io('http://localhost:8080');
+    var socket = io("http://localhost:8080");
 
-    socket.on('post', (post) => {
+    socket.on("connect", () =>{
+      socket.emit("join", "testing");
+    });
+
+    socket.on("post", (post) => {
       this.posts.push(post);
     });
   }

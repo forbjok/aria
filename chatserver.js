@@ -11,7 +11,7 @@ var moment = require("moment");
 var uploadsPath = __dirname + "/uploads";
 var imagesPath = uploadsPath + "/images";
 
-var postUrl = "/post";
+var postUrl = "/:room/post";
 var imagesUrl = "/images";
 
 // Serve static shit
@@ -53,8 +53,10 @@ function getUrl(req) {
 }
 
 class ChatRoom {
-  constructor(postReceived) {
-    this.postReceived = postReceived;
+  constructor(options) {
+    options = options || {};
+
+    this.postReceived = options.postReceived;
 
     this.posts = [];
   }
@@ -72,31 +74,36 @@ class ChatRoom {
 var rooms = {};
 
 function getRoom(name) {
-  if(!name in rooms){
+  if (!(name in rooms)) {
+    console.log(`Room ${name} not found. Creating it.`)
     let room = new ChatRoom({
       postReceived: (post) => {
-        io.to(name).emit(post);
+        console.log(`Post received, emitting it to room ${name}.`)
+        io.to(name).emit("post", post);
       }
     });
 
-    rooms.push(room);
+    rooms[name] = room;
     return room;
   }
 
   return rooms[name];
 }
 
-function emitPost(res, room, post) {
-  rooms[room].posts.push(post);
+function emitPost(res, roomName, post) {
+  let room = getRoom(roomName);
 
-  io.emit("post", post);
+  room.post(post);
+
   res.send({
     result: 1
   });
 }
 
 app.post(postUrl, upload.single("image"), (req, res) => {
-  console.log("Got post");
+  let roomName = req.params.room;
+
+  console.log(`Got post to room ${roomName}.`);
 
   var post = {
     time: moment().utc().toISOString(),
@@ -120,11 +127,11 @@ app.post(postUrl, upload.single("image"), (req, res) => {
         post.image = getUrl(req) + imagesUrl + "/" + fileName;
         post.thumbnail = getUrl(req) + imagesUrl + "/" + thumbName;
 
-        emitPost(res, post);
+        emitPost(res, roomName, post);
       });
     }
   } else {
-    emitPost(res, post);
+    emitPost(res, roomName, post);
   }
 });
 
@@ -136,7 +143,10 @@ io.on("connection", (socket) => {
     let room = getRoom(roomName);
     socket.join(roomName);
 
-    for (post of room.getRecentPosts()) {
+    console.log("Sending recent posts.");
+    let recentPosts = room.getRecentPosts();
+
+    for (let post of recentPosts) {
       socket.emit("post", post);
     }
   });
