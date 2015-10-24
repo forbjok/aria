@@ -3,7 +3,13 @@ import $ from "jquery";
 import "jquery-cookie";
 
 export class Chat {
+  constructor() {
+    this.posts = [];
+    this.socket = io();
+  }
+
   clearPost() {
+    this.postForm.reset();
     this.post = {
       name: $.cookie("post_name"),
       message: "",
@@ -38,9 +44,7 @@ export class Chat {
   }
 
   activate() {
-    this.posts = [];
-
-    var socket = io();
+    var socket = this.socket;
 
     socket.on("connect", () => {
       socket.emit("join", "testing");
@@ -49,8 +53,6 @@ export class Chat {
     socket.on("post", (post) => {
       this.posts.push(post);
     });
-
-    this.clearPost();
   }
 
   attached() {
@@ -69,5 +71,7 @@ export class Chat {
     $(window).resize(() => {
       resize();
     });
+
+    this.clearPost();
   }
 }
