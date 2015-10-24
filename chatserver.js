@@ -1,5 +1,6 @@
 "use strict";
 
+var path = require("path");
 var http = require("http");
 var express = require("express");
 var multer = require("multer");
@@ -7,14 +8,17 @@ var socketio = require("socket.io");
 var easyimg = require("easyimage");
 var moment = require("moment");
 
-var uploadsPath = __dirname + "/uploads";
-var imagesPath = uploadsPath + "/images";
+// Paths
+var uploadsPath = path.join(__dirname, "uploads");
+var imagesPath = path.join(uploadsPath, "images");
 
+// URLs
 var postUrl = "/:room/post";
 var imagesUrl = "/images";
 
+// Create Express app and HTTP server
 var app = express();
-var server = http.Server(app);
+var server = http.createServer(app);
 var io = socketio(server);
 
 // Set up Express app
@@ -78,8 +82,10 @@ class ChatRoom {
   }
 }
 
+// Global variables
 var rooms = {};
 
+// Get a room or create, add and return it if it does not exist
 function getRoom(name) {
   if (!(name in rooms)) {
     console.log(`Room ${name} not found. Creating it.`)
@@ -122,17 +128,17 @@ app.post(postUrl, upload.single("image"), (req, res) => {
 
   if (imageFile) {
     if (imageFile.mimetype.match(/^image\//)) {
-      var fileName = imageFile.filename;
-      var thumbName = "thumb-" + fileName;
+      var filename = imageFile.filename;
+      var thumbFilename = `thumb-${filename}`;
 
       easyimg.resize({
         src: imageFile.path,
-        dst: imagesPath + "/" + thumbName,
+        dst: path.join(imagesPath, thumbFilename),
         width: 50,
         height: 50
       }).then((file) => {
-        post.image = getUrl(req) + imagesUrl + "/" + fileName;
-        post.thumbnail = getUrl(req) + imagesUrl + "/" + thumbName;
+        post.image = getUrl(req) + imagesUrl + "/" + filename;
+        post.thumbnail = getUrl(req) + imagesUrl + "/" + thumbFilename;
 
         emitPost(res, roomName, post);
       });
@@ -167,6 +173,13 @@ io.on("connection", (socket) => {
     console.log("Disconnected!");
   });
 });
+
+// error handling middleware should be loaded after the loading the routes
+if ("development" == app.get("env")) {
+  var errorhandler = require('errorhandler');
+
+  app.use(errorhandler());
+}
 
 var port = app.get("port");
 
