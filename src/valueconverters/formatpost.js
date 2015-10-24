@@ -1,4 +1,4 @@
-export class PostFormatValueConverter {
+export class FormatPostValueConverter {
   toView(value) {
     if (!value)
       return value;
