@@ -1,10 +1,9 @@
 "use strict";
 
+var http = require("http");
 var express = require("express");
 var multer = require("multer");
-var app = express();
-var http = require("http").Server(app);
-var io = require("socket.io")(http);
+var socketio = require("socket.io");
 var easyimg = require("easyimage");
 var moment = require("moment");
 
@@ -14,7 +13,15 @@ var imagesPath = uploadsPath + "/images";
 var postUrl = "/:room/post";
 var imagesUrl = "/images";
 
+var app = express();
+var server = http.Server(app);
+var io = socketio(server);
+
+// Set up Express app
+app.set("port", process.env.PORT || 5000);
+
 // Serve static shit
+app.use("/", express.static(__dirname));
 app.use(imagesUrl, express.static(imagesPath));
 
 // Get file extension based on mimetype
@@ -161,4 +168,8 @@ io.on("connection", (socket) => {
   });
 });
 
-http.listen(8080);
+var port = app.get("port");
+
+server.listen(port, () => {
+  console.log(`Listening on port ${port}.`);
+});

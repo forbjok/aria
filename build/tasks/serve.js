@@ -9,9 +9,10 @@ gulp.task('serve', ['build'], function(done) {
     online: false,
     open: false,
     port: 9000,
-    server: {
-      baseDir: ['.'],
-      middleware: function (req, res, next) {
+    proxy: {
+      target: "http://localhost:5000",
+      ws: true,
+      middleware: function(req, res, next) {
         res.setHeader('Access-Control-Allow-Origin', '*');
         next();
       }

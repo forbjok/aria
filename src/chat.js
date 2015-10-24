@@ -5,9 +5,9 @@ export class Chat {
   activate() {
     this.posts = [];
 
-    var socket = io("http://localhost:8080");
+    var socket = io();
 
-    socket.on("connect", () =>{
+    socket.on("connect", () => {
       socket.emit("join", "testing");
     });
 
@@ -17,7 +17,7 @@ export class Chat {
   }
 
   attached() {
-    this.postForm = $("#postForm");
+    this.postForm = $("#postForm")[0];
     var postContainer = $("#postContainer");
     var chatControls = $("#chatControls");
 
@@ -34,12 +34,15 @@ export class Chat {
     });
   }
 
-  post(){
-    console.log("pots!");
+  post() {
     var formData = new FormData(this.postForm);
 
-    console.log("Posting jquey");
-    $.ajax("http://localhost:8080/testing/post", { data: formData, contentType: false, processData: false }).done(() => {
+    $.ajax("/testing/post", {
+      method: "POST",
+      data: formData,
+      contentType: false,
+      processData: false
+    }).done(() => {
       console.log("Posted!");
     });
   }
