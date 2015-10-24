@@ -45,6 +45,7 @@ System.config({
     "fetch": "github:github/fetch@0.9.0",
     "font-awesome": "npm:font-awesome@4.4.0",
     "jquery": "github:components/jquery@2.1.4",
+    "jquery-cookie": "github:carhartl/jquery-cookie@1.4.1",
     "moment": "github:moment/moment@2.10.6",
     "socket.io-client": "github:socketio/socket.io-client@1.3.7",
     "text": "github:systemjs/plugin-text@0.0.2",

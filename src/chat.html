@@ -21,20 +21,19 @@
     </div>
 
     <div id="chatControls" class="chatControls">
-      <form id="postForm" submit.delegate="post()">
-        <iframe name="postframe" style="display: none;"></iframe>
+      <form id="postForm" submit.delegate="submitPost()">
         <table class="postTable">
           <tr>
             <td>Name</td>
-            <td><input name="name" type="text" placeholder="Anonymous"></td>
+            <td><input name="name" type="text" value.bind="post.name" placeholder="Anonymous"></td>
           </tr>
           <tr>
             <td>Message</td>
-            <td><textarea name="message" class="postMessageTextarea" wrap="soft"></textarea></td>
+            <td><textarea name="message" value.bind="post.message" class="postMessageTextarea" wrap="soft"></textarea></td>
           </tr>
           <tr>
             <td>Image</td>
-            <td><input name="image" type="file"></td>
+            <td><input name="image" type="file" accept="image/*" files.bind="post.image"></td>
           </tr>
           <tr>
             <td></td>
