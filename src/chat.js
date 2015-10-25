@@ -1,9 +1,15 @@
+import {inject} from "aurelia-framework";
+
 import io from "socket.io-client";
 import $ from "jquery";
 import "jquery-cookie";
 
+@inject("RoomName")
 export class Chat {
-  constructor() {
+  constructor(roomName) {
+    this.roomName = roomName;
+    this.postUrl = `/chat/${this.roomName}/post`;
+
     this.posts = [];
     this.socket = io();
   }
@@ -31,7 +37,7 @@ export class Chat {
     if (image)
       formData.append("image", image, image.name);
 
-    $.ajax("/testing/post", {
+    $.ajax(this.postUrl, {
       method: "POST",
       data: formData,
       contentType: false,
@@ -46,12 +52,12 @@ export class Chat {
   activate() {
     var socket = this.socket;
 
-    socket.on("connect", () => {
-      socket.emit("join", "testing");
-    });
-
     socket.on("post", (post) => {
       this.posts.push(post);
+    });
+
+    socket.on("connect", () => {
+      socket.emit("join", this.roomName);
     });
   }
 

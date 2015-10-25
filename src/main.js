@@ -13,6 +13,8 @@ export function configure(aurelia) {
 
   aurelia.start().then(a => {
     let start = a.host.attributes.start.value;
+    let roomName = a.host.attributes.room.value;
+    aurelia.use.instance("RoomName", roomName);
     a.setRoot(start);
   });
 }

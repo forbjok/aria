@@ -1,13 +1,31 @@
+import {inject} from "aurelia-framework";
+
+import io from "socket.io-client";
+
+@inject("RoomName")
 export class Content {
-  get contentUrl() {
-    switch (this.id) {
-      case 1:
-        return "STEIN";
-      case 2:
-        return "BALLE";
-      default:
-        return "http://www.ustream.tv/embed/16698010?html5ui";
-    }
+  constructor(roomName) {
+    this.roomName = roomName;
+
+    this.contentUrl = "about:blank";
+    this.socket = io();
+  }
+
+  get chatUrl() {
+    return `/chat/${this.roomName}`;
+  }
+
+  activate() {
+    var socket = this.socket;
+
+    socket.on("content", (url) => {
+      console.log("ROOM!", url);
+      this.contentUrl = url;
+    });
+
+    socket.on("connect", () => {
+      socket.emit("join", this.roomName);
+    });
   }
 
   attached() {

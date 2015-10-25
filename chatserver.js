@@ -3,6 +3,7 @@
 var path = require("path");
 var http = require("http");
 var express = require("express");
+var exphbs = require("express-handlebars");
 var multer = require("multer");
 var socketio = require("socket.io");
 var easyimg = require("easyimage");
@@ -13,7 +14,6 @@ var uploadsPath = path.join(__dirname, "uploads");
 var imagesPath = path.join(uploadsPath, "images");
 
 // URLs
-var postUrl = "/:room/post";
 var imagesUrl = "/images";
 
 // Create Express app and HTTP server
@@ -27,6 +27,15 @@ app.set("port", process.env.PORT || 5000);
 // Serve static shit
 app.use("/", express.static(__dirname));
 app.use(imagesUrl, express.static(imagesPath));
+
+// Set up view engine
+app.engine("handlebars", exphbs({
+  layoutsDir: "views/layouts/",
+  partialsDir: "views/partials/"
+}));
+
+app.set("view engine", "handlebars");
+app.set("views", "views");
 
 // Get file extension based on mimetype
 function getExtensionByMimetype(mimetype) {
@@ -67,9 +76,20 @@ class ChatRoom {
   constructor(options) {
     options = options || {};
 
+    this.contentChanged = options.contentChanged;
     this.postReceived = options.postReceived;
 
+    this.contentUrl = "about:blank";
     this.posts = [];
+  }
+
+  getContentUrl() {
+    return this.contentUrl; //"http://www.ustream.tv/embed/16698010?html5ui";
+  }
+
+  setContentUrl(url) {
+    this.contentUrl = url;
+    this.contentChanged(this.contentUrl);
   }
 
   getRecentPosts() {
@@ -90,6 +110,9 @@ function getRoom(name) {
   if (!(name in rooms)) {
     console.log(`Room ${name} not found. Creating it.`)
     let room = new ChatRoom({
+      contentChanged: (url) => {
+        io.to(name).emit("content", url);
+      },
       postReceived: (post) => {
         console.log(`Post received, emitting it to room ${name}.`)
         io.to(name).emit("post", post);
@@ -113,8 +136,39 @@ function emitPost(res, roomName, post) {
   });
 }
 
-app.post(postUrl, upload.single("image"), (req, res) => {
+app.get("/r/:room", (req, res) => {
+  console.log(`Room! ${req.params.room}`);
+  res.render("room", {
+    room: req.params.room
+  });
+});
+
+app.get("/chat/:room", (req, res) => {
+  console.log(`Chat! ${req.params.room}`);
+  res.render("chat", {
+    room: req.params.room
+  });
+});
+
+var contentRegex = /^\/content\s+(.+)$/g;
+
+app.post("/chat/:room/post", upload.single("image"), (req, res) => {
   let roomName = req.params.room;
+
+  if(req.body.message[0] === "/") {
+    console.log("Command detected");
+
+    let contentUrl = contentRegex.exec(req.body.message)[1];
+    console.log("COTL", contentUrl);
+
+    let room = getRoom(roomName);
+    room.setContentUrl(contentUrl);
+
+    res.send({
+      result: 1
+    });
+    return;
+  }
 
   console.log(`Got post to room ${roomName}.`);
 
@@ -155,6 +209,10 @@ io.on("connection", (socket) => {
     console.log(`Joining room ${roomName}!`);
     let room = getRoom(roomName);
     socket.join(roomName);
+
+    let contentUrl = room.getContentUrl();
+    console.log("Sending content url: " + contentUrl);
+    socket.emit("content", contentUrl);
 
     console.log("Sending recent posts.");
     let recentPosts = room.getRecentPosts();
