@@ -9,8 +9,10 @@ var socketio = require("socket.io");
 var easyimg = require("easyimage");
 var moment = require("moment");
 
+var rootDir = path.join(__dirname, "../..");
+
 // Paths
-var uploadsPath = path.join(__dirname, "uploads");
+var uploadsPath = path.join(rootDir, "uploads");
 var imagesPath = path.join(uploadsPath, "images");
 
 // URLs
@@ -25,17 +27,20 @@ var io = socketio(server);
 app.set("port", process.env.PORT || 5000);
 
 // Serve static shit
-app.use("/", express.static(__dirname));
+app.use("/dist", express.static(path.join(rootDir, "dist")));
+app.use("/styles", express.static(path.join(rootDir, "styles")));
+app.use("/jspm_packages", express.static(path.join(rootDir, "jspm_packages")));
+app.use("/config.js", express.static(path.join(rootDir, "config.js")));
 app.use(imagesUrl, express.static(imagesPath));
 
 // Set up view engine
 app.engine("handlebars", exphbs({
-  layoutsDir: "views/layouts/",
-  partialsDir: "views/partials/"
+  layoutsDir: path.join(__dirname, "views/layouts/"),
+  partialsDir: path.join(__dirname, "views/partials/")
 }));
 
 app.set("view engine", "handlebars");
-app.set("views", "views");
+app.set("views", path.join(__dirname, "views"));
 
 // Get file extension based on mimetype
 function getExtensionByMimetype(mimetype) {
