@@ -1,6 +1,6 @@
 import {inject} from "aurelia-framework";
-
 import io from "socket.io-client";
+import $ from "jquery";
 
 @inject("RoomName")
 export class Content {

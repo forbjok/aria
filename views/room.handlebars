@@ -2,12 +2,10 @@
 <html>
   <head>
     <title>Aurelia</title>
-    <link rel="stylesheet" href="/jspm_packages/npm/font-awesome@4.4.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="/styles/frame.css">
     <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
 
-  <body aurelia-app="main" start="app" room="{{room}}">
+  <body aurelia-app="main" start="room" room="{{room}}">
     <div class="splash">
       <div class="message">Aria</div>
       <i class="fa fa-spinner fa-spin"></i>
@@ -19,6 +17,8 @@
     </script>
     <script src="/config.js"></script>
     <script>
+      System.import("font-awesome/css/font-awesome.min.css!");
+      System.import("/styles/room.css!");
       System.import('aurelia-bootstrapper');
     </script>
   </body>

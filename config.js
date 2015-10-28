@@ -43,6 +43,7 @@ System.config({
     "babel-runtime": "npm:babel-runtime@5.8.29",
     "bootstrap": "github:twbs/bootstrap@3.3.5",
     "core-js": "npm:core-js@1.2.3",
+    "css": "github:systemjs/plugin-css@0.1.19",
     "fetch": "github:github/fetch@0.9.0",
     "font-awesome": "npm:font-awesome@4.4.0",
     "github/fetch": "github:github/fetch@0.10.0",

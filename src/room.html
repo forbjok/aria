@@ -1,5 +1,7 @@
 <template>
-  <iframe id="chatFrame" src.bind="chatUrl" frameborder="0" scrolling="no" height="100%" width="350px"></iframe>
+  <div class="chatContainer">
+    <iframe id="chatFrame" src.bind="chatUrl" frameborder="0" scrolling="no" height="100%" width="350px"></iframe>
+  </div>
   <div id="contentContainer" class="contentContainer">
     <iframe width="100%" height="100%" src.bind="contentUrl" allowfullscreen webkitallowfullscreen scrolling="no" frameborder="0"></iframe>
   </div>
