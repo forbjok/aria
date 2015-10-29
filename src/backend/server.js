@@ -25,6 +25,7 @@ var io = socketio(server);
 
 // Set up Express app
 app.set("port", process.env.PORT || 5000);
+app.enable("trust proxy"); // Required for req.ip to work correctly behind a proxy
 
 // Serve static shit
 app.use("/dist", express.static(path.join(rootDir, "dist")));
@@ -72,9 +73,20 @@ var upload = multer({
   storage: storage
 });
 
-// Get the base URL of a request
-function getUrl(req) {
-  return req.protocol + "://" + req.get("host");
+// Create a post view-model (for websocket use) from an internal post object
+function postToViewModel(post) {
+  let vm = {
+    time: post.posted,
+    name: post.name,
+    message: post.comment
+  };
+
+  if(post.image) {
+    vm.image = `${imagesUrl}/${post.image.filename}`;
+    vm.thumbnail = `${imagesUrl}/${post.image.thumbnailFilename}`;
+  }
+
+  return vm;
 }
 
 class ChatRoom {
@@ -113,14 +125,14 @@ var rooms = {};
 // Get a room or create, add and return it if it does not exist
 function getRoom(name) {
   if (!(name in rooms)) {
-    console.log(`Room ${name} not found. Creating it.`)
+    console.log(`Room ${name} not found. Creating it.`);
     let room = new ChatRoom({
       contentChanged: (url) => {
         io.to(name).emit("content", url);
       },
       postReceived: (post) => {
-        console.log(`Post received, emitting it to room ${name}.`)
-        io.to(name).emit("post", post);
+        console.log(`Post received, emitting it to room ${name}.`);
+        io.to(name).emit("post", postToViewModel(post));
       }
     });
 
@@ -177,13 +189,14 @@ app.post("/chat/:room/post", upload.single("image"), (req, res) => {
 
   console.log(`Got post to room ${roomName}.`);
 
-  var post = {
-    time: moment().utc().toISOString(),
-    name: (req.body.name ? req.body.name : "Anonymous"),
-    message: req.body.message,
+  let post = {
+    posted: moment().utc().toISOString(),
+    name: req.body.name ? req.body.name : "Anonymous",
+    comment: req.body.message,
+    ip: req.ip
   };
 
-  var imageFile = req.file;
+  let imageFile = req.file;
 
   if (imageFile) {
     if (imageFile.mimetype.match(/^image\//)) {
@@ -196,8 +209,11 @@ app.post("/chat/:room/post", upload.single("image"), (req, res) => {
         width: 50,
         height: 50
       }).then((file) => {
-        post.image = getUrl(req) + imagesUrl + "/" + filename;
-        post.thumbnail = getUrl(req) + imagesUrl + "/" + thumbFilename;
+        post.image = {
+          filename: filename,
+          thumbnailFilename: thumbFilename,
+          originalFilename: imageFile.originalname
+        }
 
         emitPost(res, roomName, post);
       });
@@ -223,7 +239,7 @@ io.on("connection", (socket) => {
     let recentPosts = room.getRecentPosts();
 
     for (let post of recentPosts) {
-      socket.emit("post", post);
+      socket.emit("post", postToViewModel(post));
     }
   });
 
