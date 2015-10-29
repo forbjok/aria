@@ -43,6 +43,9 @@ app.engine("handlebars", exphbs({
 app.set("view engine", "handlebars");
 app.set("views", path.join(__dirname, "views"));
 
+var pgstore = require("./pgstore");
+var ariaStore = pgstore.postgresql();
+
 // Get file extension based on mimetype
 function getExtensionByMimetype(mimetype) {
   switch (mimetype) {
@@ -126,13 +129,24 @@ var rooms = {};
 function getRoom(name) {
   if (!(name in rooms)) {
     console.log(`Room ${name} not found. Creating it.`);
+
+    ariaStore.claimRoom(name);
+
     let room = new ChatRoom({
       contentChanged: (url) => {
         io.to(name).emit("content", url);
       },
       postReceived: (post) => {
         console.log(`Post received, emitting it to room ${name}.`);
+        ariaStore.addPost(name, post);
         io.to(name).emit("post", postToViewModel(post));
+      }
+    });
+
+    // Retrieve recent posts from database
+    ariaStore.getPosts(name, { limit: 50 }, (posts) => {
+      for (let post of posts) {
+        room.post(post);
       }
     });
 
