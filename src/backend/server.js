@@ -8,14 +8,13 @@ var multer = require("multer");
 var socketio = require("socket.io");
 var easyimg = require("easyimage");
 var moment = require("moment");
+var config = require("./config");
 
 var noop = () => {};
 
-var rootDir = path.join(__dirname, "../..");
-
 // Paths
-var uploadsPath = path.join(rootDir, "uploads");
-var imagesPath = path.join(uploadsPath, "images");
+var rootDir = path.join(__dirname, "../..");
+var imagesPath = path.join(config.uploadsPath, "images");
 
 // URLs
 var imagesUrl = "/images";
@@ -26,7 +25,7 @@ var server = http.createServer(app);
 var io = socketio(server);
 
 // Set up Express app
-app.set("port", process.env.PORT || 5000);
+app.set("port", config.port);
 app.enable("trust proxy"); // Required for req.ip to work correctly behind a proxy
 
 // Serve static shit
@@ -279,5 +278,5 @@ if ("development" == app.get("env")) {
 var port = app.get("port");
 
 server.listen(port, () => {
-  console.log(`Listening on port ${port}.`);
+  console.log(`Aria listening on port ${port}.`);
 });
