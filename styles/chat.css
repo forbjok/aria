@@ -27,7 +27,7 @@ body {
 }
 
 .postContainer .post:nth-child(odd) {
-  background: #141414;
+  background: #121212;
 }
 
 .chatControls {
