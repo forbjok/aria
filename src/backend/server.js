@@ -9,6 +9,8 @@ var socketio = require("socket.io");
 var easyimg = require("easyimage");
 var moment = require("moment");
 
+var noop = () => {};
+
 var rootDir = path.join(__dirname, "../..");
 
 // Paths
@@ -99,8 +101,8 @@ class ChatRoom {
     this.contentChanged = options.contentChanged;
     this.postReceived = options.postReceived;
 
-    this.contentUrl = "about:blank";
-    this.posts = [];
+    this.contentUrl = options.contentUrl || "about:blank";
+    this.posts = options.posts || [];
   }
 
   getContentUrl() {
@@ -126,44 +128,42 @@ class ChatRoom {
 var rooms = {};
 
 // Get a room or create, add and return it if it does not exist
-function getRoom(name) {
-  if (!(name in rooms)) {
-    console.log(`Room ${name} not found. Creating it.`);
-
-    ariaStore.claimRoom(name);
-
-    let room = new ChatRoom({
-      contentChanged: (url) => {
-        io.to(name).emit("content", url);
-      },
-      postReceived: (post) => {
-        console.log(`Post received, emitting it to room ${name}.`);
-        ariaStore.addPost(name, post);
-        io.to(name).emit("post", postToViewModel(post));
-      }
-    });
-
-    // Retrieve recent posts from database
-    ariaStore.getPosts(name, { limit: 50 }, (posts) => {
-      for (let post of posts) {
-        room.post(post);
-      }
-    });
-
-    rooms[name] = room;
-    return room;
+function getRoom(name, cb) {
+  if (name in rooms) {
+    (cb || noop)(rooms[name]);
+    return;
   }
 
-  return rooms[name];
+  console.log(`Room ${name} not found. Creating it.`);
+
+  ariaStore.claimRoom(name, () => {
+    // Retrieve recent posts from database
+    ariaStore.getPosts(name, { limit: 50 }, (posts) => {
+      let room = new ChatRoom({
+        posts: posts,
+        contentChanged: (url) => {
+          io.to(name).emit("content", url);
+        },
+        postReceived: (post) => {
+          console.log(`Post received, emitting it to room ${name}.`);
+          ariaStore.addPost(name, post);
+          io.to(name).emit("post", postToViewModel(post));
+        }
+      });
+
+      rooms[name] = room;
+      (cb || noop)(room);
+    });
+  });
 }
 
 function emitPost(res, roomName, post) {
-  let room = getRoom(roomName);
+  getRoom(roomName, (room) => {
+    room.post(post);
 
-  room.post(post);
-
-  res.send({
-    result: 1
+    res.send({
+      result: 1
+    });
   });
 }
 
@@ -192,11 +192,12 @@ app.post("/chat/:room/post", upload.single("image"), (req, res) => {
     let contentUrl = contentRegex.exec(req.body.message)[1];
     console.log("COTL", contentUrl);
 
-    let room = getRoom(roomName);
-    room.setContentUrl(contentUrl);
+    getRoom(roomName, (room) => {
+      room.setContentUrl(contentUrl);
 
-    res.send({
-      result: 1
+      res.send({
+        result: 1
+      });
     });
     return;
   }
@@ -242,19 +243,20 @@ io.on("connection", (socket) => {
 
   socket.on("join", (roomName) => {
     console.log(`Joining room ${roomName}!`);
-    let room = getRoom(roomName);
-    socket.join(roomName);
+    getRoom(roomName, (room) => {
+      socket.join(roomName);
 
-    let contentUrl = room.getContentUrl();
-    console.log("Sending content url: " + contentUrl);
-    socket.emit("content", contentUrl);
+      let contentUrl = room.getContentUrl();
+      console.log("Sending content url: " + contentUrl);
+      socket.emit("content", contentUrl);
 
-    console.log("Sending recent posts.");
-    let recentPosts = room.getRecentPosts();
+      console.log("Sending recent posts.");
+      let recentPosts = room.getRecentPosts();
 
-    for (let post of recentPosts) {
-      socket.emit("post", postToViewModel(post));
-    }
+      for (let post of recentPosts) {
+        socket.emit("post", postToViewModel(post));
+      }
+    });
   });
 
   socket.on("leave", (roomName) => {
