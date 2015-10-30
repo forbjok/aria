@@ -11,7 +11,6 @@ export class Chat {
     this.postUrl = `/chat/${this.roomName}/post`;
 
     this.posts = [];
-    this.socket = io();
   }
 
   clearPost() {
@@ -50,15 +49,6 @@ export class Chat {
   }
 
   activate() {
-    var socket = this.socket;
-
-    socket.on("post", (post) => {
-      this.posts.push(post);
-    });
-
-    socket.on("connect", () => {
-      socket.emit("join", this.roomName);
-    });
   }
 
   attached() {
@@ -79,5 +69,15 @@ export class Chat {
     });
 
     this.clearPost();
+
+    var socket = io();
+
+    socket.on("post", (post) => {
+      this.posts.push(post);
+    });
+
+    socket.on("connect", () => {
+      socket.emit("join", this.roomName);
+    });
   }
 }
