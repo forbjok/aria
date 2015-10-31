@@ -62,14 +62,18 @@ export class Chat {
     });
 
     ajaxPost.done(() => {
-      $.cookie("post_name", this.post.name);
+      this.postingProgress = "Done!";
       this.clearPost();
+      $.cookie("post_name", this.post.name);
       console.log("Posted!");
     });
 
     ajaxPost.always(() => {
       this.postingDisabled = false;
-      delete this.postingProgress;
+
+      setTimeout(() => {
+        this.postingProgress = "";
+      }, 5000);
     });
   }
 
