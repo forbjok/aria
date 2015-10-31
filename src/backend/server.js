@@ -155,7 +155,7 @@ function getRoom(name, cb) {
 
         rooms[name] = room;
         (cb || noop)(room);
-      });      
+      });
     });
   });
 }
@@ -224,8 +224,8 @@ app.post("/chat/:room/post", upload.single("image"), (req, res) => {
       easyimg.resize({
         src: imageFile.path,
         dst: path.join(imagesPath, thumbFilename),
-        width: 50,
-        height: 50
+        width: 100,
+        height: 100
       }).then((file) => {
         post.image = {
           filename: filename,
