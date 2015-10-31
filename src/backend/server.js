@@ -190,12 +190,13 @@ app.get("/chat/:room", (req, res) => {
 var contentRegex = /^\/content\s+(.+)$/g;
 
 app.post("/chat/:room/post", upload.single("image"), (req, res) => {
+  let comment = req.body.comment;
   let roomName = req.params.room;
 
-  if(req.body.message[0] === "/") {
+  if(comment[0] === "/") {
     console.log("Command detected");
 
-    let contentUrl = contentRegex.exec(req.body.message)[1];
+    let contentUrl = contentRegex.exec(comment)[1];
     console.log("COTL", contentUrl);
 
     getRoom(roomName, (room) => {
@@ -213,7 +214,7 @@ app.post("/chat/:room/post", upload.single("image"), (req, res) => {
   let post = {
     posted: moment().utc().toISOString(),
     name: req.body.name ? req.body.name : "Anonymous",
-    comment: req.body.message,
+    comment: comment,
     ip: req.ip
   };
 

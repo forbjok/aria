@@ -22,7 +22,7 @@ export class Chat {
     this.postForm.reset();
     this.post = {
       name: $.cookie("post_name"),
-      message: ""
+      comment: ""
     };
   }
 
@@ -30,12 +30,12 @@ export class Chat {
     var post = this.post;
     var image = post.image;
 
-    if(!post.message && !image)
+    if(!post.comment && !image)
       return;
 
     var formData = new FormData();
     formData.append("name", post.name);
-    formData.append("message", post.message);
+    formData.append("comment", post.comment);
 
     if (image)
       formData.append("image", image, image.name);
