@@ -1,8 +1,8 @@
 <template>
   <require from="/styles/chat.css"></require>
-  <require from="/styles/chat-dark.css"></require>
   <require from="./valueconverters/formattime"></require>
   <require from="./valueconverters/formatpost"></require>
+  <link rel="stylesheet" href="/styles/chat-${theme}.css">
   <div id="chatContainer" class="chatContainer">
     <div id="postContainer" class="postContainer">
       <ul style="list-style-type: none; padding: 0px; margin: 0px;">
@@ -42,6 +42,11 @@
           </tr>
         </table>
       </form>
+      <div class="options">
+        <select value.bind="theme" change.delegate="themeSelected()">
+          <option repeat.for="theme of themes" value.bind="theme.name">${theme.description}</option>
+        </select>
+      </div>
     </div>
   </div>
 </template>

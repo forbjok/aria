@@ -79,3 +79,9 @@ body {
   resize: none;
   width: calc(100% - 5px);
 }
+
+.options {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+}

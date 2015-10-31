@@ -11,6 +11,11 @@ export class Chat {
     this.postUrl = `/chat/${this.roomName}/post`;
 
     this.posts = [];
+    this.themes = [
+      { name: "dark", description: "Dark" },
+      { name: "yotsubab", description: "Yotsuba B" }
+    ];
+    this.theme = $.cookie("theme") || "dark";
   }
 
   clearPost() {
@@ -80,5 +85,9 @@ export class Chat {
 
   imageSelected(event) {
     this.post.image = event.target.files[0];
+  }
+
+  themeSelected() {
+    $.cookie("theme", this.theme);
   }
 }
