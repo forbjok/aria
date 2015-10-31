@@ -1,7 +1,7 @@
-import moment from 'moment';
+import moment from "moment";
 
 export class FormatTimeValueConverter {
   toView(value) {
-    return moment(value).format('h:mm:ss a');
+    return moment(value).format("hh:mm:ss a");
   }
 }
