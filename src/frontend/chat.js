@@ -31,7 +31,7 @@ export class Chat {
 
   submitPost() {
     // Prevent duplicate submits
-    if (this.postingDisabled || this.postingCooldown > 0)
+    if (this.postingDisabled)
       return;
 
     var post = this.post;
@@ -39,6 +39,11 @@ export class Chat {
 
     if(!post.comment && !image)
       return;
+
+    if(this.postingCooldown > 0) {
+      this.submitOnCooldown = !this.submitOnCooldown;
+      return;
+    }
 
     var formData = new FormData();
     formData.append("name", post.name);
@@ -70,7 +75,7 @@ export class Chat {
     });
 
     ajaxPost.done(() => {
-      this.postingProgress = "Done!";
+      this.postingProgress = "Posted.";
       this.clearPost();
 
       // Activate posting cooldown
@@ -80,6 +85,11 @@ export class Chat {
 
         if (this.postingCooldown <= 0) {
           clearInterval(cooldownInterval);
+
+          if (this.submitOnCooldown) {
+            this.submitOnCooldown = false;
+            this.submitPost();
+          }
         }
       }, 1000);
     });
@@ -89,7 +99,7 @@ export class Chat {
 
       setTimeout(() => {
         this.postingProgress = "";
-      }, 5000);
+      }, 2000);
     });
   }
 
@@ -143,5 +153,17 @@ export class Chat {
     }
 
     return true;
+  }
+
+  get postButtonText() {
+    if (this.postingCooldown > 0) {
+      if (this.submitOnCooldown) {
+        return `Auto (${this.postingCooldown})`;
+      } else {
+        return `${this.postingCooldown}`;
+      }
+    }
+
+    return "Post";
   }
 }
