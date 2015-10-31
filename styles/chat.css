@@ -1,7 +1,10 @@
+@import url(https://fonts.googleapis.com/css?family=Roboto);
+
 body {
   background: black;
   color: white;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 0.9em;
 }
 
 .chatContainer {
@@ -67,6 +70,7 @@ body {
 .post {
   overflow: hidden;
   padding: 5px;
+  font-family: "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 .postBody {
