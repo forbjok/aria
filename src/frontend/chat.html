@@ -33,7 +33,7 @@
           </tr>
           <tr>
             <td>Image</td>
-            <td><input name="image" type="file" accept="image/*" files.bind="post.image"></td>
+            <td><input name="image" type="file" accept="image/*" change.delegate="imageSelected($event)"></td>
           </tr>
           <tr>
             <td></td>

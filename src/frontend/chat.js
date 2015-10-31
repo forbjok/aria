@@ -48,9 +48,6 @@ export class Chat {
     });
   }
 
-  activate() {
-  }
-
   attached() {
     this.postForm = $("#postForm")[0];
     var postContainer = $("#postContainer");
@@ -79,5 +76,9 @@ export class Chat {
     socket.on("connect", () => {
       socket.emit("join", this.roomName);
     });
+  }
+
+  imageSelected(event) {
+    this.post.image = event.target.files;
   }
 }
