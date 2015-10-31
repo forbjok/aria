@@ -1,8 +1,4 @@
-@import url(https://fonts.googleapis.com/css?family=Roboto);
-
 body {
-  background: black;
-  color: white;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 0.9em;
 }
@@ -28,17 +24,12 @@ body {
   flex-direction: column-reverse;
 }
 
-.postContainer .post:nth-child(odd) {
-  background: #121212;
-}
-
 .chatControls {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
   padding: 2px;
-  background: #282828;
 }
 
 .postTable {

@@ -1,12 +1,12 @@
 body {
   background-color: #080808;
-  color: #D5FFAB;
 }
 
 .splash {
   text-align: center;
   margin: 10% 0 0 0;
   box-sizing: border-box;
+  color: #D5FFAB;
 }
 
 .splash .message {
