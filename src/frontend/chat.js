@@ -17,14 +17,13 @@ export class Chat {
     this.postForm.reset();
     this.post = {
       name: $.cookie("post_name"),
-      message: "",
-      image: null
+      message: ""
     };
   }
 
   submitPost() {
     var post = this.post;
-    var image = post.image[0];
+    var image = post.image;
 
     if(!post.message && !image)
       return;
@@ -79,6 +78,6 @@ export class Chat {
   }
 
   imageSelected(event) {
-    this.post.image = event.target.files;
+    this.post.image = event.target.files[0];
   }
 }
