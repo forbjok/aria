@@ -47,6 +47,7 @@ System.config({
     "fetch": "github:github/fetch@0.9.0",
     "font-awesome": "npm:font-awesome@4.4.0",
     "github/fetch": "github:github/fetch@0.10.0",
+    "jq-ajax-progress": "github:likerRr/jq-ajax-progress@0.1.6",
     "jquery": "github:components/jquery@2.1.4",
     "jquery-cookie": "github:carhartl/jquery-cookie@1.4.1",
     "moment": "github:moment/moment@2.10.6",

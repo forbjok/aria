@@ -3,6 +3,7 @@ import {inject} from "aurelia-framework";
 import io from "socket.io-client";
 import $ from "jquery";
 import "jquery-cookie";
+import "jq-ajax-progress";
 
 @inject("RoomName")
 export class Chat {
@@ -16,6 +17,7 @@ export class Chat {
       { name: "yotsubab", description: "Yotsuba B" }
     ];
     this.theme = $.cookie("theme") || "dark";
+    this.postingDisabled = false;
   }
 
   clearPost() {
@@ -40,15 +42,34 @@ export class Chat {
     if (image)
       formData.append("image", image, image.name);
 
-    $.ajax(this.postUrl, {
+    // Disable post controls while posting
+    this.postingDisabled = true;
+
+    let ajaxPost = $.ajax(this.postUrl, {
       method: "POST",
       data: formData,
       contentType: false,
       processData: false
-    }).done(() => {
+    });
+
+    ajaxPost.uploadProgress((e) => {
+      if (e.lengthComputable) {
+        let percentComplete = parseInt((e.loaded / e.total) * 100);
+        this.postingProgress = `${percentComplete}%`;
+      } else {
+        this.postingProgress = "Posting...";
+      }
+    });
+
+    ajaxPost.done(() => {
       $.cookie("post_name", this.post.name);
       this.clearPost();
       console.log("Posted!");
+    });
+
+    ajaxPost.always(() => {
+      this.postingDisabled = false;
+      delete this.postingProgress;
     });
   }
 

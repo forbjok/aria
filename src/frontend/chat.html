@@ -26,19 +26,22 @@
         <table class="postTable">
           <tr>
             <td>Name</td>
-            <td><input name="name" type="text" value.bind="post.name" placeholder="Anonymous"></td>
+            <td><input name="name" type="text" value.bind="post.name" placeholder="Anonymous" disabled.bind="postingDisabled"></td>
           </tr>
           <tr>
             <td>Comment</td>
-            <td><textarea name="comment" value.bind="post.comment" maxlength="600" class="postMessageTextarea" wrap="soft"></textarea></td>
+            <td><textarea name="comment" value.bind="post.comment" maxlength="600" class="postMessageTextarea" wrap="soft" disabled.bind="postingDisabled"></textarea></td>
           </tr>
           <tr>
             <td>Image</td>
-            <td><input name="image" type="file" accept="image/*" change.delegate="imageSelected($event)"></td>
+            <td><input name="image" type="file" accept="image/*" change.delegate="imageSelected($event)" disabled.bind="postingDisabled"></td>
           </tr>
           <tr>
             <td></td>
-            <td><button type="submit">Post</button></td>
+            <td>
+              <button type="submit" disabled.bind="postingDisabled">Post</button>
+              <span class="progress">${postingProgress}</span>
+            </td>
           </tr>
         </table>
       </form>
@@ -46,6 +49,7 @@
         <select value.bind="theme" change.delegate="themeSelected()">
           <option repeat.for="theme of themes" value.bind="theme.name">${theme.description}</option>
         </select>
+        <button type="button" name="themeSelector"><span class="fa fa-wrench"></span></button>
       </div>
     </div>
   </div>
