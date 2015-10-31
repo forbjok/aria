@@ -55,7 +55,7 @@ export class Chat {
     function resize() {
       var chatControlsHeight = chatControls.height();
 
-      postContainer.css("bottom", chatControlsHeight);
+      postContainer.css("bottom", chatControlsHeight + 4);
     }
 
     resize();

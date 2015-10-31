@@ -35,7 +35,7 @@ export class Content {
     function resize() {
       var chatFrameWidth = chatFrame.width();
 
-      contentContainer.css("left", chatFrameWidth);
+      contentContainer.css("left", chatFrameWidth + 2);
     }
 
     resize();
