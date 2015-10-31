@@ -63,11 +63,22 @@ class AriaStore {
 
   getRoom(roomName, cb) {
     queryRows(this.connectionString,
-      "SELECT id, name, content_url, password, expires" +
+      "SELECT name, content_url, password, claimed, expires" +
       " FROM rooms" +
       " WHERE name = $1;",
       [roomName],
-      cb);
+      (rows) => {
+        let row = rows[0];
+        let room = {
+          name: row.name,
+          contentUrl: row.content_url,
+          password: row.password,
+          claimed: row.claimed,
+          expires: row.expires
+        };
+
+        (cb || noop)(room);
+      });
   }
 
   claimRoom(roomName, cb) {
@@ -75,8 +86,17 @@ class AriaStore {
       "INSERT INTO rooms (name, content_url, password, claimed, expires)" +
       " SELECT $1, $2, $3, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC' + INTERVAL '1 day'" +
       " WHERE NOT EXISTS (SELECT * FROM rooms WHERE name = $1 AND expires > NOW() AT TIME ZONE 'UTC')" +
-      " RETURNING name, password;",
+      " RETURNING name, password, content_url;",
       [roomName, "about:blank", "123"],
+      cb);
+  }
+
+  setContentUrl(roomName, contentUrl, cb) {
+    execQuery(this.connectionString,
+      "UPDATE rooms" +
+      " SET content_url = $2" +
+      " WHERE name = $1;",
+      [roomName, contentUrl],
       cb);
   }
 

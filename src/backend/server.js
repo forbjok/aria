@@ -136,22 +136,26 @@ function getRoom(name, cb) {
   console.log(`Room ${name} not found. Creating it.`);
 
   ariaStore.claimRoom(name, () => {
-    // Retrieve recent posts from database
-    ariaStore.getPosts(name, { limit: 50 }, (posts) => {
-      let room = new ChatRoom({
-        posts: posts,
-        contentChanged: (url) => {
-          io.to(name).emit("content", url);
-        },
-        postReceived: (post) => {
-          console.log(`Post received, emitting it to room ${name}.`);
-          ariaStore.addPost(name, post);
-          io.to(name).emit("post", postToViewModel(post));
-        }
-      });
+    ariaStore.getRoom(name, (roomInfo) => {
+      // Retrieve recent posts from database
+      ariaStore.getPosts(name, { limit: 50 }, (posts) => {
+        let room = new ChatRoom({
+          posts: posts,
+          contentUrl: roomInfo.contentUrl,
+          contentChanged: (url) => {
+            ariaStore.setContentUrl(name, url);
+            io.to(name).emit("content", url);
+          },
+          postReceived: (post) => {
+            console.log(`Post received, emitting it to room ${name}.`);
+            ariaStore.addPost(name, post);
+            io.to(name).emit("post", postToViewModel(post));
+          }
+        });
 
-      rooms[name] = room;
-      (cb || noop)(room);
+        rooms[name] = room;
+        (cb || noop)(room);
+      });      
     });
   });
 }
