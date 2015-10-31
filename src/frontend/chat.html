@@ -26,15 +26,15 @@
         <table class="postTable">
           <tr>
             <td>Name</td>
-            <td><input name="name" type="text" value.bind="post.name" placeholder="Anonymous" disabled.bind="postingDisabled"></td>
+            <td><input name="name" type="text" value.bind="post.name" placeholder="Anonymous" readonly.bind="postingDisabled"></td>
           </tr>
           <tr>
             <td>Comment</td>
-            <td><textarea name="comment" value.bind="post.comment" maxlength="600" class="postMessageTextarea" wrap="soft" disabled.bind="postingDisabled"></textarea></td>
+            <td><textarea name="comment" value.bind="post.comment" maxlength="600" class="postMessageTextarea" wrap="soft" readonly.bind="postingDisabled" keypress.trigger="submitOnEnterKeypress($event)" autofocus></textarea></td>
           </tr>
           <tr>
             <td>Image</td>
-            <td><input name="image" type="file" accept="image/*" change.delegate="imageSelected($event)" disabled.bind="postingDisabled"></td>
+            <td><input name="image" type="file" accept="image/*" change.delegate="imageSelected($event)" readonly.bind="postingDisabled" keypress.trigger="submitOnEnterKeypress($event)"></td>
           </tr>
           <tr>
             <td></td>

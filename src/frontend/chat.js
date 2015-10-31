@@ -29,6 +29,10 @@ export class Chat {
   }
 
   submitPost() {
+    // Prevent duplicate submits
+    if (this.postingDisabled)
+      return;
+
     var post = this.post;
     var image = post.image;
 
@@ -42,11 +46,11 @@ export class Chat {
     if (image)
       formData.append("image", image, image.name);
 
-    // Save name in cookie
-    $.cookie("post_name", this.post.name);
-
     // Disable post controls while posting
     this.postingDisabled = true;
+
+    // Save name in cookie
+    $.cookie("post_name", this.post.name);
 
     let ajaxPost = $.ajax(this.postUrl, {
       method: "POST",
@@ -119,5 +123,14 @@ export class Chat {
 
   toggleImage(post) {
     post.showFullImage = !post.showFullImage;
+  }
+
+  submitOnEnterKeypress(event) {
+    if (event.keyCode == 13) {
+      this.submitPost();
+      return false;
+    }
+
+    return true;
   }
 }
