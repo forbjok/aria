@@ -80,14 +80,17 @@ var upload = multer({
 // Create a post view-model (for websocket use) from an internal post object
 function postToViewModel(post) {
   let vm = {
-    time: post.posted,
+    posted: post.posted,
     name: post.name,
-    message: post.comment
+    comment: post.comment
   };
 
   if(post.image) {
-    vm.image = `${imagesUrl}/${post.image.filename}`;
-    vm.thumbnail = `${imagesUrl}/${post.image.thumbnailFilename}`;
+    vm.image = {
+      url: `${imagesUrl}/${post.image.filename}`,
+      thumbUrl: `${imagesUrl}/${post.image.thumbnailFilename}`,
+      originalFilename: post.image.originalFilename
+    };
   }
 
   return vm;

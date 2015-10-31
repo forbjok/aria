@@ -8,14 +8,14 @@
       <ul style="list-style-type: none; padding: 0px; margin: 0px;">
         <li class="post" style="" repeat.for="post of posts">
           <div class="postHeader">
-            <span class="time">${post.time | formatTime}</span>
+            <span class="time">${post.posted | formatTime}</span>
             <span class="name">${post.name}</span>
           </div>
           <div class="postBody">
-          <a if.bind="post.image" class="image" href.bind="post.image" target="_blank">
-            <img class="thumbnail" src.bind="post.thumbnail" alt="Image">
+          <a if.bind="post.image" class="image" href.bind="post.image.url" target="_blank">
+            <img class="thumbnail" src.bind="post.image.thumbUrl" title.bind="post.image.originalFilename">
           </a>
-          <span class="message" innerHTML.bind="post.message | formatPost"></span>
+          <span class="comment" innerHTML.bind="post.comment | formatPost"></span>
           </div>
         </li>
       </ul>
@@ -29,8 +29,8 @@
             <td><input name="name" type="text" value.bind="post.name" placeholder="Anonymous"></td>
           </tr>
           <tr>
-            <td>Message</td>
-            <td><textarea name="message" value.bind="post.message" maxlength="600" class="postMessageTextarea" wrap="soft"></textarea></td>
+            <td>Comment</td>
+            <td><textarea name="comment" value.bind="post.comment" maxlength="600" class="postMessageTextarea" wrap="soft"></textarea></td>
           </tr>
           <tr>
             <td>Image</td>
