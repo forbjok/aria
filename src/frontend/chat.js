@@ -115,4 +115,8 @@ export class Chat {
   themeSelected() {
     $.cookie("theme", this.theme);
   }
+
+  toggleImage(post) {
+    post.showFullImage = !post.showFullImage;
+  }
 }
