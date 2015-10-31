@@ -39,7 +39,7 @@
           <tr>
             <td></td>
             <td>
-              <button type="submit" disabled.bind="postingDisabled">Post</button>
+              <button id="submitButton" type="submit" disabled.bind="postingDisabled">${postingCooldown > 0 ? postingCooldown : "Post"}</button>
               <span class="progress">${postingProgress}</span>
             </td>
           </tr>

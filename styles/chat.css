@@ -86,3 +86,7 @@ body {
   right: 5px;
   bottom: 5px;
 }
+
+#submitButton {
+  min-width: 45px;
+}

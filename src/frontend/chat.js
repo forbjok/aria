@@ -18,6 +18,7 @@ export class Chat {
     ];
     this.theme = $.cookie("theme") || "dark";
     this.postingDisabled = false;
+    this.postingCooldown = 0;
   }
 
   clearPost() {
@@ -30,7 +31,7 @@ export class Chat {
 
   submitPost() {
     // Prevent duplicate submits
-    if (this.postingDisabled)
+    if (this.postingDisabled || this.postingCooldown > 0)
       return;
 
     var post = this.post;
@@ -71,6 +72,16 @@ export class Chat {
     ajaxPost.done(() => {
       this.postingProgress = "Done!";
       this.clearPost();
+
+      // Activate posting cooldown
+      this.postingCooldown = 5;
+      let cooldownInterval = setInterval(() => {
+        this.postingCooldown -= 1;
+
+        if (this.postingCooldown <= 0) {
+          clearInterval(cooldownInterval);
+        }
+      }, 1000);
     });
 
     ajaxPost.always(() => {
