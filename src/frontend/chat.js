@@ -73,6 +73,7 @@ export class Chat {
     });
 
     socket.on("connect", () => {
+      this.posts = [];
       socket.emit("join", this.roomName);
     });
   }
