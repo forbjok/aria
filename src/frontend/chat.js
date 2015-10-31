@@ -42,6 +42,9 @@ export class Chat {
     if (image)
       formData.append("image", image, image.name);
 
+    // Save name in cookie
+    $.cookie("post_name", this.post.name);
+
     // Disable post controls while posting
     this.postingDisabled = true;
 
@@ -64,8 +67,6 @@ export class Chat {
     ajaxPost.done(() => {
       this.postingProgress = "Done!";
       this.clearPost();
-      $.cookie("post_name", this.post.name);
-      console.log("Posted!");
     });
 
     ajaxPost.always(() => {
