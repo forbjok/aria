@@ -21,11 +21,15 @@ export class Content {
   }
 
   attached() {
+    var w = $(window);
     var chatContainer = $("#chatContainer");
     var contentContainer = $("#contentContainer");
 
     function resize() {
-      if(screen.height > screen.width) {
+      var width = w.width();
+      var height = w.height();
+
+      if(height > width) {
         // Portrait mode
         contentContainer.css("left", "");
         contentContainer.css("bottom", chatContainer.height() + 4);
@@ -38,7 +42,7 @@ export class Content {
 
     resize();
 
-    $(window).resize(() => {
+    w.resize(() => {
       resize();
     });
 
