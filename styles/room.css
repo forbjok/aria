@@ -7,26 +7,17 @@ body {
   height: 100%;
 }
 
-.page-host {
-  position: fixed;
-  left: 0;
-  right: 0;
-  top: 50px;
-  bottom: 0;
-  overflow: hidden;
-}
-
-.chatContainer {
+#chatContainer {
   position: fixed;
   left: 0;
   top: 0;
-  right: 0;
   bottom: 0;
+  width: 350px;
   padding: 1px;
   overflow: hidden;
 }
 
-.contentContainer {
+#contentContainer {
   position: fixed;
   top: 0;
   right: 0;

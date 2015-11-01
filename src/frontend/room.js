@@ -29,13 +29,13 @@ export class Content {
   }
 
   attached() {
-    var chatFrame = $("#chatFrame");
+    var chatContainer = $("#chatContainer");
     var contentContainer = $("#contentContainer");
 
     function resize() {
-      var chatFrameWidth = chatFrame.width();
+      var chatWidth = chatContainer.width();
 
-      contentContainer.css("left", chatFrameWidth + 2);
+      contentContainer.css("left", chatWidth + 2);
     }
 
     resize();
