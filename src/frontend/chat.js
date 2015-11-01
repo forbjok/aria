@@ -178,6 +178,16 @@ export class Chat {
     return true;
   }
 
+  clearFileOnShiftClick(event) {
+    if (event.shiftKey) {
+      $(event.target).val("");
+      delete this.post.image;
+      return false;
+    }
+
+    return true;
+  }
+
   get postButtonText() {
     if (this.postingCooldown > 0) {
       if (this.submitOnCooldown) {
