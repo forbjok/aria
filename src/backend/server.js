@@ -257,8 +257,15 @@ app.post("/chat/:room/post", upload.single("image"), (req, res) => {
 io.on("connection", (socket) => {
   console.log("Connected!");
 
+  let roomsJoined = {};
+
   socket.on("join", (roomName) => {
+    if (roomName in roomsJoined)
+      return;
+
     console.log(`Joining room ${roomName}!`);
+
+    roomsJoined[roomName] = true;
     getRoom(roomName, (room) => {
       socket.join(roomName);
 
