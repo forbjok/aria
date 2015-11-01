@@ -136,30 +136,41 @@ function getRoom(name, cb) {
     return;
   }
 
-  console.log(`Room ${name} not found. Creating it.`);
-
-  ariaStore.claimRoom(name, () => {
-    ariaStore.getRoom(name, (roomInfo) => {
-      // Retrieve recent posts from database
-      ariaStore.getPosts(name, { limit: 50 }, (posts) => {
-        let room = new ChatRoom({
-          posts: posts,
-          contentUrl: roomInfo.contentUrl,
-          contentChanged: (url) => {
-            ariaStore.setContentUrl(name, url);
-            io.to(name).emit("content", url);
-          },
-          postReceived: (post) => {
-            console.log(`Post received, emitting it to room ${name}.`);
-            ariaStore.addPost(name, post);
-            io.to(name).emit("post", postToViewModel(post));
-          }
-        });
-
-        rooms[name] = room;
-        (cb || noop)(room);
+  function createAndReturnRoom(roomInfo) {
+    // Retrieve recent posts from database
+    ariaStore.getPosts(name, { limit: 50 }, (posts) => {
+      let room = new ChatRoom({
+        posts: posts,
+        contentUrl: roomInfo.contentUrl,
+        contentChanged: (url) => {
+          ariaStore.setContentUrl(name, url);
+          io.to(name).emit("content", url);
+        },
+        postReceived: (post) => {
+          console.log(`Post received, emitting it to room ${name}.`);
+          ariaStore.addPost(name, post);
+          io.to(name).emit("post", postToViewModel(post));
+        }
       });
+
+      rooms[name] = room;
+      (cb || noop)(room);
     });
+  }
+
+  ariaStore.getRoom(name, (roomInfo) => {
+    if (!roomInfo) {
+      console.log(`Room ${name} not found. Creating it.`);
+
+      ariaStore.claimRoom(name, () => {
+        ariaStore.getRoom(name, (roomInfo) => {
+          createAndReturnRoom(roomInfo);
+        });
+      });
+      return;
+    }
+
+    createAndReturnRoom(roomInfo);
   });
 }
 
@@ -174,14 +185,12 @@ function emitPost(res, roomName, post) {
 }
 
 app.get("/r/:room", (req, res) => {
-  console.log(`Room! ${req.params.room}`);
   res.render("room", {
     room: req.params.room
   });
 });
 
 app.get("/chat/:room", (req, res) => {
-  console.log(`Chat! ${req.params.room}`);
   res.render("chat", {
     room: req.params.room
   });
