@@ -1,6 +1,7 @@
 import {inject} from "aurelia-framework";
-import io from "socket.io-client";
 import $ from "jquery";
+
+import socket from "services/sharedsocket";
 
 @inject("RoomName")
 export class Content {
@@ -8,18 +9,9 @@ export class Content {
     this.roomName = roomName;
 
     this.contentUrl = "about:blank";
-    this.socket = io();
-  }
-
-  get chatUrl() {
-    return `/chat/${this.roomName}`;
-  }
-
-  activate() {
-    var socket = this.socket;
 
     socket.on("content", (url) => {
-      console.log("ROOM!", url);
+      console.log("New content URL received", url);
       this.contentUrl = url;
     });
 
@@ -43,5 +35,8 @@ export class Content {
     $(window).resize(() => {
       resize();
     });
+
+    // Connect websocket
+    socket.connect();
   }
 }

@@ -1,20 +1,19 @@
-import {inject} from "aurelia-framework";
+import {bindable} from "aurelia-framework";
 
-import io from "socket.io-client";
 import $ from "jquery";
 import "jquery-cookie";
 import "jq-ajax-progress";
+
+import socket from "services/sharedsocket";
 
 import filesize from "filesize";
 
 var maxImageSize = 2097152;
 
-@inject("RoomName")
-export class Chat {
-  constructor(roomName) {
-    this.roomName = roomName;
-    this.postUrl = `/chat/${this.roomName}/post`;
+export class ChatCustomElement {
+  @bindable room;
 
+  constructor() {
     this.posts = [];
     this.themes = [
       { name: "dark", description: "Dark" },
@@ -23,6 +22,15 @@ export class Chat {
     this.theme = $.cookie("theme") || "dark";
     this.posting = false;
     this.postingCooldown = 0;
+
+    socket.on("connect", () => {
+      this.posts = [];
+      socket.emit("join", this.room);
+    });
+
+    socket.on("post", (post) => {
+      this.posts.push(post);
+    });
   }
 
   clearPost() {
@@ -31,6 +39,10 @@ export class Chat {
       name: $.cookie("post_name"),
       comment: ""
     };
+  }
+
+  get postUrl() {
+    return `/chat/${this.room}/post`;
   }
 
   get canSubmitPost() {
@@ -141,16 +153,8 @@ export class Chat {
 
     this.clearPost();
 
-    var socket = io();
-
-    socket.on("post", (post) => {
-      this.posts.push(post);
-    });
-
-    socket.on("connect", () => {
-      this.posts = [];
-      socket.emit("join", this.roomName);
-    });
+    // Connect websocket
+    socket.connect();
   }
 
   imageSelected(event) {
