@@ -1,14 +1,14 @@
 @import url(https://fonts.googleapis.com/css?family=Roboto);
 
-.chatContainer {
+.chat {
   background: black;
   color: white;
 }
 
-.postContainer .post:nth-child(odd) {
+.chat .postContainer .post:nth-child(odd) {
   background: #121212;
 }
 
-.chatControls {
+.chat .chatControls {
   background: #282828;
 }

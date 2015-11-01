@@ -25,9 +25,15 @@ export class Content {
     var contentContainer = $("#contentContainer");
 
     function resize() {
-      var chatWidth = chatContainer.width();
-
-      contentContainer.css("left", chatWidth + 2);
+      if(screen.height > screen.width) {
+        // Portrait mode
+        contentContainer.css("left", "");
+        contentContainer.css("bottom", chatContainer.height() + 4);
+      } else {
+        // Landscape mode
+        contentContainer.css("bottom", "");
+        contentContainer.css("left", chatContainer.width() + 2);
+      }
     }
 
     resize();

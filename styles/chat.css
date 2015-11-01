@@ -3,7 +3,7 @@ body {
   font-size: 0.9em;
 }
 
-.chatContainer {
+.chat {
   position: absolute;
   left: 0;
   top: 0;
@@ -12,7 +12,7 @@ body {
   padding: 1px;
 }
 
-.postContainer {
+.chat .postContainer {
   position: absolute;
   left: 0;
   top: 0;
@@ -24,7 +24,7 @@ body {
   flex-direction: column-reverse;
 }
 
-.chatControls {
+.chat .chatControls {
   position: absolute;
   left: 0;
   right: 0;
@@ -32,17 +32,17 @@ body {
   padding: 2px;
 }
 
-.postTable {
+.chat .postTable {
   width: 100%;
 }
 
-.time {
+.chat .time {
   vertical-align: top;
   text-align: right;
   color: gray;
 }
 
-.name {
+.chat .name {
   vertical-align: top;
   text-align: right;
   padding-left: 2px;
@@ -51,7 +51,7 @@ body {
   font-weight: bold;
 }
 
-.thumbnail {
+.chat .thumbnail {
   display: block;
   float: left;
   border: none;
@@ -59,34 +59,31 @@ body {
   max-width: 300px;
 }
 
-.post {
+.chat .post {
   overflow: hidden;
   padding: 5px;
   font-family: "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
-.postBody {
-}
-
-.message {
+.chat .message {
   word-wrap: break-word;
 }
 
-.quote {
+.chat .quote {
   color: #789922;
 }
 
-.postMessageTextarea {
+.chat .postMessageTextarea {
   resize: none;
   width: calc(100% - 5px);
 }
 
-.options {
+.chat .options {
   position: absolute;
   right: 5px;
   bottom: 5px;
 }
 
-#submitButton {
+.chat #submitButton {
   min-width: 65px;
 }
