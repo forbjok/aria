@@ -35,7 +35,7 @@
           </tr>
           <tr>
             <td>Image</td>
-            <td><input name="image" type="file" accept="image/*" change.delegate="imageSelected($event)" readonly.bind="posting" keypress.trigger="submitOnEnterKeypress($event)" click.trigger="clearFileOnShiftClick($event)"></td>
+            <td><input name="image" type="file" accept="image/*" change.delegate="imageSelected($event)" disabled.bind="posting" keypress.trigger="submitOnEnterKeypress($event)" click.trigger="clearFileOnShiftClick($event)"></td>
           </tr>
           <tr>
             <td></td>
