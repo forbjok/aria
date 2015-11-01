@@ -9,7 +9,7 @@
   overflow: hidden;
 }
 
-@media screen and (orientation:landscape) {
+@media screen and (orientation: landscape) {
   #chatContainer {
     left: 0;
     top: 0;
@@ -24,7 +24,7 @@
   }
 }
 
-@media screen and (orientation:portrait) {
+@media screen and (orientation: portrait) {
   #chatContainer {
     left: 0;
     right: 0;
