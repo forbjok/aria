@@ -1,4 +1,4 @@
-import {bindable} from "aurelia-framework";
+import {bindable, inject} from "aurelia-framework";
 
 import $ from "jquery";
 import "jquery-cookie";
@@ -10,10 +10,13 @@ import filesize from "filesize";
 
 var maxImageSize = 2097152;
 
+@inject(Element)
 export class ChatCustomElement {
   @bindable room;
 
-  constructor() {
+  constructor(element) {
+    this.element = element;
+
     this.posts = [];
     this.themes = [
       { name: "dark", description: "Dark" },
@@ -135,9 +138,11 @@ export class ChatCustomElement {
   }
 
   attached() {
-    this.postForm = $("#postForm")[0];
-    var postContainer = $("#postContainer");
-    var chatControls = $("#chatControls");
+    var e = $(this.element);
+
+    this.postForm = e.find("#postForm")[0];
+    var postContainer = e.find("#postContainer");
+    var chatControls = e.find("#chatControls");
 
     function resize() {
       var chatControlsHeight = chatControls.height();
@@ -147,7 +152,7 @@ export class ChatCustomElement {
 
     resize();
 
-    $(window).resize(() => {
+    e.resize(() => {
       resize();
     });
 
