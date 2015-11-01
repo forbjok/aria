@@ -50,12 +50,34 @@ body {
     font-weight: bold;
   }
 
-  .thumbnail {
-    display: block;
-    float: left;
-    border: none;
-    padding-right: 2px;
-    max-width: 100%;
+  .image {
+    .thumbnail {
+      display: block;
+      float: left;
+      border: none;
+      padding-right: 2px;
+    }
+
+    .expanded-image {
+      display: block;
+      float: left;
+      max-width: 100%;
+    }
+
+    .filename {
+      display: none;
+      text-align: center;
+    }
+
+    &.expanded {
+      .thumbnail {
+        display: none;
+      }
+
+      .filename {
+        display: block;
+      }
+    }
   }
 
   .post {
