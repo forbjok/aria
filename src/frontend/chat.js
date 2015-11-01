@@ -35,7 +35,7 @@ export class Chat {
 
   get canSubmitPost() {
     // Prevent duplicate submits
-    if (this.uploading)
+    if (this.posting)
       return false;
 
     var post = this.post;
