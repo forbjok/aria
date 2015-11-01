@@ -5,6 +5,10 @@ import $ from "jquery";
 import "jquery-cookie";
 import "jq-ajax-progress";
 
+import filesize from "filesize";
+
+var maxImageSize = 2097152;
+
 @inject("RoomName")
 export class Chat {
   constructor(roomName) {
@@ -17,7 +21,7 @@ export class Chat {
       { name: "yotsubab", description: "Yotsuba B" }
     ];
     this.theme = $.cookie("theme") || "dark";
-    this.postingDisabled = false;
+    this.posting = false;
     this.postingCooldown = 0;
   }
 
@@ -29,21 +33,36 @@ export class Chat {
     };
   }
 
-  submitPost() {
+  get canSubmitPost() {
     // Prevent duplicate submits
-    if (this.postingDisabled)
-      return;
+    if (this.uploading)
+      return false;
 
     var post = this.post;
     var image = post.image;
 
-    if(!post.comment && !image)
+    // Disallow posts with neither comment nor image
+    if (!post.comment && !image)
+      return false;
+
+    // Disallow posting images bigger than the max image size
+    if (image && image.size > maxImageSize)
+      return false;
+
+    return true;
+  }
+
+  submitPost() {
+    if (!this.canSubmitPost)
       return;
 
-    if(this.postingCooldown > 0) {
+    if (this.postingCooldown > 0) {
       this.submitOnCooldown = !this.submitOnCooldown;
       return;
     }
+
+    var post = this.post;
+    var image = post.image;
 
     var formData = new FormData();
     formData.append("name", post.name);
@@ -53,7 +72,7 @@ export class Chat {
       formData.append("image", image, image.name);
 
     // Disable post controls while posting
-    this.postingDisabled = true;
+    this.posting = true;
 
     // Save name in cookie
     $.cookie("post_name", this.post.name);
@@ -95,7 +114,7 @@ export class Chat {
     });
 
     ajaxPost.always(() => {
-      this.postingDisabled = false;
+      this.posting = false;
 
       setTimeout(() => {
         this.postingProgress = "";
@@ -136,6 +155,10 @@ export class Chat {
 
   imageSelected(event) {
     this.post.image = event.target.files[0];
+
+    if(this.post.image && this.post.image.size > maxImageSize) {
+      alert(`The selected file is bigger than the maximum allowed size of ${filesize(maxImageSize)}`);
+    }
   }
 
   themeSelected() {

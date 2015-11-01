@@ -45,6 +45,7 @@ System.config({
     "core-js": "npm:core-js@1.2.3",
     "css": "github:systemjs/plugin-css@0.1.19",
     "fetch": "github:github/fetch@0.9.0",
+    "filesize": "npm:filesize@3.1.3",
     "font-awesome": "npm:font-awesome@4.4.0",
     "github/fetch": "github:github/fetch@0.10.0",
     "jq-ajax-progress": "github:likerRr/jq-ajax-progress@0.1.6",
