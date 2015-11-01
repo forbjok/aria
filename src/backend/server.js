@@ -30,7 +30,6 @@ app.enable("trust proxy"); // Required for req.ip to work correctly behind a pro
 
 // Serve static shit
 app.use("/dist", express.static(path.join(rootDir, "dist")));
-app.use("/styles", express.static(path.join(rootDir, "styles")));
 app.use("/jspm_packages", express.static(path.join(rootDir, "jspm_packages")));
 app.use("/config.js", express.static(path.join(rootDir, "config.js")));
 app.use(imagesUrl, express.static(imagesPath));

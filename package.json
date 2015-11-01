@@ -36,6 +36,7 @@
     "gulp-bump": "^1.0.0",
     "gulp-changed": "^1.1.0",
     "gulp-eslint": "^1.0.0",
+    "gulp-less": "^3.0.3",
     "gulp-notify": "^2.2.0",
     "gulp-plumber": "^1.0.1",
     "gulp-protractor": "^1.0.0",

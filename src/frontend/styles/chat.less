@@ -1,0 +1,89 @@
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 0.9em;
+}
+
+.chat {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  padding: 1px;
+
+  .postContainer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0px;
+    padding: 0px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column-reverse;
+  }
+
+  .chatControls {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 2px;
+  }
+
+  .postTable {
+    width: 100%;
+  }
+
+  .time {
+    vertical-align: top;
+    text-align: right;
+    color: gray;
+  }
+
+  .name {
+    vertical-align: top;
+    text-align: right;
+    padding-left: 2px;
+    padding-right: 2px;
+    color: #117743;
+    font-weight: bold;
+  }
+
+  .thumbnail {
+    display: block;
+    float: left;
+    border: none;
+    padding-right: 2px;
+    max-width: 100%;
+  }
+
+  .post {
+    overflow: hidden;
+    padding: 5px;
+    font-family: "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+
+  .message {
+    word-wrap: break-word;
+  }
+
+  .quote {
+    color: #789922;
+  }
+
+  .postMessageTextarea {
+    resize: none;
+    width: calc(100% - 5px);
+  }
+
+  .options {
+    position: absolute;
+    right: 5px;
+    bottom: 5px;
+  }
+
+  #submitButton {
+    min-width: 65px;
+  }
+}
