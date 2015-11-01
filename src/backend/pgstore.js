@@ -68,6 +68,11 @@ class AriaStore {
       " WHERE name = $1;",
       [roomName],
       (rows) => {
+        if (!rows) {
+          (cb || noop)();
+          return;
+        }
+
         let row = rows[0];
         let room = {
           name: row.name,
