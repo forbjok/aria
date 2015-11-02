@@ -8,7 +8,7 @@ import socket from "services/sharedsocket";
 
 import filesize from "filesize";
 
-var maxImageSize = 2097152;
+let maxImageSize = 2097152;
 
 @inject(Element)
 export class ChatCustomElement {
@@ -50,41 +50,46 @@ export class ChatCustomElement {
 
   get canSubmitPost() {
     // Prevent duplicate submits
-    if (this.posting)
+    if (this.posting) {
       return false;
+    }
 
-    var post = this.post;
-    var image = post.image;
+    let post = this.post;
+    let image = post.image;
 
     // Disallow posts with neither comment nor image
-    if (!post.comment && !image)
+    if (!post.comment && !image) {
       return false;
+    }
 
     // Disallow posting images bigger than the max image size
-    if (image && image.size > maxImageSize)
+    if (image && image.size > maxImageSize) {
       return false;
+    }
 
     return true;
   }
 
   submitPost() {
-    if (!this.canSubmitPost)
+    if (!this.canSubmitPost) {
       return;
+    }
 
     if (this.postingCooldown > 0) {
       this.submitOnCooldown = !this.submitOnCooldown;
       return;
     }
 
-    var post = this.post;
-    var image = post.image;
+    let post = this.post;
+    let image = post.image;
 
-    var formData = new FormData();
+    let formData = new FormData();
     formData.append("name", post.name);
     formData.append("comment", post.comment);
 
-    if (image)
+    if (image) {
       formData.append("image", image, image.name);
+    }
 
     // Disable post controls while posting
     this.posting = true;
@@ -101,7 +106,7 @@ export class ChatCustomElement {
 
     ajaxPost.uploadProgress((e) => {
       if (e.lengthComputable) {
-        let percentComplete = parseInt((e.loaded / e.total) * 100);
+        let percentComplete = parseInt((e.loaded / e.total) * 100, 10);
         this.postingProgress = `${percentComplete}%`;
       } else {
         this.postingProgress = "Posting...";
@@ -138,14 +143,14 @@ export class ChatCustomElement {
   }
 
   attached() {
-    var e = $(this.element);
+    let e = $(this.element);
 
     this.postForm = e.find("#postForm")[0];
-    var postContainer = e.find("#postContainer");
-    var chatControls = e.find("#chatControls");
+    let postContainer = e.find("#postContainer");
+    let chatControls = e.find("#chatControls");
 
     function resize() {
-      var chatControlsHeight = chatControls.height();
+      let chatControlsHeight = chatControls.height();
 
       postContainer.css("bottom", chatControlsHeight + 4);
     }
@@ -165,7 +170,7 @@ export class ChatCustomElement {
   imageSelected(event) {
     this.post.image = event.target.files[0];
 
-    if(this.post.image && this.post.image.size > maxImageSize) {
+    if (this.post.image && this.post.image.size > maxImageSize) {
       alert(`The selected file is bigger than the maximum allowed size of ${filesize(maxImageSize)}`);
     }
   }
@@ -179,7 +184,7 @@ export class ChatCustomElement {
   }
 
   submitOnEnterKeypress(event) {
-    if (event.keyCode == 13) {
+    if (event.keyCode === 13) {
       this.submitPost();
       return false;
     }
@@ -201,9 +206,9 @@ export class ChatCustomElement {
     if (this.postingCooldown > 0) {
       if (this.submitOnCooldown) {
         return `Auto (${this.postingCooldown})`;
-      } else {
-        return `${this.postingCooldown}`;
       }
+
+      return `${this.postingCooldown}`;
     }
 
     return "Post";

@@ -1,6 +1,6 @@
 import io from "socket.io-client";
 
-var socket = io({
+let socket = io({
   autoConnect: false
 });
 

@@ -11,7 +11,6 @@ export class Content {
     this.contentUrl = "about:blank";
 
     socket.on("content", (url) => {
-      console.log("New content URL received", url);
       this.contentUrl = url;
     });
 
@@ -21,15 +20,15 @@ export class Content {
   }
 
   attached() {
-    var w = $(window);
-    var chatContainer = $("#chatContainer");
-    var contentContainer = $("#contentContainer");
+    let w = $(window);
+    let chatContainer = $("#chatContainer");
+    let contentContainer = $("#contentContainer");
 
     function resize() {
-      var width = w.width();
-      var height = w.height();
+      let width = w.width();
+      let height = w.height();
 
-      if(height > width) {
+      if (height > width) {
         // Portrait mode
         contentContainer.css("left", "");
         contentContainer.css("bottom", chatContainer.height() + 4);
