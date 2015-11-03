@@ -3,59 +3,59 @@
 var Promise = require("bluebird");
 var pg = Promise.promisifyAll(require("pg"));
 
-function execQuery(connectionString, sql, params) {
-  return pg.connectAsync(connectionString).then((client) => {
-    return client.queryAsync(sql, params)
-    .then((result) => {
-      return result.rowCount;
-    })
-    .catch((err) => {
-      throw new Error(`Error executing query: ${sql} with parameters ${params}: ${err.cause}`);
-    })
-  });
-}
-
-function queryRows(connectionString, sql, params, cb) {
-  return pg.connectAsync(connectionString).then((client) => {
-    return client.queryAsync(sql, params)
-    .then((result) => {
-      return result.rows;
-    })
-    .catch((err) => {
-      throw new Error(`Error executing query: ${sql} with parameters ${params}: ${err.cause}`);
-    });
-  });
-}
-
-function insertImage(connectionString, image) {
-  return queryRows(connectionString,
-    "INSERT INTO images (filename, thumbnail_filename, original_filename)" +
-    " VALUES ($1, $2, $3)" +
-    " RETURNING id;",
-    [image.filename, image.thumbnailFilename, image.originalFilename])
-    .then((rows) => {
-      return rows[0];
-    });
-}
-
-function insertPost(connectionString, roomName, post, imageId, cb) {
-  return queryRows(connectionString,
-    "INSERT INTO posts (room_id, posted, name, comment, image_id, ip)" +
-    " SELECT (SELECT id FROM rooms WHERE name = $1), $2, $3, $4, $5, $6" +
-    " RETURNING id;",
-    [roomName, post.posted, post.name, post.comment, imageId, post.ip])
-    .then((rows) => {
-      return rows[0];
-    });
-}
-
 class PostgreSqlStore {
   constructor(connectionString) {
     this.connectionString = process.env.DATABASE_URL || connectionString || "postgres://aria:aria@localhost:5432/aria";
   }
 
+  _execQuery(sql, params) {
+    return pg.connectAsync(this.connectionString).then((client) => {
+      return client.queryAsync(sql, params)
+      .then((result) => {
+        return result.rowCount;
+      })
+      .catch((err) => {
+        throw new Error(`Error executing query: ${sql} with parameters ${params}: ${err.cause}`);
+      })
+    });
+  }
+
+  _queryRows(sql, params) {
+    return pg.connectAsync(this.connectionString).then((client) => {
+      return client.queryAsync(sql, params)
+      .then((result) => {
+        return result.rows;
+      })
+      .catch((err) => {
+        throw new Error(`Error executing query: ${sql} with parameters ${params}: ${err.cause}`);
+      });
+    });
+  }
+
+  _insertImage(image) {
+    return this._queryRows(
+      "INSERT INTO images (filename, thumbnail_filename, original_filename)" +
+      " VALUES ($1, $2, $3)" +
+      " RETURNING id;",
+      [image.filename, image.thumbnailFilename, image.originalFilename])
+      .then((rows) => {
+        return rows[0];
+      });
+  }
+
+  _insertPost(roomName, post, imageId) {
+    return this._queryRows(
+      "INSERT INTO posts (room_id, posted, name, comment, image_id, ip)" +
+      " SELECT (SELECT id FROM rooms WHERE name = $1), $2, $3, $4, $5, $6" +
+      " RETURNING id;",
+      [roomName, post.posted, post.name, post.comment, imageId, post.ip])
+      .then((rows) => {
+        return rows[0];
+      });
+  }
+
   getRoom(roomName) {
-    return queryRows(this.connectionString,
+    return this._queryRows(
       "SELECT name, content_url, password, claimed, expires" +
       " FROM rooms" +
       " WHERE name = $1;",
@@ -79,19 +79,16 @@ class PostgreSqlStore {
   }
 
   claimRoom(roomName) {
-    return execQuery(this.connectionString,
+    return this._queryRows(
       "INSERT INTO rooms (name, content_url, password, claimed, expires)" +
       " SELECT $1, $2, $3, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC' + INTERVAL '1 day'" +
       " WHERE NOT EXISTS (SELECT * FROM rooms WHERE name = $1 AND expires > NOW() AT TIME ZONE 'UTC')" +
       " RETURNING name, password, content_url;",
-      [roomName, "about:blank", "123"])
-      .then((rowsAffected) => {
-        return rowsAffected === 1;
-      });
+      [roomName, "about:blank", "123"]);
   }
 
   setContentUrl(roomName, contentUrl) {
-    return execQuery(this.connectionString,
+    return this._execQuery(
       "UPDATE rooms" +
       " SET content_url = $2" +
       " WHERE name = $1;",
@@ -120,7 +117,7 @@ class PostgreSqlStore {
       limit +
       ") AS p2 ORDER BY p2.id ASC;";
 
-    return queryRows(this.connectionString, sql, [roomName])
+    return this._queryRows(sql, [roomName])
       .then((rows) => {
         // Transform raw DB rows into valid internal post objects
         let posts = [];
@@ -150,15 +147,15 @@ class PostgreSqlStore {
   addPost(roomName, post) {
     if (post.image) {
       // Post contained an image - insert image record first
-      return insertImage(this.connectionString, post.image)
+      return this._insertImage(post.image)
       .then((image) => {
         // Insert post record linked to the inserted image
-        return insertPost(this.connectionString, roomName, post, image.id);
+        return this._insertPost(roomName, post, image.id);
       });
     }
 
     // No image - insert post without image link
-    return insertPost(this.connectionString, roomName, post, null);
+    return this._insertPost(roomName, post, null);
   }
 }
 
