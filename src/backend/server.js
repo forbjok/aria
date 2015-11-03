@@ -41,8 +41,7 @@ app.engine("handlebars", exphbs({
 app.set("view engine", "handlebars");
 app.set("views", path.join(__dirname, "views"));
 
-var pgstore = require("./pgstore");
-var ariaStore = pgstore.postgresql();
+var ariaStore = config.dataStore;
 
 // Get file extension based on mimetype
 function getExtensionByMimetype(mimetype) {
