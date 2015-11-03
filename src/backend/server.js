@@ -41,7 +41,7 @@ app.engine("handlebars", exphbs({
 app.set("view engine", "handlebars");
 app.set("views", path.join(__dirname, "views"));
 
-var ariaStore = config.dataStore;
+var ariaStore = config.dataStore.create();
 
 // Get file extension based on mimetype
 function getExtensionByMimetype(mimetype) {

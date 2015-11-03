@@ -57,7 +57,7 @@ function insertPost(connectionString, roomName, post, imageId, cb) {
   });
 }
 
-class AriaStore {
+class PostgreSqlStore {
   constructor(connectionString) {
     this.connectionString = process.env.DATABASE_URL || connectionString || "postgres://aria:aria@localhost:5432/aria";
   }
@@ -172,10 +172,10 @@ class AriaStore {
   }
 }
 
-function postgresql(connectionString) {
-  return new AriaStore(connectionString);
+function create(connectionString) {
+  return new PostgreSqlStore(connectionString);
 }
 
 module.exports = {
-  postgresql: postgresql
+  create: create
 };
