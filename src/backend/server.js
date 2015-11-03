@@ -10,8 +10,6 @@ var easyimg = require("easyimage");
 var moment = require("moment");
 var config = require("./config");
 
-var noop = () => {};
-
 // Paths
 var rootDir = path.join(__dirname, "../..");
 var imagesPath = path.join(config.uploadsPath, "images");
@@ -129,15 +127,14 @@ class ChatRoom {
 var rooms = {};
 
 // Get a room or create, add and return it if it does not exist
-function getRoom(name, cb) {
+function getRoom(name) {
   if (name in rooms) {
-    (cb || noop)(rooms[name]);
-    return;
+    return Promise.resolve(rooms[name]);
   }
 
   function createAndReturnRoom(roomInfo) {
     // Retrieve recent posts from database
-    ariaStore.getPosts(name, { limit: 50 }, (posts) => {
+    return ariaStore.getPosts(name, { limit: 50 }).then((posts) => {
       let room = new ChatRoom({
         posts: posts,
         contentUrl: roomInfo.contentUrl,
@@ -153,28 +150,27 @@ function getRoom(name, cb) {
       });
 
       rooms[name] = room;
-      (cb || noop)(room);
+      return room;
     });
   }
 
-  ariaStore.getRoom(name, (roomInfo) => {
+  return ariaStore.getRoom(name).then((roomInfo) => {
     if (!roomInfo) {
       console.log(`Room ${name} not found. Creating it.`);
 
-      ariaStore.claimRoom(name, () => {
-        ariaStore.getRoom(name, (roomInfo) => {
-          createAndReturnRoom(roomInfo);
+      return ariaStore.claimRoom(name).then(() => {
+        return ariaStore.getRoom(name).then((roomInfo) => {
+          return createAndReturnRoom(roomInfo);
         });
       });
-      return;
     }
 
-    createAndReturnRoom(roomInfo);
+    return createAndReturnRoom(roomInfo);
   });
 }
 
 function emitPost(res, roomName, post) {
-  getRoom(roomName, (room) => {
+  getRoom(roomName).then((room) => {
     room.post(post);
 
     res.send({
@@ -207,7 +203,7 @@ app.post("/chat/:room/post", upload.single("image"), (req, res) => {
     let contentUrl = contentRegex.exec(comment)[1];
     console.log("COTL", contentUrl);
 
-    getRoom(roomName, (room) => {
+    getRoom(roomName).then((room) => {
       room.setContentUrl(contentUrl);
 
       res.send({
@@ -265,7 +261,7 @@ io.on("connection", (socket) => {
     console.log(`Joining room ${roomName}!`);
 
     roomsJoined[roomName] = true;
-    getRoom(roomName, (room) => {
+    getRoom(roomName).then((room) => {
       socket.join(roomName);
 
       let contentUrl = room.getContentUrl();

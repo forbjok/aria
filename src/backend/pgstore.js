@@ -1,59 +1,60 @@
 "use strict";
 
-var pg = require("pg");
+var Promise = require("bluebird");
+var pg = Promise.promisifyAll(require("pg"));
 
-var noop = () => {};
-
-function execQuery(connectionString, sql, params, cb) {
-  pg.connect(connectionString, (err, client, done) => {
-    let query = client.query(
-      sql,
-      params,
-    (err, result) => {
-      if(err) {
-        console.log("Error executing query: ", sql, params);
-        return;
-      }
-
-      done();
-      (cb || noop)(result.rowCount);
+function execQuery(connectionString, sql, params) {
+  return Promise.try(() => {
+    return pg.connectAsync(connectionString).then((client) => {
+      return client.queryAsync(sql, params)
+      .then((result) => {
+        return result.rowCount;
+      })
+      .catch((err) => {
+        throw new Error(`Error executing query: ${sql} with parameters ${params}: ${err.cause}`);
+      })
     });
   });
 }
 
 function queryRows(connectionString, sql, params, cb) {
-  pg.connect(connectionString, (err, client, done) => {
-    let query = client.query(
-      sql,
-      params,
-    (err, result) => {
-      if(err) {
-        console.log("Error executing query: ", sql, params);
-        return;
-      }
-
-      done();
-      (cb || noop)(result.rows);
+  return Promise.try(() => {
+    return pg.connectAsync(connectionString).then((client) => {
+      return client.queryAsync(sql, params)
+      .then((result) => {
+        return result.rows;
+      })
+      .catch((err) => {
+        throw new Error(`Error executing query: ${sql} with parameters ${params}: ${err.cause}`);
+      });
     });
   });
 }
 
-function insertImage(connectionString, image, cb) {
-  queryRows(connectionString,
-    "INSERT INTO images (filename, thumbnail_filename, original_filename)" +
-    " VALUES ($1, $2, $3)" +
-    " RETURNING id;",
-    [image.filename, image.thumbnailFilename, image.originalFilename],
-    cb);
+function insertImage(connectionString, image) {
+  return Promise.try(() => {
+    return queryRows(connectionString,
+      "INSERT INTO images (filename, thumbnail_filename, original_filename)" +
+      " VALUES ($1, $2, $3)" +
+      " RETURNING id;",
+      [image.filename, image.thumbnailFilename, image.originalFilename])
+      .then((rows) => {
+        return rows[0];
+      });
+  });
 }
 
 function insertPost(connectionString, roomName, post, imageId, cb) {
-  queryRows(connectionString,
-    "INSERT INTO posts (room_id, posted, name, comment, image_id, ip)" +
-    " SELECT (SELECT id FROM rooms WHERE name = $1), $2, $3, $4, $5, $6" +
-    " RETURNING id;",
-    [roomName, post.posted, post.name, post.comment, imageId, post.ip],
-    cb);
+  return Promise.try(() => {
+    return queryRows(connectionString,
+      "INSERT INTO posts (room_id, posted, name, comment, image_id, ip)" +
+      " SELECT (SELECT id FROM rooms WHERE name = $1), $2, $3, $4, $5, $6" +
+      " RETURNING id;",
+      [roomName, post.posted, post.name, post.comment, imageId, post.ip])
+      .then((rows) => {
+        return rows[0];
+      });
+  });
 }
 
 class AriaStore {
@@ -61,15 +62,14 @@ class AriaStore {
     this.connectionString = process.env.DATABASE_URL || connectionString || "postgres://aria:aria@localhost:5432/aria";
   }
 
-  getRoom(roomName, cb) {
-    queryRows(this.connectionString,
+  getRoom(roomName) {
+    return queryRows(this.connectionString,
       "SELECT name, content_url, password, claimed, expires" +
       " FROM rooms" +
       " WHERE name = $1;",
-      [roomName],
-      (rows) => {
-        if (!rows) {
-          (cb || noop)();
+      [roomName])
+      .then((rows) => {
+        if (!rows || rows.length === 0) {
           return;
         }
 
@@ -82,30 +82,36 @@ class AriaStore {
           expires: row.expires
         };
 
-        (cb || noop)(room);
+        return room;
       });
   }
 
-  claimRoom(roomName, cb) {
-    execQuery(this.connectionString,
-      "INSERT INTO rooms (name, content_url, password, claimed, expires)" +
-      " SELECT $1, $2, $3, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC' + INTERVAL '1 day'" +
-      " WHERE NOT EXISTS (SELECT * FROM rooms WHERE name = $1 AND expires > NOW() AT TIME ZONE 'UTC')" +
-      " RETURNING name, password, content_url;",
-      [roomName, "about:blank", "123"],
-      cb);
+  claimRoom(roomName) {
+    return Promise.try(() => {
+      return execQuery(this.connectionString,
+        "INSERT INTO rooms (name, content_url, password, claimed, expires)" +
+        " SELECT $1, $2, $3, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC' + INTERVAL '1 day'" +
+        " WHERE NOT EXISTS (SELECT * FROM rooms WHERE name = $1 AND expires > NOW() AT TIME ZONE 'UTC')" +
+        " RETURNING name, password, content_url;",
+        [roomName, "about:blank", "123"])
+        .then((rowsAffected) => {
+          return rowsAffected === 1;
+        })
+    });
   }
 
-  setContentUrl(roomName, contentUrl, cb) {
-    execQuery(this.connectionString,
+  setContentUrl(roomName, contentUrl) {
+    return execQuery(this.connectionString,
       "UPDATE rooms" +
       " SET content_url = $2" +
       " WHERE name = $1;",
-      [roomName, contentUrl],
-      cb);
+      [roomName, contentUrl])
+      .then((rowsAffected) => {
+        return rowsAffected === 1;
+      });
   }
 
-  getPosts(roomName, options, cb) {
+  getPosts(roomName, options) {
     options = options || {};
 
     let limit = "";
@@ -124,10 +130,8 @@ class AriaStore {
       limit +
       ") AS p2 ORDER BY p2.id ASC;";
 
-    queryRows(this.connectionString,
-      sql,
-      [roomName],
-      (rows) => {
+    return queryRows(this.connectionString, sql, [roomName])
+      .then((rows) => {
         // Transform raw DB rows into valid internal post objects
         let posts = [];
         for (let row of rows) {
@@ -149,29 +153,22 @@ class AriaStore {
           posts.push(post);
         }
 
-        // Return posts
-        (cb || noop)(posts);
+        return posts;
       });
   }
 
-  addPost(roomName, post, cb) {
+  addPost(roomName, post) {
     if (post.image) {
       // Post contained an image - insert image record first
-      insertImage(this.connectionString, post.image, (images) => {
-        let imageId = images[0].id;
-
+      return insertImage(this.connectionString, post.image)
+      .then((image) => {
         // Insert post record linked to the inserted image
-        insertPost(this.connectionString, roomName, post, imageId, () => {
-          (cb || noop)(true);
-        });
-      })
-    }
-    else {
-      // No image - insert post without image link
-      insertPost(this.connectionString, roomName, post, null, () => {
-        (cb || noop)(true);
+        return insertPost(this.connectionString, roomName, post, image.id);
       });
     }
+
+    // No image - insert post without image link
+    return insertPost(this.connectionString, roomName, post, null);
   }
 }
 
