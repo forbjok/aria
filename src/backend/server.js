@@ -57,6 +57,10 @@ function getExtensionByMimetype(mimetype) {
   }
 }
 
+function stripExtension(filename) {
+  return path.basename(filename, path.extname(filename));
+}
+
 // Set up multer storage for uploaded images
 var storage = multer.diskStorage({
   destination: imagesPath,
@@ -226,13 +230,15 @@ app.post("/chat/:room/post", upload.single("image"), (req, res) => {
   if (imageFile) {
     if (imageFile.mimetype.match(/^image\//)) {
       var filename = imageFile.filename;
-      var thumbFilename = `thumb-${filename}`;
+      var thumbFilename = `thumb-${stripExtension(filename)}.jpg`;
 
       easyimg.resize({
         src: imageFile.path,
         dst: path.join(imagesPath, thumbFilename),
         width: 100,
-        height: 100
+        height: 100,
+        quality: 80,
+        background: "#D6DAF0"
       }).then((file) => {
         post.image = {
           filename: filename,
