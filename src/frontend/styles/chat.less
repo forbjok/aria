@@ -51,9 +51,12 @@ body {
   }
 
   .image {
+    display: block;
+    float: left;
+    overflow: hidden;
+
     .thumbnail {
       display: block;
-      float: left;
       border: none;
       padding-right: 2px;
 
@@ -65,13 +68,14 @@ body {
 
     .expanded-image {
       display: block;
-      float: left;
       max-width: 100%;
     }
 
     .filename {
       display: none;
       text-align: center;
+      clear: left;
+      font-weight: bold;
     }
 
     &.expanded {

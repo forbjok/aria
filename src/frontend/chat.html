@@ -12,14 +12,14 @@
             <span class="name">${post.name}</span>
           </div>
           <div class="postBody">
-            <div class="image" class.bind="post.showFullImage ? 'expanded' : ''">
-              <a if.bind="post.image" class="image" href.bind="post.image.url" click.trigger="$parent.toggleImage(post)">
+            <div if.bind="post.image" class="image" class.bind="post.showFullImage ? 'expanded' : ''">
+              <a href.bind="post.image.url" click.trigger="$parent.toggleImage(post)">
                 <img class="thumbnail" src.bind="post.image.thumbUrl" title.bind="post.image.originalFilename">
                 <img if.bind="post.showFullImage" class="expanded-image" src.bind="post.image.url">
               </a>
-              <span class="filename">${post.image.originalFilename}</span>
+              <div class="filename">${post.image.originalFilename}</div>
             </div>
-            <span class="comment" innerHTML.bind="post.comment | formatPost"></span>
+            <div class="comment" innerHTML.bind="post.comment | formatPost"></div>
           </div>
         </li>
       </ul>
