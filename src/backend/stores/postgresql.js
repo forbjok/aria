@@ -1,7 +1,7 @@
 "use strict";
 
 var Promise = require("bluebird");
-var pg = Promise.promisifyAll(require("pg"));
+var pg = require("pg");
 
 class PostgreSqlStore {
   constructor(connectionString) {
@@ -9,25 +9,41 @@ class PostgreSqlStore {
   }
 
   _execQuery(sql, params) {
-    return pg.connectAsync(this.connectionString).then((client) => {
-      return client.queryAsync(sql, params)
-      .then((result) => {
-        return result.rowCount;
-      })
-      .catch((err) => {
-        throw new Error(`Error executing query: ${sql} with parameters ${params}: ${err.cause}`);
-      })
+    return new Promise((resolve, reject) => {
+      pg.connect(this.connectionString, (err, client, done) => {
+        if (err) {
+          throw new Error(`Error connecting to PostgreSQL server '${this.connectionString}': ${err.cause}`);
+        }
+
+        client.query(sql, params, (err, result) => {
+          done();
+
+          if (err) {
+            throw new Error(`Error executing query: ${sql} with parameters ${params}: ${err.cause}`);
+          }
+
+          resolve(result.rowCount);
+        });
+      });
     });
   }
 
   _queryRows(sql, params) {
-    return pg.connectAsync(this.connectionString).then((client) => {
-      return client.queryAsync(sql, params)
-      .then((result) => {
-        return result.rows;
-      })
-      .catch((err) => {
-        throw new Error(`Error executing query: ${sql} with parameters ${params}: ${err.cause}`);
+    return new Promise((resolve, reject) => {
+      pg.connect(this.connectionString, (err, client, done) => {
+        if (err) {
+          throw new Error(`Error connecting to PostgreSQL server '${this.connectionString}': ${err.cause}`);
+        }
+
+        client.query(sql, params, (err, result) => {
+          done();
+
+          if (err) {
+            throw new Error(`Error executing query: ${sql} with parameters ${params}: ${err.cause}`);
+          }
+
+          resolve(result.rows);
+        });
       });
     });
   }
