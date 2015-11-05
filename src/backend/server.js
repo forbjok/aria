@@ -4,6 +4,7 @@ var path = require("path");
 var http = require("http");
 var express = require("express");
 var exphbs = require("express-handlebars");
+var bodyParser = require("body-parser");
 var multer = require("multer");
 var socketio = require("socket.io");
 var easyimg = require("easyimage");
@@ -100,6 +101,7 @@ class ChatRoom {
   constructor(options) {
     options = options || {};
 
+    this.password = options.password;
     this.contentChanged = options.contentChanged;
     this.postReceived = options.postReceived;
 
@@ -129,62 +131,114 @@ class ChatRoom {
 // Global variables
 var rooms = {};
 
-// Get a room or create, add and return it if it does not exist
+function createAndReturnRoom(roomInfo) {
+  let name = roomInfo.name;
+
+  // Retrieve recent posts from database
+  return ariaStore.getPosts(name, { limit: 50 }).then((posts) => {
+    let room = new ChatRoom({
+      password: roomInfo.password,
+      posts: posts,
+      contentUrl: roomInfo.contentUrl,
+      contentChanged: (url) => {
+        ariaStore.setContentUrl(name, url);
+        io.to(name).emit("content", url);
+      },
+      postReceived: (post) => {
+        console.log(`Post received, emitting it to room ${name}.`);
+        ariaStore.addPost(name, post);
+        io.to(name).emit("post", postToViewModel(post));
+      }
+    });
+
+    rooms[name] = room;
+    return room;
+  });
+}
+
+// Get a room
 function getRoom(name) {
   if (name in rooms) {
     return Promise.resolve(rooms[name]);
   }
 
-  function createAndReturnRoom(roomInfo) {
-    // Retrieve recent posts from database
-    return ariaStore.getPosts(name, { limit: 50 }).then((posts) => {
-      let room = new ChatRoom({
-        posts: posts,
-        contentUrl: roomInfo.contentUrl,
-        contentChanged: (url) => {
-          ariaStore.setContentUrl(name, url);
-          io.to(name).emit("content", url);
-        },
-        postReceived: (post) => {
-          console.log(`Post received, emitting it to room ${name}.`);
-          ariaStore.addPost(name, post);
-          io.to(name).emit("post", postToViewModel(post));
-        }
-      });
-
-      rooms[name] = room;
-      return room;
-    });
-  }
-
   return ariaStore.getRoom(name).then((roomInfo) => {
     if (!roomInfo) {
-      console.log(`Room ${name} not found. Creating it.`);
-
-      return ariaStore.claimRoom(name).then(() => {
-        return ariaStore.getRoom(name).then((roomInfo) => {
-          return createAndReturnRoom(roomInfo);
-        });
-      });
+      console.log(`Room ${name} not found.`);
+      return;
     }
 
     return createAndReturnRoom(roomInfo);
   });
 }
 
-function emitPost(res, roomName, post) {
-  getRoom(roomName).then((room) => {
-    room.post(post);
+function claimRoom(name) {
+  return ariaStore.claimRoom(name).then((claimInfo) => {
+    return claimInfo;
+  });
+}
 
-    res.send({
-      result: 1
-    });
+function emitPost(res, roomName, post) {
+  return getRoom(roomName).then((room) => {
+    room.post(post);
   });
 }
 
 app.get("/r/:room", (req, res) => {
-  res.render("room", {
-    room: req.params.room
+  let roomName = req.params.room;
+
+  getRoom(roomName).then(room => {
+    if (!room) {
+      // Room was not found, render claim page
+      res.render("claim", {
+        room: roomName
+      });
+      return;
+    }
+
+    // Room was found, render room
+    res.render("room", {
+      room: roomName
+    });
+  });
+});
+
+app.post("/r/:room/claim", (req, res) => {
+  let roomName = req.params.room;
+
+  claimRoom(roomName).then((claimInfo) => {
+    if (!claimInfo) {
+      console.log(`Room ${roomName} could not be claimed.`);
+
+      res.status(403).send("Room has already been claimed.");
+      return;
+    }
+
+    res.send(claimInfo);
+  });
+});
+
+app.post("/r/:room/control", bodyParser.json(), (req, res) => {
+  let roomName = req.params.room;
+
+  getRoom(roomName).then(room => {
+    let data = req.body;
+
+    if (data.password !== room.password) {
+      res.status(403).send("You are not authorized.");
+      return;
+    }
+
+    let action = data.action;
+    if (action) {
+      switch(action.action) {
+        case "set content url":
+        room.setContentUrl(action.url);
+        break;
+      }
+    }
+
+    res.send();
   });
 });
 
@@ -197,31 +251,14 @@ app.get("/chat/:room", (req, res) => {
 var contentRegex = /^\/content\s+(.+)$/g;
 
 app.post("/chat/:room/post", upload.single("image"), (req, res) => {
-  let comment = req.body.comment;
   let roomName = req.params.room;
-
-  if(comment[0] === "/") {
-    console.log("Command detected");
-
-    let contentUrl = contentRegex.exec(comment)[1];
-    console.log("COTL", contentUrl);
-
-    getRoom(roomName).then((room) => {
-      room.setContentUrl(contentUrl);
-
-      res.send({
-        result: 1
-      });
-    });
-    return;
-  }
 
   console.log(`Got post to room ${roomName}.`);
 
   let post = {
     posted: moment().utc().toISOString(),
     name: req.body.name ? req.body.name : "Anonymous",
-    comment: comment,
+    comment: req.body.comment,
     ip: req.ip
   };
 
@@ -246,11 +283,15 @@ app.post("/chat/:room/post", upload.single("image"), (req, res) => {
           originalFilename: imageFile.originalname
         }
 
-        emitPost(res, roomName, post);
+        emitPost(res, roomName, post).then(() => {
+          res.send();
+        });
       });
     }
   } else {
-    emitPost(res, roomName, post);
+    emitPost(res, roomName, post).then(() => {
+      res.send();
+    });
   }
 });
 

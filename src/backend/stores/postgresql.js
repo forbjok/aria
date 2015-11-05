@@ -83,8 +83,14 @@ class PostgreSqlStore {
       "INSERT INTO rooms (name, content_url, password, claimed, expires)" +
       " SELECT $1, $2, $3, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC' + INTERVAL '1 day'" +
       " WHERE NOT EXISTS (SELECT * FROM rooms WHERE name = $1 AND expires > NOW() AT TIME ZONE 'UTC')" +
-      " RETURNING name, password, content_url;",
-      [roomName, "about:blank", "123"]);
+      " RETURNING name, password;",
+      [roomName, "about:blank", "123"]).then((rows) => {
+        if (!rows || rows.length === 0) {
+          return;
+        }
+
+        return rows[0];
+      });
   }
 
   setContentUrl(roomName, contentUrl) {

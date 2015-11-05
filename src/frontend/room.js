@@ -1,11 +1,15 @@
 import {inject} from "aurelia-framework";
-import $ from "jquery";
 
 import socket from "services/sharedsocket";
+import {RoomAdminService} from "./services/roomadminservice.js";
 
-@inject("RoomName")
+import $ from "jquery";
+import "jquery-cookie";
+
+@inject(RoomAdminService, "RoomName")
 export class Content {
-  constructor(roomName) {
+  constructor(adminService, roomName) {
+    this.adminService = adminService;
     this.roomName = roomName;
 
     this.contentUrl = "about:blank";
@@ -17,6 +21,17 @@ export class Content {
     socket.on("connect", () => {
       socket.emit("join", this.roomName);
     });
+  }
+
+  get isAdmin() {
+    return this.adminService.isAdmin;
+  }
+
+  activate() {
+    let password = $.cookie("password");
+    if (password) {
+      return this.adminService.login(password);
+    }
   }
 
   attached() {
@@ -47,5 +62,26 @@ export class Content {
 
     // Connect websocket
     socket.connect();
+  }
+
+  login() {
+    let password = window.prompt("What's the password?", "");
+    if (password) {
+      return this.adminService.login(password)
+      .then(() => {
+        // Set password cookie
+        $.cookie("password", password, { path: window.location.pathname });
+      })
+      .catch(() => {
+        window.alert("Nope, that's not it.");
+      });
+    }
+  }
+
+  setContentUrl() {
+    let contentUrl = window.prompt("Enter new content URL:", "");
+    if (contentUrl) {
+      return this.adminService.setContentUrl(contentUrl);
+    }
   }
 }
