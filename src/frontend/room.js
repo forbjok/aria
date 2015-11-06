@@ -4,7 +4,7 @@ import socket from "services/sharedsocket";
 import {RoomAdminService} from "./services/roomadminservice.js";
 
 import $ from "jquery";
-import "jquery-cookie";
+import Cookies from "js-cookie";
 
 @inject(RoomAdminService, "RoomName")
 export class Content {
@@ -28,7 +28,7 @@ export class Content {
   }
 
   activate() {
-    let password = $.cookie("password");
+    let password = Cookies.get("password");
     if (password) {
       return this.adminService.login(password);
     }
@@ -70,7 +70,7 @@ export class Content {
       return this.adminService.login(password)
       .then(() => {
         // Set password cookie
-        $.cookie("password", password, { path: window.location.pathname });
+        Cookies.set("password", password, { path: window.location.pathname });
       })
       .catch(() => {
         window.alert("Nope, that's not it.");

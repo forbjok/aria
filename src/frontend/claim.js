@@ -2,7 +2,7 @@ import {inject} from "aurelia-framework";
 import {HttpClient} from "aurelia-http-client";
 
 import $ from "jquery";
-import "jquery-cookie";
+import Cookies from "js-cookie";
 
 @inject(HttpClient, "RoomName")
 export class Claim {
@@ -17,7 +17,7 @@ export class Claim {
       this.claimInfo = response.content;
 
       // Set password cookie
-      $.cookie("password", this.claimInfo.password, { path: window.location.pathname });
+      Cookies.set("password", this.claimInfo.password, { path: window.location.pathname });
     })
     .catch(error => {
       this.claimError = "Error";

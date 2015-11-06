@@ -1,7 +1,7 @@
 import {bindable, inject} from "aurelia-framework";
 
 import $ from "jquery";
-import "jquery-cookie";
+import Cookies from "js-cookie";
 import "jq-ajax-progress";
 
 import socket from "services/sharedsocket";
@@ -22,7 +22,7 @@ export class ChatCustomElement {
       { name: "dark", description: "Dark" },
       { name: "yotsubab", description: "Yotsuba B" }
     ];
-    this.theme = $.cookie("theme") || "dark";
+    this.theme = Cookies.get("theme") || "dark";
     this.posting = false;
     this.postingCooldown = 0;
 
@@ -39,7 +39,7 @@ export class ChatCustomElement {
   clearPost() {
     this.postForm.reset();
     this.post = {
-      name: $.cookie("post_name"),
+      name: Cookies.get("post_name"),
       comment: ""
     };
   }
@@ -95,7 +95,7 @@ export class ChatCustomElement {
     this.posting = true;
 
     // Save name in cookie
-    $.cookie("post_name", this.post.name);
+    Cookies.set("post_name", this.post.name, { path: window.location.pathname });
 
     let ajaxPost = $.ajax(this.postUrl, {
       method: "POST",
@@ -176,7 +176,7 @@ export class ChatCustomElement {
   }
 
   themeSelected() {
-    $.cookie("theme", this.theme);
+    Cookies.set("theme", this.theme, { path: "/" });
   }
 
   toggleImage(post) {

@@ -51,7 +51,7 @@ System.config({
     "github/fetch": "github:github/fetch@0.10.0",
     "jq-ajax-progress": "github:likerRr/jq-ajax-progress@0.1.6",
     "jquery": "github:components/jquery@2.1.4",
-    "jquery-cookie": "github:carhartl/jquery-cookie@1.4.1",
+    "js-cookie": "github:js-cookie/js-cookie@2.0.4",
     "moment": "github:moment/moment@2.10.6",
     "socket.io-client": "github:socketio/socket.io-client@1.3.7",
     "systemjs/plugin-text": "github:systemjs/plugin-text@0.0.3",
