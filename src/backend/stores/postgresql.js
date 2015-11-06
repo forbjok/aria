@@ -2,6 +2,14 @@
 
 var Promise = require("bluebird");
 var pg = require("pg");
+var randomstring = require("randomstring");
+
+function generatePassword() {
+  return randomstring.generate({
+    length: 6,
+    readable: true
+  });
+}
 
 class PostgreSqlStore {
   constructor(connectionString) {
@@ -100,7 +108,7 @@ class PostgreSqlStore {
       " SELECT $1, $2, $3, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC' + INTERVAL '1 day'" +
       " WHERE NOT EXISTS (SELECT * FROM rooms WHERE name = $1 AND expires > NOW() AT TIME ZONE 'UTC')" +
       " RETURNING name, password;",
-      [roomName, "about:blank", "123"]).then((rows) => {
+      [roomName, "about:blank", generatePassword()]).then((rows) => {
         if (!rows || rows.length === 0) {
           return;
         }

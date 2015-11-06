@@ -1,7 +1,6 @@
 import {inject} from "aurelia-framework";
 import {HttpClient} from "aurelia-http-client";
 
-import $ from "jquery";
 import Cookies from "js-cookie";
 
 @inject(HttpClient, "RoomName")

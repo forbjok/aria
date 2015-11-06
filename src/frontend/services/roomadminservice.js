@@ -15,7 +15,7 @@ export class RoomAdminService {
 
     let data = {
       password: password
-    }
+    };
 
     return this.http.post(`/r/${this.roomName}/control`, data)
     .then(response => {
