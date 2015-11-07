@@ -6,12 +6,27 @@ var express = require("express");
 var exphbs = require("express-handlebars");
 var socketio = require("socket.io");
 
-var config = require("./config");
-var chat = require("./chat")
-var room = require("./room")
+var chat = require("./chat");
+var room = require("./room");
+
+// Root dir
+var rootDir = path.join(__dirname, "../..");
+
+// Default configuration
+var config = {
+  port: process.env.PORT || 5000,
+  uploadsPath: process.env.UPLOADS_PATH || path.join(rootDir, "uploads"),
+  dataStore: "./stores/postgresql"
+};
+
+// Load config file if it is present
+try {
+  let configFile = process.env.CONFIG || path.join(__dirname, "config.js");
+
+  Object.assign(config, require(configFile));
+} catch(e) {}
 
 // Paths
-var rootDir = path.join(__dirname, "../..");
 var imagesPath = path.join(config.uploadsPath, "images");
 
 // Create Express app and HTTP server
@@ -37,7 +52,7 @@ app.engine("handlebars", exphbs({
 app.set("view engine", "handlebars");
 app.set("views", path.join(__dirname, "views"));
 
-var ariaStore = config.dataStore.create();
+var ariaStore = require(config.dataStore).create();
 
 // Set up chat server
 var roomServer = room.server(app, io, ariaStore, {
