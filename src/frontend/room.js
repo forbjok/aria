@@ -22,8 +22,8 @@ export class Room {
 
     let contentEvent = "room:" + this.roomName + ":content";
 
-    socket.on(contentEvent, (url) => {
-      this.contentUrl = url;
+    socket.on(contentEvent, (content) => {
+      this.contentUrl = content.url;
     });
 
     socket.on("connect", () => {

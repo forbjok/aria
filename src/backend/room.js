@@ -6,7 +6,9 @@ class Room {
   constructor(name, options) {
     this.name = name;
 
-    Object.assign(this, options);
+    Object.assign(this, {
+      emit: () => {}
+    }, options);
   }
 
   getContentUrl() {
@@ -15,7 +17,7 @@ class Room {
 
   setContentUrl(url) {
     this.contentUrl = url;
-    this.contentChanged(this.contentUrl);
+    this.emit("content", { url: this.contentUrl });
   }
 }
 
@@ -57,22 +59,19 @@ class RoomServer {
     let io = this.io;
     let store = this.store;
 
-    // Retrieve recent posts from database
-    return store.getPosts(name, { limit: 50 }).then((posts) => {
-      let contentEvent = this.eventPrefix + name + ":content";
+    let ioRoomName = this.eventPrefix + name;
+    let eventPrefix = this.eventPrefix + name + ":";
 
-      let room = new Room(name, {
-        password: roomInfo.password,
-        contentUrl: roomInfo.contentUrl,
-        contentChanged: (url) => {
-          store.setContentUrl(name, url);
-          io.to(this.eventPrefix + name).emit(contentEvent, url);
-        }
-      });
-
-      this.rooms[name] = room;
-      return room;
+    let room = new Room(name, {
+      password: roomInfo.password,
+      contentUrl: roomInfo.contentUrl,
+      emit: (event, data) => {
+        io.to(ioRoomName).emit(eventPrefix + event, data);
+      }
     });
+
+    this.rooms[name] = room;
+    return room;
   }
 
   _claimRoom(name) {
@@ -172,7 +171,7 @@ class RoomServer {
 
           let contentEvent = this.eventPrefix + roomName + ":content";
           let contentUrl = room.getContentUrl();
-          socket.emit(contentEvent, contentUrl);
+          socket.emit(contentEvent, { url: contentUrl });
         });
       });
 

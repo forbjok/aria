@@ -28,7 +28,9 @@ class ChatRoom {
   constructor(name, options) {
     this.name = name;
 
-    Object.assign(this, options);
+    Object.assign(this, {
+      emit: () => {}
+    }, options);
 
     if (!this.posts) {
       this.posts = [];
@@ -41,7 +43,7 @@ class ChatRoom {
 
   post(post) {
     this.posts.push(post);
-    this.postReceived(post);
+    this.emitPost(post);
   }
 }
 
@@ -108,14 +110,16 @@ class ChatServer {
 
     // Retrieve recent posts from database
     return store.getPosts(name, { limit: 50 }).then((posts) => {
-      let postEvent = this.eventPrefix + name + ":post";
+      let ioRoomName = this.eventPrefix + name;
+      let eventPrefix = this.eventPrefix + name + ":";
 
       let room = new ChatRoom(name, {
         posts: posts,
-        postReceived: (post) => {
-          console.log(`Post received, emitting it to room ${name}.`);
-          store.addPost(name, post);
-          io.to(this.eventPrefix + name).emit(postEvent, this._postToViewModel(post));
+        emit: (event, data) => {
+          io.to(ioRoomName).emit(eventPrefix + event, data);
+        },
+        emitPost: post => {
+          io.to(ioRoomName).emit(eventPrefix + "post", this._postToViewModel(post));
         }
       });
 
