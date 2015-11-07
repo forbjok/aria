@@ -1,18 +1,22 @@
 import {inject} from "aurelia-framework";
 
-import socket from "services/sharedsocket";
-import {RoomAdminService} from "./services/roomadminservice.js";
+import {SocketService} from "services/socketservice";
+import {RoomAdminService} from "./services/roomadminservice";
 
 import $ from "jquery";
 import Cookies from "js-cookie";
 
-@inject(RoomAdminService, "RoomName")
-export class Content {
-  constructor(adminService, roomName) {
+@inject(SocketService, RoomAdminService, "RoomName")
+export class Room {
+  constructor(socketService, adminService, roomName) {
+    this.socketService = socketService;
     this.adminService = adminService;
     this.roomName = roomName;
 
     this.contentUrl = "about:blank";
+
+    let socket = this.socketService.getSocket();
+    this.socket = socket;
 
     socket.on("content", (url) => {
       this.contentUrl = url;
@@ -21,10 +25,6 @@ export class Content {
     socket.on("connect", () => {
       socket.emit("join", this.roomName);
     });
-  }
-
-  get isAdmin() {
-    return this.adminService.isAdmin;
   }
 
   activate() {
@@ -61,7 +61,7 @@ export class Content {
     });
 
     // Connect websocket
-    socket.connect();
+    this.socket.connect();
   }
 
   login() {

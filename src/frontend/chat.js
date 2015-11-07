@@ -4,18 +4,19 @@ import $ from "jquery";
 import Cookies from "js-cookie";
 import "jq-ajax-progress";
 
-import socket from "services/sharedsocket";
+import {SocketService} from "services/socketservice";
 
 import filesize from "filesize";
 
 let maxImageSize = 2097152;
 
-@inject(Element)
+@inject(Element, SocketService)
 export class ChatCustomElement {
   @bindable room;
 
-  constructor(element) {
+  constructor(element, socketService) {
     this.element = element;
+    this.socketService = socketService;
 
     this.posts = [];
     this.themes = [
@@ -25,6 +26,9 @@ export class ChatCustomElement {
     this.theme = Cookies.get("theme") || "dark";
     this.posting = false;
     this.postingCooldown = 0;
+
+    let socket = this.socketService.getSocket();
+    this.socket = socket;
 
     socket.on("connect", () => {
       this.posts = [];
@@ -164,7 +168,7 @@ export class ChatCustomElement {
     this.clearPost();
 
     // Connect websocket
-    socket.connect();
+    this.socket.connect();
   }
 
   imageSelected(event) {
