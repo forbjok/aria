@@ -26,12 +26,24 @@ class RoomServer {
     this.store = store;
 
     Object.assign(this, {
-      baseUrl: "/r"
+      baseUrl: "/r",
+      eventPrefix: "room:"
     }, options);
 
     this.rooms = [];
 
+    this._setupEvents();
     this._initialize();
+  }
+
+  _setupEvents() {
+    let prefix = this.eventPrefix;
+
+    this.events = {
+      join: `${prefix}join`,
+      leave: `${prefix}leave`,
+      content: `${prefix}content`
+    }
   }
 
   _getRoom(name) {
@@ -63,7 +75,7 @@ class RoomServer {
         contentUrl: roomInfo.contentUrl,
         contentChanged: (url) => {
           store.setContentUrl(name, url);
-          io.to(name).emit("content", url);
+          io.to(name).emit(this.events.content, url);
         }
       });
 
@@ -156,7 +168,7 @@ class RoomServer {
 
       let roomsJoined = {};
 
-      socket.on("join", (roomName) => {
+      socket.on(this.events.join, (roomName) => {
         if (roomName in roomsJoined)
           return;
 
@@ -168,11 +180,11 @@ class RoomServer {
 
           let contentUrl = room.getContentUrl();
           console.log("Sending content url: " + contentUrl);
-          socket.emit("content", contentUrl);
+          socket.emit(this.events.content, contentUrl);
         });
       });
 
-      socket.on("leave", (roomName) => {
+      socket.on(this.events.leave, (roomName) => {
         console.log(`Leaving room ${roomName}!`);
         socket.leave(roomName);
       });

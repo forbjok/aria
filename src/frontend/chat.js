@@ -32,10 +32,10 @@ export class ChatCustomElement {
 
     socket.on("connect", () => {
       this.posts = [];
-      socket.emit("join", this.room);
+      socket.emit("chat:join", this.room);
     });
 
-    socket.on("post", (post) => {
+    socket.on("chat:post", (post) => {
       this.posts.push(post);
     });
   }

@@ -18,12 +18,12 @@ export class Room {
     let socket = this.socketService.getSocket();
     this.socket = socket;
 
-    socket.on("content", (url) => {
+    socket.on("room:content", (url) => {
       this.contentUrl = url;
     });
 
     socket.on("connect", () => {
-      socket.emit("join", this.roomName);
+      socket.emit("room:join", this.roomName);
     });
   }
 

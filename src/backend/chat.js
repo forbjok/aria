@@ -53,13 +53,25 @@ class ChatServer {
 
     Object.assign(this, {
       baseUrl: "/chat",
+      eventPrefix: "chat:",
       imagesPath: path.join(__dirname, "images")
     }, options);
 
     this.imagesUrl = `${this.baseUrl}/images`;
     this.rooms = [];
 
+    this._setupEvents();
     this._initialize();
+  }
+
+  _setupEvents() {
+    let prefix = this.eventPrefix;
+
+    this.events = {
+      join: `${prefix}join`,
+      leave: `${prefix}leave`,
+      post: `${prefix}post`
+    }
   }
 
   // Create a post view-model (for websocket use) from an internal post object
@@ -112,7 +124,7 @@ class ChatServer {
         postReceived: (post) => {
           console.log(`Post received, emitting it to room ${name}.`);
           store.addPost(name, post);
-          io.to(name).emit("post", this._postToViewModel(post));
+          io.to(name).emit(this.events.post, this._postToViewModel(post));
         }
       });
 
@@ -212,7 +224,7 @@ class ChatServer {
 
       let roomsJoined = {};
 
-      socket.on("join", (roomName) => {
+      socket.on(this.events.join, (roomName) => {
         if (roomName in roomsJoined)
           return;
 
@@ -226,12 +238,12 @@ class ChatServer {
           let recentPosts = room.getRecentPosts();
 
           for (let post of recentPosts) {
-            socket.emit("post", this._postToViewModel(post));
+            socket.emit(this.events.post, this._postToViewModel(post));
           }
         });
       });
 
-      socket.on("leave", (roomName) => {
+      socket.on(this.events.leave, (roomName) => {
         console.log(`Leaving chatroom ${roomName}!`);
         socket.leave(roomName);
       });
