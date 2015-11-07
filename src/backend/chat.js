@@ -220,7 +220,8 @@ class ChatServer {
     let io = this.io;
 
     io.on("connection", (socket) => {
-      console.log("Chat connected!");
+      let ip = socket.handshake.address;
+      console.log(`${ip}: Chat connected!`);
 
       let roomsJoined = {};
 
@@ -228,13 +229,13 @@ class ChatServer {
         if (roomName in roomsJoined)
           return;
 
-        console.log(`Joining chatroom ${roomName}!`);
+        console.log(`${ip}: Joining chatroom ${roomName}!`);
 
         roomsJoined[roomName] = true;
         this._getRoom(roomName).then((room) => {
           socket.join(roomName);
 
-          console.log("Sending recent posts.");
+          console.log(`${ip}: Sending recent posts.`);
           let recentPosts = room.getRecentPosts();
 
           for (let post of recentPosts) {
@@ -244,12 +245,12 @@ class ChatServer {
       });
 
       socket.on(this.events.leave, (roomName) => {
-        console.log(`Leaving chatroom ${roomName}!`);
+        console.log(`${ip}: Leaving chatroom ${roomName}!`);
         socket.leave(roomName);
       });
 
       socket.on("disconnect", () => {
-        console.log("Chat disconnected!");
+        console.log(`${ip}: Chat disconnected!`);
       });
     });
   }

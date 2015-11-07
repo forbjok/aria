@@ -164,7 +164,8 @@ class RoomServer {
     let io = this.io;
 
     io.on("connection", (socket) => {
-      console.log("Room connected!");
+      let ip = socket.handshake.address;
+      console.log(`${ip}: Room connected!`);
 
       let roomsJoined = {};
 
@@ -172,25 +173,24 @@ class RoomServer {
         if (roomName in roomsJoined)
           return;
 
-        console.log(`Joining room ${roomName}!`);
+        console.log(`${ip}: Joining room ${roomName}!`);
 
         roomsJoined[roomName] = true;
         this._getRoom(roomName).then((room) => {
           socket.join(roomName);
 
           let contentUrl = room.getContentUrl();
-          console.log("Sending content url: " + contentUrl);
           socket.emit(this.events.content, contentUrl);
         });
       });
 
       socket.on(this.events.leave, (roomName) => {
-        console.log(`Leaving room ${roomName}!`);
+        console.log(`${ip}: Leaving room ${roomName}!`);
         socket.leave(roomName);
       });
 
       socket.on("disconnect", () => {
-        console.log("Room disconnected!");
+        console.log(`${ip}: Room disconnected!`);
       });
     });
   }
