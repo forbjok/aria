@@ -59,7 +59,7 @@ class ChatServer {
       imagesPath: path.join(__dirname, "images")
     }, options);
 
-    this.imagesUrl = `${this.baseUrl}/images`;
+    this.imagesUrl = this.baseUrl + "/images";
     this.rooms = [];
 
     this._initialize();
@@ -78,8 +78,8 @@ class ChatServer {
       let imagesUrl = this.imagesUrl;
 
       vm.image = {
-        url: `${imagesUrl}/${image.filename}`,
-        thumbUrl: `${imagesUrl}/${image.thumbnailFilename}`,
+        url: imagesUrl + "/" + image.filename,
+        thumbUrl: imagesUrl + "/" + image.thumbnailFilename,
         originalFilename: image.originalFilename
       };
     }
@@ -181,7 +181,7 @@ class ChatServer {
       if (imageFile) {
         if (imageFile.mimetype.match(/^image\//)) {
           let filename = imageFile.filename;
-          let thumbFilename = `thumb-${stripExtension(filename)}.jpg`;
+          let thumbFilename = "thumb-" + stripExtension(filename) + ".jpg";
 
           easyimg.resize({
             src: imageFile.path,
