@@ -153,7 +153,7 @@ export class ChatCustomElement {
 
     resizeChatControls();
 
-    chatControls.resize(() => {
+    $(this.chatControls).resize(() => {
       resizeChatControls();
     });
 
