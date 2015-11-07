@@ -36,8 +36,8 @@ export class Room {
 
   attached() {
     let w = $(window);
-    let chatContainer = $("#chatContainer");
-    let contentContainer = $("#contentContainer");
+    let chatContainer = $(this.chatContainer);
+    let contentContainer = $(this.contentContainer);
 
     function resize() {
       let width = w.width();

@@ -147,22 +147,14 @@ export class ChatCustomElement {
   }
 
   attached() {
-    let e = $(this.element);
-
-    this.postForm = e.find("#postForm")[0];
-    let postContainer = e.find("#postContainer");
-    let chatControls = e.find("#chatControls");
-
-    function resize() {
-      let chatControlsHeight = chatControls.height();
-
-      postContainer.css("bottom", chatControlsHeight + 4);
+    let resizeChatControls = () => {
+      $(this.postContainer).css("bottom", $(this.chatControls).height() + 4);
     }
 
-    resize();
+    resizeChatControls();
 
-    e.resize(() => {
-      resize();
+    chatControls.resize(() => {
+      resizeChatControls();
     });
 
     this.clearPost();
