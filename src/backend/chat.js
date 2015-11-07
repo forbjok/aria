@@ -29,7 +29,7 @@ class ChatRoom {
     this.name = name;
 
     Object.assign(this, {
-      emit: () => {}
+      onPost: () => {}
     }, options);
 
     if (!this.posts) {
@@ -43,7 +43,7 @@ class ChatRoom {
 
   post(post) {
     this.posts.push(post);
-    this.emitPost(post);
+    this.onPost(post);
   }
 }
 
@@ -116,10 +116,8 @@ class ChatServer {
 
       let room = new ChatRoom(name, {
         posts: posts,
-        emit: (event, data) => {
-          io.to(ioRoomName).emit(eventPrefix + event, data);
-        },
-        emitPost: (post) => {
+        onPost: (post) => {
+          store.addPost(name, post);
           io.to(ioRoomName).emit(eventPrefix + "post", this._postToViewModel(post));
         }
       });

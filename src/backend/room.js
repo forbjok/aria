@@ -7,7 +7,7 @@ class Room {
     this.name = name;
 
     Object.assign(this, {
-      emit: () => {}
+      onContentChange: () => {}
     }, options);
   }
 
@@ -17,7 +17,7 @@ class Room {
 
   setContentUrl(url) {
     this.contentUrl = url;
-    this.emit("content", { url: this.contentUrl });
+    this.onContentChange(this.contentUrl);
   }
 }
 
@@ -65,8 +65,9 @@ class RoomServer {
     let room = new Room(name, {
       password: roomInfo.password,
       contentUrl: roomInfo.contentUrl,
-      emit: (event, data) => {
-        io.to(ioRoomName).emit(eventPrefix + event, data);
+      onContentChange: (contentUrl) => {
+        store.setContentUrl(name, contentUrl);
+        io.to(ioRoomName).emit(eventPrefix + "content", { url: contentUrl });
       }
     });
 
