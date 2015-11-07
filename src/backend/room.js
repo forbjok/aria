@@ -32,18 +32,7 @@ class RoomServer {
 
     this.rooms = [];
 
-    this._setupEvents();
     this._initialize();
-  }
-
-  _setupEvents() {
-    let prefix = this.eventPrefix;
-
-    this.events = {
-      join: `${prefix}join`,
-      leave: `${prefix}leave`,
-      content: `${prefix}content`
-    }
   }
 
   _getRoom(name) {
@@ -70,12 +59,14 @@ class RoomServer {
 
     // Retrieve recent posts from database
     return store.getPosts(name, { limit: 50 }).then((posts) => {
+      let contentEvent = this.eventPrefix + name + ":content";
+
       let room = new Room(name, {
         password: roomInfo.password,
         contentUrl: roomInfo.contentUrl,
         contentChanged: (url) => {
           store.setContentUrl(name, url);
-          io.to(name).emit(this.events.content, url);
+          io.to(this.eventPrefix + name).emit(contentEvent, url);
         }
       });
 
@@ -169,7 +160,7 @@ class RoomServer {
 
       let roomsJoined = {};
 
-      socket.on(this.events.join, (roomName) => {
+      socket.on(this.eventPrefix + "join", (roomName) => {
         if (roomName in roomsJoined)
           return;
 
@@ -177,16 +168,17 @@ class RoomServer {
 
         roomsJoined[roomName] = true;
         this._getRoom(roomName).then((room) => {
-          socket.join(roomName);
+          socket.join(this.eventPrefix + roomName);
 
+          let contentEvent = this.eventPrefix + roomName + ":content";
           let contentUrl = room.getContentUrl();
-          socket.emit(this.events.content, contentUrl);
+          socket.emit(contentEvent, contentUrl);
         });
       });
 
-      socket.on(this.events.leave, (roomName) => {
+      socket.on(this.eventPrefix + "leave", (roomName) => {
         console.log(`${ip}: Leaving room ${roomName}!`);
-        socket.leave(roomName);
+        socket.leave(this.eventPrefix + roomName);
       });
 
       socket.on("disconnect", () => {

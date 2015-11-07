@@ -14,11 +14,15 @@ export class Room {
     this.roomName = roomName;
 
     this.contentUrl = "about:blank";
+  }
 
+  bind() {
     let socket = this.socketService.getSocket();
     this.socket = socket;
 
-    socket.on("room:content", (url) => {
+    let contentEvent = "room:" + this.roomName + ":content";
+
+    socket.on(contentEvent, (url) => {
       this.contentUrl = url;
     });
 

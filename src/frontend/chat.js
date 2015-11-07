@@ -26,18 +26,6 @@ export class ChatCustomElement {
     this.theme = Cookies.get("theme") || "dark";
     this.posting = false;
     this.postingCooldown = 0;
-
-    let socket = this.socketService.getSocket();
-    this.socket = socket;
-
-    socket.on("connect", () => {
-      this.posts = [];
-      socket.emit("chat:join", this.room);
-    });
-
-    socket.on("chat:post", (post) => {
-      this.posts.push(post);
-    });
   }
 
   clearPost() {
@@ -143,6 +131,20 @@ export class ChatCustomElement {
       setTimeout(() => {
         this.postingProgress = "";
       }, 2000);
+    });
+  }
+
+  bind() {
+    let socket = this.socketService.getSocket();
+    this.socket = socket;
+
+    socket.on("connect", () => {
+      this.posts = [];
+      socket.emit("chat:join", this.room);
+    });
+
+    socket.on("chat:" + this.room + ":post", (post) => {
+      this.posts.push(post);
     });
   }
 
