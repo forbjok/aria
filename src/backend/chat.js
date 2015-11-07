@@ -1,10 +1,10 @@
 "use strict";
 
-var path = require("path");
-var express = require("express");
-var multer = require("multer");
-var easyimg = require("easyimage");
-var moment = require("moment");
+let path = require("path");
+let express = require("express");
+let multer = require("multer");
+let easyimg = require("easyimage");
+let moment = require("moment");
 
 // Get file extension based on mimetype
 function getExtensionByMimetype(mimetype) {
@@ -73,13 +73,14 @@ class ChatServer {
       comment: post.comment
     };
 
-    if(post.image) {
+    if (post.image) {
+      let image = post.image;
       let imagesUrl = this.imagesUrl;
 
       vm.image = {
-        url: `${imagesUrl}/${post.image.filename}`,
-        thumbUrl: `${imagesUrl}/${post.image.thumbnailFilename}`,
-        originalFilename: post.image.originalFilename
+        url: `${imagesUrl}/${image.filename}`,
+        thumbUrl: `${imagesUrl}/${image.thumbnailFilename}`,
+        originalFilename: image.originalFilename
       };
     }
 
@@ -118,7 +119,7 @@ class ChatServer {
         emit: (event, data) => {
           io.to(ioRoomName).emit(eventPrefix + event, data);
         },
-        emitPost: post => {
+        emitPost: (post) => {
           io.to(ioRoomName).emit(eventPrefix + "post", this._postToViewModel(post));
         }
       });
@@ -147,8 +148,8 @@ class ChatServer {
     let multerStorage = multer.diskStorage({
       destination: imagesPath,
       filename: (req, file, cb) => {
-        var extension = getExtensionByMimetype(file.mimetype);
-        var filename = moment().utc().valueOf().toString() + extension;
+        let extension = getExtensionByMimetype(file.mimetype);
+        let filename = moment().utc().valueOf().toString() + extension;
 
         cb(null, filename);
       }
@@ -181,8 +182,8 @@ class ChatServer {
 
       if (imageFile) {
         if (imageFile.mimetype.match(/^image\//)) {
-          var filename = imageFile.filename;
-          var thumbFilename = `thumb-${stripExtension(filename)}.jpg`;
+          let filename = imageFile.filename;
+          let thumbFilename = `thumb-${stripExtension(filename)}.jpg`;
 
           easyimg.resize({
             src: imageFile.path,
@@ -221,8 +222,9 @@ class ChatServer {
       let roomsJoined = {};
 
       socket.on(this.eventPrefix + "join", (roomName) => {
-        if (roomName in roomsJoined)
+        if (roomName in roomsJoined) {
           return;
+        }
 
         console.log(`${ip}: Joining chatroom ${roomName}!`);
 

@@ -1,8 +1,8 @@
 "use strict";
 
-var Promise = require("bluebird");
-var pg = require("pg");
-var randomstring = require("randomstring");
+let Promise = require("bluebird");
+let pg = require("pg");
+let randomstring = require("randomstring");
 
 function generatePassword() {
   return randomstring.generate({

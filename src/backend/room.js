@@ -1,6 +1,6 @@
 "use strict";
 
-var bodyParser = require("body-parser");
+let bodyParser = require("body-parser");
 
 class Room {
   constructor(name, options) {
@@ -94,7 +94,7 @@ class RoomServer {
     app.get(`${baseUrl}/:room`, (req, res) => {
       let roomName = req.params.room;
 
-      this._getRoom(roomName).then(room => {
+      this._getRoom(roomName).then((room) => {
         if (!room) {
           // Room was not found, render claim page
           res.render("claim", {
@@ -113,7 +113,7 @@ class RoomServer {
     app.post(`${baseUrl}/:room/claim`, (req, res) => {
       let roomName = req.params.room;
 
-      this._claimRoom(roomName).then(claimInfo => {
+      this._claimRoom(roomName).then((claimInfo) => {
         if (!claimInfo) {
           console.log(`Room ${roomName} could not be claimed.`);
 
@@ -128,7 +128,7 @@ class RoomServer {
     app.post(`${baseUrl}/:room/control`, bodyParser.json(), (req, res) => {
       let roomName = req.params.room;
 
-      this._getRoom(roomName).then(room => {
+      this._getRoom(roomName).then((room) => {
         let data = req.body;
 
         if (data.password !== room.password) {
@@ -160,8 +160,9 @@ class RoomServer {
       let roomsJoined = {};
 
       socket.on(this.eventPrefix + "join", (roomName) => {
-        if (roomName in roomsJoined)
+        if (roomName in roomsJoined) {
           return;
+        }
 
         console.log(`${ip}: Joining room ${roomName}!`);
 

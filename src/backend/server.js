@@ -1,19 +1,19 @@
 "use strict";
 
-var path = require("path");
-var http = require("http");
-var express = require("express");
-var exphbs = require("express-handlebars");
-var socketio = require("socket.io");
+let path = require("path");
+let http = require("http");
+let express = require("express");
+let exphbs = require("express-handlebars");
+let socketio = require("socket.io");
 
-var chat = require("./chat");
-var room = require("./room");
+let chat = require("./chat");
+let room = require("./room");
 
 // Root dir
-var rootDir = path.join(__dirname, "../..");
+let rootDir = path.join(__dirname, "../..");
 
 // Default configuration
-var config = {
+let config = {
   port: process.env.PORT || 5000,
   uploadsPath: process.env.UPLOADS_PATH || path.join(rootDir, "uploads"),
   dataStore: "./stores/postgresql"
@@ -27,12 +27,12 @@ try {
 } catch(e) {}
 
 // Paths
-var imagesPath = path.join(config.uploadsPath, "images");
+let imagesPath = path.join(config.uploadsPath, "images");
 
 // Create Express app and HTTP server
-var app = express();
-var server = http.createServer(app);
-var io = socketio(server);
+let app = express();
+let server = http.createServer(app);
+let io = socketio(server);
 
 // Set up Express app
 app.set("port", config.port);
@@ -52,26 +52,26 @@ app.engine("handlebars", exphbs({
 app.set("view engine", "handlebars");
 app.set("views", path.join(__dirname, "views"));
 
-var ariaStore = require(config.dataStore).create();
+let ariaStore = require(config.dataStore).create();
 
 // Set up chat server
-var roomServer = room.server(app, io, ariaStore, {
+let roomServer = room.server(app, io, ariaStore, {
   baseUrl: "/r"
 });
 
-var chatServer = chat.server(app, io, ariaStore, {
+let chatServer = chat.server(app, io, ariaStore, {
   baseUrl: "/chat",
   imagesPath: imagesPath
 });
 
 // error handling middleware should be loaded after the loading the routes
 if ("development" == app.get("env")) {
-  var errorhandler = require('errorhandler');
+  let errorhandler = require('errorhandler');
 
   app.use(errorhandler());
 }
 
-var port = app.get("port");
+let port = app.get("port");
 
 server.listen(port, () => {
   console.log(`Aria listening on port ${port}.`);
