@@ -2,12 +2,12 @@
   <require from="chat"></require>
   <require from="./styles/room.css!"></require>
   <div class="room">
-    <div ref="chatContainer" id="chatContainer" class="chatContainer">
+    <div ref="chatContainer" id="chatcontainer" class="chatcontainer">
       <chat room.bind="roomName" socket.bind="socket"></chat>
     </div>
-    <div ref="contentContainer" id="contentContainer" class="contentContainer">
+    <div ref="contentContainer" id="contentcontainer" class="contentcontainer">
       <iframe width="100%" height="100%" src.bind="contentUrl" allowfullscreen webkitallowfullscreen scrolling="no" frameborder="0"></iframe>
-      <div class="control-panel">
+      <div class="controlpanel">
         <button if.bind="!adminService.isAdmin" type="button" name="login" click.trigger="login()"><span class="fa fa-unlock-alt"></span></button>
         <button if.bind="adminService.isAdmin" type="button" name="controlpanel" click.trigger="setContentUrl()"><span class="fa fa-wrench"></span></button>
       </div>

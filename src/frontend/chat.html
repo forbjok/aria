@@ -4,15 +4,15 @@
   <require from="./styles/chat.css!"></require>
   <link rel="stylesheet" href="/dist/styles/chat-${theme}.css">
   <div class="chat">
-    <div ref="postContainer" class="postContainer">
+    <div ref="postContainer" class="chat-postcontainer">
       <ul style="list-style-type: none; padding: 0px; margin: 0px;">
         <li class="post" style="" repeat.for="post of posts">
-          <div class="postHeader">
+          <div class="post-header">
             <span class="time">${post.posted | formatTime}</span>
             <span class="name">${post.name}</span>
           </div>
-          <div class="postBody">
-            <div if.bind="post.image" class="image" class.bind="post.showFullImage ? 'expanded' : ''">
+          <div class="post-body">
+            <div if.bind="post.image" class="post-image" class.bind="post.showFullImage ? 'expanded' : ''">
               <a href.bind="post.image.url" click.trigger="$parent.toggleImage(post)">
                 <img class="thumbnail" src.bind="post.image.thumbUrl" title.bind="post.image.originalFilename">
                 <img if.bind="post.showFullImage" class="expanded-image" src.bind="post.image.url">
@@ -25,16 +25,16 @@
       </ul>
     </div>
 
-    <div ref="chatControls" class="chatControls">
+    <div ref="chatControls" class="chatcontrols">
       <form ref="postForm" submit.delegate="submitPost()">
-        <table class="postTable">
+        <table class="chatcontrols-table">
           <tr>
             <td>Name</td>
             <td><input name="name" type="text" value.bind="post.name" placeholder="Anonymous" readonly.bind="posting"></td>
           </tr>
           <tr>
             <td>Comment</td>
-            <td><textarea name="comment" value.bind="post.comment" maxlength="600" class="postMessageTextarea" wrap="soft" readonly.bind="posting" keypress.trigger="submitOnEnterKeypress($event)" autofocus></textarea></td>
+            <td><textarea name="comment" value.bind="post.comment" maxlength="600" class="comment-field" wrap="soft" readonly.bind="posting" keypress.trigger="submitOnEnterKeypress($event)" autofocus></textarea></td>
           </tr>
           <tr>
             <td>Image</td>
@@ -43,7 +43,7 @@
           <tr>
             <td></td>
             <td>
-              <button id="submitButton" type="submit" disabled.bind="!canSubmitPost">${postButtonText}</button>
+              <button id="postbutton" type="submit" disabled.bind="!canSubmitPost">${postButtonText}</button>
               <span class="progress">${postingProgress}</span>
             </td>
           </tr>
