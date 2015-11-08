@@ -16,7 +16,7 @@ let rootDir = path.join(__dirname, "../..");
 let config = {
   port: process.env.PORT || 5000,
   uploadsPath: process.env.UPLOADS_PATH || path.join(rootDir, "uploads"),
-  dataStore: "pg",
+  dataStore: "sequelize",
 };
 
 // Load config file if it is present
