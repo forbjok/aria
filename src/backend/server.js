@@ -16,7 +16,7 @@ let rootDir = path.join(__dirname, "../..");
 let config = {
   port: process.env.PORT || 5000,
   uploadsPath: process.env.UPLOADS_PATH || path.join(rootDir, "uploads"),
-  dataStore: "./stores/postgresql"
+  dataStore: "pg",
 };
 
 // Load config file if it is present
@@ -52,14 +52,15 @@ app.engine("handlebars", exphbs({
 app.set("view engine", "handlebars");
 app.set("views", path.join(__dirname, "views"));
 
-let ariaStore = require(config.dataStore).create();
-
-// Set up chat server
-let roomServer = room.server(app, io, ariaStore, {
+// Set up room server
+let roomStore = room.store(config.dataStore);
+let roomServer = room.server(app, io, roomStore, {
   baseUrl: "/r"
 });
 
-let chatServer = chat.server(app, io, ariaStore, {
+// Set up chat server
+let chatStore = chat.store(config.dataStore);
+let chatServer = chat.server(app, io, chatStore, {
   baseUrl: "/chat",
   imagesPath: imagesPath
 });
