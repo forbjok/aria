@@ -114,11 +114,15 @@ class ChatServer {
       let ioRoomName = this.eventPrefix + name;
       let eventPrefix = this.eventPrefix + name + ":";
 
+      let emit = (event, data) => {
+        io.to(ioRoomName).emit(eventPrefix + event, data);
+      }
+
       let room = new ChatRoom(name, {
         posts: posts,
         onPost: (post) => {
           store.addPost(name, post);
-          io.to(ioRoomName).emit(eventPrefix + "post", this._postToViewModel(post));
+          emit("post", this._postToViewModel(post));
         }
       });
 
@@ -234,6 +238,7 @@ class ChatServer {
           let recentPosts = room.getRecentPosts();
 
           let postEvent = this.eventPrefix + roomName + ":post";
+
           for (let post of recentPosts) {
             socket.emit(postEvent, this._postToViewModel(post));
           }

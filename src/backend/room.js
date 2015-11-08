@@ -62,12 +62,16 @@ class RoomServer {
     let ioRoomName = this.eventPrefix + name;
     let eventPrefix = this.eventPrefix + name + ":";
 
+    let emit = (event, data) => {
+      io.to(ioRoomName).emit(eventPrefix + event, data);
+    }
+
     let room = new Room(name, {
       password: roomInfo.password,
       contentUrl: roomInfo.contentUrl,
       onContentChange: (contentUrl) => {
         store.setContentUrl(name, contentUrl);
-        io.to(ioRoomName).emit(eventPrefix + "content", { url: contentUrl });
+        emit("content", { url: contentUrl });
       }
     });
 
@@ -173,6 +177,7 @@ class RoomServer {
 
           let contentEvent = this.eventPrefix + roomName + ":content";
           let contentUrl = room.getContentUrl();
+
           socket.emit(contentEvent, { url: contentUrl });
         });
       });
