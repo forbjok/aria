@@ -17,6 +17,7 @@ let config = {
   port: process.env.PORT || 5000,
   uploadsPath: process.env.UPLOADS_PATH || path.join(rootDir, "uploads"),
   dataStore: "sequelize",
+  connectionString: process.env.DATABASE_URL || "postgres://aria:aria@localhost/aria"
 };
 
 // Load config file if it is present
@@ -53,13 +54,13 @@ app.set("view engine", "handlebars");
 app.set("views", path.join(__dirname, "views"));
 
 // Set up room server
-let roomStore = room.store(config.dataStore);
+let roomStore = room.store(config.dataStore, config.connectionString);
 let roomServer = room.server(app, io, roomStore, {
   baseUrl: "/r"
 });
 
 // Set up chat server
-let chatStore = chat.store(config.dataStore);
+let chatStore = chat.store(config.dataStore, config.connectionString);
 let chatServer = chat.server(app, io, chatStore, {
   baseUrl: "/chat",
   imagesPath: imagesPath

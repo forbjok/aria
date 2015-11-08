@@ -6,7 +6,7 @@ let models = require("./models");
 
 class SequelizeChatStore {
   constructor(connectionString) {
-    this.connectionString = process.env.DATABASE_URL || connectionString || "postgres://aria:aria@localhost:5432/aria";
+    this.connectionString = connectionString;
 
     this.sequelize = new Sequelize(this.connectionString, {
       define: {
