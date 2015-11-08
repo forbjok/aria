@@ -55,7 +55,9 @@ class ChatServer {
     Object.assign(this, {
       baseUrl: "/chat",
       eventPrefix: "chat:",
-      imagesPath: path.join(__dirname, "images")
+      imagesPath: path.join(__dirname, "images"),
+      thumbSize: 100,
+      thumbBackground: "#D6DAF0",
     }, options);
 
     this.imagesUrl = this.baseUrl + "/images";
@@ -141,6 +143,8 @@ class ChatServer {
     let app = this.app;
     let imagesPath = this.imagesPath;
     let baseUrl = this.baseUrl;
+    let thumbSize = this.thumbSize;
+    let thumbBackground = this.thumbBackground;
 
     // Serve images
     app.use(this.imagesUrl, express.static(this.imagesPath));
@@ -203,10 +207,10 @@ class ChatServer {
         easyimg.resize({
           src: imageFile.path,
           dst: path.join(imagesPath, thumbFilename),
-          width: 100,
-          height: 100,
+          width: thumbSize,
+          height: thumbSize,
           quality: 80,
-          background: "#D6DAF0"
+          background: thumbBackground
         }).then((file) => {
           post.image = {
             filename: filename,
