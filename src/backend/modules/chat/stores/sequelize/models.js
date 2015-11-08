@@ -22,7 +22,7 @@ function createModels(sequelize) {
     name: { type: Sequelize.STRING(100), allowNull: false },
     comment: { type: Sequelize.TEXT, allowNull: false },
     image_id: { type: Sequelize.INTEGER, allowNull: true },
-    ip: { type: Sequelize.STRING(16), allowNull: false }
+    ip: { type: Sequelize.STRING(64), allowNull: false }
   });
 
   Post.belongsTo(Room, { as: "room", foreignKey: "room_id", onDelete: "CASCADE" });
