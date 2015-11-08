@@ -62,6 +62,23 @@ export class ChatCustomElement {
     return true;
   }
 
+  _activatePostingCooldown() {
+    this.postingCooldown = 5;
+    let cooldownInterval = setInterval(() => {
+      this.postingCooldown -= 1;
+
+      if (this.postingCooldown <= 0) {
+        clearInterval(cooldownInterval);
+        this.postingProgress = "";
+
+        if (this.submitOnCooldown) {
+          this.submitOnCooldown = false;
+          this.submitPost();
+        }
+      }
+    }, 1000);
+  }
+
   submitPost() {
     if (!this.canSubmitPost) {
       return;
@@ -110,27 +127,19 @@ export class ChatCustomElement {
       this.clearPost();
 
       // Activate posting cooldown
-      this.postingCooldown = 5;
-      let cooldownInterval = setInterval(() => {
-        this.postingCooldown -= 1;
+      this._activatePostingCooldown();
+    });
 
-        if (this.postingCooldown <= 0) {
-          clearInterval(cooldownInterval);
+    ajaxPost.fail((jqXHR, textStatus, errorThrown) => {
+      // Display the error response from the server
+      this.postingProgress = jqXHR.responseText;
 
-          if (this.submitOnCooldown) {
-            this.submitOnCooldown = false;
-            this.submitPost();
-          }
-        }
-      }, 1000);
+      // Activate posting cooldown
+      this._activatePostingCooldown();
     });
 
     ajaxPost.always(() => {
       this.posting = false;
-
-      setTimeout(() => {
-        this.postingProgress = "";
-      }, 2000);
     });
   }
 

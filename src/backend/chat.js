@@ -6,18 +6,17 @@ let multer = require("multer");
 let easyimg = require("easyimage");
 let moment = require("moment");
 
+let noImageFile = {};
+
+let extensionsByMimetype = {
+  "image/png": ".png",
+  "image/jpeg": ".jpg",
+  "image/gif": ".gif"
+};
+
 // Get file extension based on mimetype
 function getExtensionByMimetype(mimetype) {
-  switch (mimetype) {
-    case "image/png":
-      return ".png";
-    case "image/jpeg":
-      return ".jpg";
-    case "image/gif":
-      return ".gif";
-    default:
-      return "";
-  }
+  return extensionsByMimetype[mimetype] || "";
 }
 
 function stripExtension(filename) {
@@ -159,7 +158,17 @@ class ChatServer {
 
     // Set up multer uploader
     let upload = multer({
-      storage: multerStorage
+      storage: multerStorage,
+      fileFilter: (req, file, cb) => {
+        if (file.mimetype in extensionsByMimetype) {
+          cb(null, true);
+          return;
+        }
+
+        console.log(`File rejected: "${file.originalname}". Unsupported mimetype "${file.mimetype}".`);
+        req.file = noImageFile;
+        cb(null, false);
+      }
     });
 
     let emitPost = (roomName, post) => {
@@ -183,29 +192,32 @@ class ChatServer {
       let imageFile = req.file;
 
       if (imageFile) {
-        if (imageFile.mimetype.match(/^image\//)) {
-          let filename = imageFile.filename;
-          let thumbFilename = "thumb-" + stripExtension(filename) + ".jpg";
-
-          easyimg.resize({
-            src: imageFile.path,
-            dst: path.join(imagesPath, thumbFilename),
-            width: 100,
-            height: 100,
-            quality: 80,
-            background: "#D6DAF0"
-          }).then((file) => {
-            post.image = {
-              filename: filename,
-              thumbnailFilename: thumbFilename,
-              originalFilename: imageFile.originalname
-            }
-
-            emitPost(roomName, post).then(() => {
-              res.send();
-            });
-          });
+        if (imageFile === noImageFile) {
+          res.status(415).send("Unsupported image format");
+          return;
         }
+
+        let filename = imageFile.filename;
+        let thumbFilename = "thumb-" + stripExtension(filename) + ".jpg";
+
+        easyimg.resize({
+          src: imageFile.path,
+          dst: path.join(imagesPath, thumbFilename),
+          width: 100,
+          height: 100,
+          quality: 80,
+          background: "#D6DAF0"
+        }).then((file) => {
+          post.image = {
+            filename: filename,
+            thumbnailFilename: thumbFilename,
+            originalFilename: imageFile.originalname
+          }
+
+          emitPost(roomName, post).then(() => {
+            res.send();
+          });
+        });
       } else {
         emitPost(roomName, post).then(() => {
           res.send();
