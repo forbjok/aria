@@ -6,8 +6,8 @@ let express = require("express");
 let exphbs = require("express-handlebars");
 let socketio = require("socket.io");
 
-let chat = require("./chat");
-let room = require("./room");
+let chat = require("./modules/chat");
+let room = require("./modules/room");
 
 // Root dir
 let rootDir = path.join(__dirname, "../..");
