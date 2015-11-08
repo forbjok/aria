@@ -14,17 +14,26 @@ function generatePassword() {
 }
 
 class SequelizeRoomStore {
-  constructor(connectionString) {
+  constructor(connectionString, options) {
+    Object.assign(this, {
+      schema: "room"
+    }, options);
+
     this.connectionString = connectionString;
 
     this.sequelize = new Sequelize(this.connectionString, {
       define: {
-        timestamps: false
+        timestamps: false,
+        schema: this.schema
       }
     });
 
     this.models = models(this.sequelize);
-    this.sequelize.sync();
+    this.sequelize.createSchema(this.schema)
+    .catch(() => {})
+    .finally(() => {
+      this.sequelize.sync();
+    });
   }
 
   getRoom(roomName) {
@@ -83,8 +92,8 @@ class SequelizeRoomStore {
   }
 }
 
-function create(connectionString) {
-  return new SequelizeRoomStore(connectionString);
+function create(connectionString, options) {
+  return new SequelizeRoomStore(connectionString, options);
 }
 
 module.exports = {

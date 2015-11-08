@@ -97,8 +97,10 @@ class ChatServer {
 
     return this.store.getRoom(name).then((roomInfo) => {
       if (!roomInfo) {
-        console.log(`Chatroom ${name} not found.`);
-        return;
+        console.log(`Chatroom ${name} not found. Creating it.`);
+        return this.store.createRoom(name).then((room) => {
+          return this._createAndReturnRoom(room);
+        });
       }
 
       return this._createAndReturnRoom(roomInfo);

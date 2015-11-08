@@ -5,17 +5,26 @@ let Sequelize = require("sequelize");
 let models = require("./models");
 
 class SequelizeChatStore {
-  constructor(connectionString) {
+  constructor(connectionString, options) {
+    Object.assign(this, {
+      schema: "chat"
+    }, options);
+
     this.connectionString = connectionString;
 
     this.sequelize = new Sequelize(this.connectionString, {
       define: {
-        timestamps: false
+        timestamps: false,
+        schema: this.schema
       }
     });
 
     this.models = models(this.sequelize);
-    this.sequelize.sync();
+    this.sequelize.createSchema(this.schema)
+    .catch(() => {})
+    .finally(() => {
+      this.sequelize.sync();
+    });
   }
 
   _insertImage(image) {
@@ -64,6 +73,17 @@ class SequelizeChatStore {
       }
 
       // Room was found, return it
+      return {
+        name: room.name
+      };
+    });
+  }
+
+  createRoom(roomName) {
+    return this.models.Room.create({
+      name: roomName,
+    })
+    .then((room) => {
       return {
         name: room.name
       };
@@ -137,8 +157,8 @@ class SequelizeChatStore {
   }
 }
 
-function create(connectionString) {
-  return new SequelizeChatStore(connectionString);
+function create(connectionString, options) {
+  return new SequelizeChatStore(connectionString, options);
 }
 
 module.exports = {

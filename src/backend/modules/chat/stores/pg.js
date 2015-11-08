@@ -90,6 +90,21 @@ class PgChatStore {
       });
   }
 
+  createRoom(roomName) {
+    return this._queryRows(
+      "INSERT INTO rooms (name)" +
+      " SELECT $1" +
+      " WHERE NOT EXISTS (SELECT * FROM rooms WHERE name = $1)" +
+      " RETURNING name;",
+      [roomName]).then((rows) => {
+        if (!rows || rows.length === 0) {
+          return;
+        }
+
+        return rows[0];
+      });
+  }
+
   getPosts(roomName, options) {
     options = options || {};
 
