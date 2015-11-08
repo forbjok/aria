@@ -250,6 +250,11 @@ class ChatServer {
         this._getRoom(roomName).then((room) => {
           socket.join(this.eventPrefix + roomName);
 
+          if (!room) {
+            // Room did not exist, return without sending content
+            return;
+          }
+
           console.log(`${ip}: Sending recent posts.`);
           let recentPosts = room.getRecentPosts();
 

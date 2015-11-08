@@ -175,6 +175,11 @@ class RoomServer {
         this._getRoom(roomName).then((room) => {
           socket.join(this.eventPrefix + roomName);
 
+          if (!room) {
+            // Room did not exist, return without sending content
+            return;
+          }
+
           let contentEvent = this.eventPrefix + roomName + ":content";
           let contentUrl = room.getContentUrl();
 
