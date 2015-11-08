@@ -25,8 +25,8 @@ function createModels(sequelize) {
     ip: { type: Sequelize.STRING(16), allowNull: false }
   });
 
-  Post.belongsTo(Room, { as: "room", foreignKey: "room_id" });
-  Post.hasOne(Image, { as: "image", foreignKey: "image_id" });
+  Post.belongsTo(Room, { as: "room", foreignKey: "room_id", onDelete: "CASCADE" });
+  Post.belongsTo(Image, { as: "image", foreignKey: "image_id", onDelete: "SET NULL" });
 
   return {
     Room: Room,

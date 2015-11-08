@@ -15,6 +15,7 @@ class SequelizeChatStore {
     });
 
     this.models = models(this.sequelize);
+    this.sequelize.sync();
   }
 
   _insertImage(image) {

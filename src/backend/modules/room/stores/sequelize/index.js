@@ -24,6 +24,7 @@ class SequelizeRoomStore {
     });
 
     this.models = models(this.sequelize);
+    this.sequelize.sync();
   }
 
   getRoom(roomName) {
