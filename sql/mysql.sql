@@ -14,7 +14,11 @@ CREATE TABLE IF NOT EXISTS `posts` (
   `comment` varchar(2000) NOT NULL,
   `image_id` int(11) DEFAULT NULL,
   `ip` varchar(16) NOT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `fk_posts_rooms` (`room_id`),
+  KEY `fk_posts_images` (`image_id`),
+  CONSTRAINT `fk_posts_images` FOREIGN KEY (`image_id`) REFERENCES `images` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_posts_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `rooms` (
