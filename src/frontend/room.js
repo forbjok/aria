@@ -84,6 +84,11 @@ export class Room {
   setContentUrl() {
     let contentUrl = window.prompt("Enter new content URL:", "");
     if (contentUrl) {
+      if (contentUrl.indexOf(":") === -1) {
+        // No scheme was present - assume HTTP
+        contentUrl = "http://" + contentUrl;
+      }
+
       return this.adminService.setContentUrl(contentUrl);
     }
   }
