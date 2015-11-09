@@ -24,16 +24,16 @@ class Room {
 class RoomServer {
   constructor(app, io, store, options) {
     this.app = app;
-    this.io = io;
     this.store = store;
 
     Object.assign(this, {
       baseUrl: "/r",
-      eventPrefix: "room:"
+      ioNamespace: "/room",
     }, options);
 
     this.rooms = [];
 
+    this.io = io.of(this.ioNamespace);
     this._initialize();
   }
 
@@ -59,19 +59,12 @@ class RoomServer {
     let io = this.io;
     let store = this.store;
 
-    let ioRoomName = this.eventPrefix + name;
-    let eventPrefix = this.eventPrefix + name + ":";
-
-    let emit = (event, data) => {
-      io.to(ioRoomName).emit(eventPrefix + event, data);
-    }
-
     let room = new Room(name, {
       password: roomInfo.password,
       contentUrl: roomInfo.contentUrl,
       onContentChange: (contentUrl) => {
         store.setContentUrl(name, contentUrl);
-        emit("content", { url: contentUrl });
+        io.to(name).emit("content", { url: contentUrl });
       }
     });
 
@@ -164,7 +157,7 @@ class RoomServer {
 
       let roomsJoined = {};
 
-      socket.on(this.eventPrefix + "join", (roomName) => {
+      socket.on("join", (roomName) => {
         if (roomName in roomsJoined) {
           return;
         }
@@ -173,23 +166,22 @@ class RoomServer {
 
         roomsJoined[roomName] = true;
         this._getRoom(roomName).then((room) => {
-          socket.join(this.eventPrefix + roomName);
+          socket.join(roomName);
 
           if (!room) {
             // Room did not exist, return without sending content
             return;
           }
 
-          let contentEvent = this.eventPrefix + roomName + ":content";
           let contentUrl = room.getContentUrl();
 
-          socket.emit(contentEvent, { url: contentUrl });
+          socket.emit("content", { url: contentUrl });
         });
       });
 
-      socket.on(this.eventPrefix + "leave", (roomName) => {
+      socket.on("leave", (roomName) => {
         console.log(`${ip}: Leaving room ${roomName}!`);
-        socket.leave(this.eventPrefix + roomName);
+        socket.leave(roomName);
       });
 
       socket.on("disconnect", () => {

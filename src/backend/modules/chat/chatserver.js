@@ -49,12 +49,11 @@ class ChatRoom {
 class ChatServer {
   constructor(app, io, store, options) {
     this.app = app;
-    this.io = io;
     this.store = store;
 
     Object.assign(this, {
       baseUrl: "/chat",
-      eventPrefix: "chat:",
+      ioNamespace: "/chat",
       imagesPath: path.join(__dirname, "images"),
       thumbSize: 100,
       thumbBackground: "#D6DAF0",
@@ -63,6 +62,7 @@ class ChatServer {
     this.imagesUrl = this.baseUrl + "/images";
     this.rooms = [];
 
+    this.io = io.of(this.ioNamespace);
     this._initialize();
   }
 
@@ -114,18 +114,11 @@ class ChatServer {
 
     // Retrieve recent posts from database
     return store.getPosts(name, { limit: 50 }).then((posts) => {
-      let ioRoomName = this.eventPrefix + name;
-      let eventPrefix = this.eventPrefix + name + ":";
-
-      let emit = (event, data) => {
-        io.to(ioRoomName).emit(eventPrefix + event, data);
-      }
-
       let room = new ChatRoom(name, {
         posts: posts,
         onPost: (post) => {
           store.addPost(name, post);
-          emit("post", this._postToViewModel(post));
+          io.to(name).emit("post", this._postToViewModel(post));
         }
       });
 
@@ -241,7 +234,7 @@ class ChatServer {
 
       let roomsJoined = {};
 
-      socket.on(this.eventPrefix + "join", (roomName) => {
+      socket.on("join", (roomName) => {
         if (roomName in roomsJoined) {
           return;
         }
@@ -250,7 +243,7 @@ class ChatServer {
 
         roomsJoined[roomName] = true;
         this._getRoom(roomName).then((room) => {
-          socket.join(this.eventPrefix + roomName);
+          socket.join(roomName);
 
           if (!room) {
             // Room did not exist, return without sending content
@@ -260,17 +253,15 @@ class ChatServer {
           console.log(`${ip}: Sending recent posts.`);
           let recentPosts = room.getRecentPosts();
 
-          let postEvent = this.eventPrefix + roomName + ":post";
-
           for (let post of recentPosts) {
-            socket.emit(postEvent, this._postToViewModel(post));
+            socket.emit("post", this._postToViewModel(post));
           }
         });
       });
 
-      socket.on(this.eventPrefix + "leave", (roomName) => {
+      socket.on("leave", (roomName) => {
         console.log(`${ip}: Leaving chatroom ${roomName}!`);
-        socket.leave(this.eventPrefix + roomName);
+        socket.leave(roomName);
       });
 
       socket.on("disconnect", () => {

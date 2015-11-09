@@ -1,22 +1,20 @@
 import {bindable, inject} from "aurelia-framework";
 
+import io from "socket.io-client";
 import $ from "jquery";
 import Cookies from "js-cookie";
 import "jq-ajax-progress";
-
-import {SocketService} from "services/socketservice";
 
 import filesize from "filesize";
 
 let maxImageSize = 2097152;
 
-@inject(Element, SocketService)
+@inject(Element)
 export class ChatCustomElement {
   @bindable room;
 
-  constructor(element, socketService) {
+  constructor(element) {
     this.element = element;
-    this.socketService = socketService;
 
     this.posts = [];
     this.themes = [
@@ -144,17 +142,22 @@ export class ChatCustomElement {
   }
 
   bind() {
-    let socket = this.socketService.getSocket();
-    this.socket = socket;
+    /* We have to use this window.location.origin + "/namespace" workaround
+       because of a bug in socket.io causing the port number to be omitted,
+       that's apparently been there for ages and yet still hasn't been fixed
+       in a release. Get your shit together, Socket.io people. */
+    let socket = io(window.location.origin + "/chat", { autoConnect: false });
 
     socket.on("connect", () => {
       this.posts = [];
-      socket.emit("chat:join", this.room);
+      socket.emit("join", this.room);
     });
 
-    socket.on("chat:" + this.room + ":post", (post) => {
+    socket.on("post", (post) => {
       this.posts.push(post);
     });
+
+    socket.connect();
   }
 
   attached() {
@@ -169,9 +172,6 @@ export class ChatCustomElement {
     });
 
     this.clearPost();
-
-    // Connect websocket
-    this.socket.connect();
   }
 
   imageSelected(event) {

@@ -1,15 +1,14 @@
 import {inject} from "aurelia-framework";
 
-import {SocketService} from "services/socketservice";
 import {RoomAdminService} from "./services/roomadminservice";
 
+import io from "socket.io-client";
 import $ from "jquery";
 import Cookies from "js-cookie";
 
-@inject(SocketService, RoomAdminService, "RoomName")
+@inject(RoomAdminService, "RoomName")
 export class Room {
-  constructor(socketService, adminService, roomName) {
-    this.socketService = socketService;
+  constructor(adminService, roomName) {
     this.adminService = adminService;
     this.roomName = roomName;
 
@@ -17,18 +16,21 @@ export class Room {
   }
 
   bind() {
-    let socket = this.socketService.getSocket();
-    this.socket = socket;
+    /* We have to use this window.location.origin + "/namespace" workaround
+       because of a bug in socket.io causing the port number to be omitted,
+       that's apparently been there for ages and yet still hasn't been fixed
+       in a release. Get your shit together, Socket.io people. */
+    let socket = io(window.location.origin + "/room", { autoConnect: false });
 
-    let contentEvent = "room:" + this.roomName + ":content";
+    socket.on("connect", () => {
+      socket.emit("join", this.roomName);
+    });
 
-    socket.on(contentEvent, (content) => {
+    socket.on("content", (content) => {
       this.contentUrl = content.url;
     });
 
-    socket.on("connect", () => {
-      socket.emit("room:join", this.roomName);
-    });
+    socket.connect();
   }
 
   activate() {
@@ -63,9 +65,6 @@ export class Room {
     w.resize(() => {
       resize();
     });
-
-    // Connect websocket
-    this.socket.connect();
   }
 
   login() {
