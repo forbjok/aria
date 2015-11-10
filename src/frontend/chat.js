@@ -24,6 +24,8 @@ export class ChatCustomElement {
     this.theme = Cookies.get("theme") || "dark";
     this.posting = false;
     this.postingCooldown = 0;
+
+    this.post = {};
   }
 
   clearPost() {
