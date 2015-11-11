@@ -1,5 +1,5 @@
 import {inject} from "aurelia-framework";
-import {HttpClient} from "aurelia-http-client";
+import {HttpClient} from "aurelia-fetch-client";
 
 @inject(HttpClient, "RoomName")
 export class RoomAdminService {
@@ -17,8 +17,18 @@ export class RoomAdminService {
       password: password
     };
 
-    return this.http.post(`/r/${this.roomName}/control`, data)
-    .then(response => {
+    return this.http.fetch(`/r/${this.roomName}/control`, {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      }
+    }).then(response => {
+      if (!response.ok) {
+        return false;
+      }
+
       this.isAdmin = true;
       this.password = password;
       return this.isAdmin;
@@ -31,7 +41,14 @@ export class RoomAdminService {
       action: action
     };
 
-    return this.http.post(`/r/${this.roomName}/control`, data);
+    return this.http.fetch(`/r/${this.roomName}/control`, {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      }
+    });
   }
 
   setContentUrl(url) {
