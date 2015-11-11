@@ -74,8 +74,12 @@ export class Room {
     // Set blank content URL to clear content
     this.contentUrl = "";
 
-    // Restore content URL to reload content
-    this.contentUrl = contentUrl;
+    /* The restoration needs to go in a 1 second timeout, because otherwise it
+       doesn't work for some types of content. */
+    setTimeout(() => {
+      // Restore content URL to reload content
+      this.contentUrl = contentUrl;
+    }, 1);
   }
 
   login() {
