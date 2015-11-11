@@ -67,6 +67,17 @@ export class Room {
     });
   }
 
+  reloadContent() {
+    // Store original content URL
+    let contentUrl = this.contentUrl;
+
+    // Set blank content URL to clear content
+    this.contentUrl = "";
+
+    // Restore content URL to reload content
+    this.contentUrl = contentUrl;
+  }
+
   login() {
     let password = window.prompt("What's the password?", "");
     if (password) {

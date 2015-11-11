@@ -41,7 +41,34 @@
     }
   }
 
-  .controlpanel {
+  .contentcontainer {
+    .usercontrols {
+      position: absolute;
+      left: 5px;
+      bottom: 5px;
+
+      opacity: 0;
+
+      .usercontrol {
+        color: #006AFF !important;
+        text-decoration: none !important;
+        font-size: 1.5em;
+
+        &:hover {
+          opacity: 1;
+          color: #3D8EFF !important;
+        }
+      }
+    }
+
+    &:hover {
+      .usercontrols {
+        opacity: 1;
+      }
+    }
+  }
+
+  .admincontrols {
     position: absolute;
     left: 5px;
     top: 5px;
