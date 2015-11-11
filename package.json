@@ -83,7 +83,6 @@
       "aurelia-templating-binding": "github:aurelia/templating-binding@^0.17.0",
       "aurelia-templating-resources": "github:aurelia/templating-resources@^0.17.0",
       "aurelia-templating-router": "github:aurelia/templating-router@^0.18.0",
-      "bootstrap": "github:twbs/bootstrap@^3.3.4",
       "core-js": "npm:core-js@^1.2.6",
       "css": "github:systemjs/plugin-css@^0.1.19",
       "fetch": "github:github/fetch@^0.10.1",
