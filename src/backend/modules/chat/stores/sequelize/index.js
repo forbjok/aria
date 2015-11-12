@@ -33,9 +33,7 @@ class SequelizeChatStore {
       thumbnail_filename: image.thumbnailFilename,
       original_filename: image.originalFilename
     }).then((dbImage) => {
-      return dbImage.save().then(() => {
-        return dbImage.id;
-      });
+      return dbImage;
     });
   }
 
@@ -56,7 +54,7 @@ class SequelizeChatStore {
         image_id: imageId,
         ip: post.ip
       }).then((dbPost) => {
-        return dbPost.id;
+        return dbPost;
       });
     });
   }
@@ -104,7 +102,13 @@ class SequelizeChatStore {
       let query = {
         where: {
           room_id: roomId
-        }
+        },
+        include: [
+          { model: this.models.Image, as: "image" }
+        ],
+        order: [
+          ["id", "DESC"]
+        ]
       };
 
       // If a limits option was specified, add it to the query
@@ -126,15 +130,19 @@ class SequelizeChatStore {
             ip: row.ip
           };
 
-          if (row.filename) {
+          let dbImage = row.image;
+          if (dbImage) {
             post.image = {
-              filename: row.filename,
-              thumbnailFilename: row.thumbnail_filename,
-              originalFilename: row.original_filename
+              filename: dbImage.filename,
+              thumbnailFilename: dbImage.thumbnail_filename,
+              originalFilename: dbImage.original_filename
             };
           }
 
-          posts.push(post);
+          /* Because we are receiving the posts in DESCENDING order,
+             add each post to the beginning of the array instead of The
+             end in order for posts to come out in the correct order. */
+          posts.unshift(post);
         }
 
         return posts;
