@@ -7,8 +7,10 @@
     </div>
     <div ref="contentContainer" id="contentcontainer" class="contentcontainer">
       <iframe width="100%" height="100%" src.bind="contentUrl" allowfullscreen webkitallowfullscreen scrolling="no" frameborder="0"></iframe>
-      <div class="usercontrols">
-        <a href="#" class="usercontrol" title="Reload" click.trigger="reloadContent()"><span class="fa fa-refresh"></span></a>
+      <div class="usercontrols-activationzone">
+        <div class="usercontrols">
+          <a href="#" class="usercontrol" title="Reload" click.trigger="reloadContent()"><span class="fa fa-refresh"></span></a>
+        </div>
       </div>
       <div class="admincontrols">
         <button if.bind="!adminService.isAdmin" type="button" name="login" click.trigger="login()"><span class="fa fa-unlock-alt"></span></button>
