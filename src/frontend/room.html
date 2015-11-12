@@ -1,7 +1,7 @@
 <template>
   <require from="chat"></require>
   <require from="./styles/room.css!"></require>
-  <div class="room">
+  <div ref="room" class="room">
     <div ref="chatContainer" id="chatcontainer" class="chatcontainer">
       <chat room.bind="roomName" socket.bind="socket"></chat>
     </div>
@@ -10,6 +10,7 @@
       <div class="usercontrols-activationzone">
         <div class="usercontrols">
           <a href="#" class="usercontrol" title="Reload" click.trigger="reloadContent()"><span class="fa fa-refresh"></span></a>
+          <a href="#" class="usercontrol" title="Fullscreen" click.trigger="toggleFullscreen()"><span class="fa fa-television"></span></a>
         </div>
       </div>
       <div class="admincontrols">

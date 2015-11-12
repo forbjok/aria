@@ -1,5 +1,6 @@
 import {inject} from "aurelia-framework";
 
+import fullscreenUtils from "./utils/fullscreen";
 import {RoomAdminService} from "./services/roomadminservice";
 
 import io from "socket.io-client";
@@ -80,6 +81,14 @@ export class Room {
       // Restore content URL to reload content
       this.contentUrl = contentUrl;
     }, 1);
+  }
+
+  toggleFullscreen() {
+    if (!fullscreenUtils.isInFullscreen()) {
+      fullscreenUtils.requestFullscreen(this.room);
+    } else {
+      fullscreenUtils.exitFullscreen();
+    }
   }
 
   login() {
