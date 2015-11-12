@@ -165,7 +165,7 @@ export class ChatCustomElement {
   attached() {
     let resizeChatControls = () => {
       $(this.postContainer).css("bottom", $(this.chatControls).height() + 4);
-    }
+    };
 
     resizeChatControls();
 

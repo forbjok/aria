@@ -3,13 +3,13 @@ let exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen ||
 
 function requestFullscreen(e) {
   if (e.requestFullscreen) {
-  	e.requestFullscreen();
+    e.requestFullscreen();
   } else if (e.webkitRequestFullscreen) {
-  	e.webkitRequestFullscreen();
+    e.webkitRequestFullscreen();
   } else if (e.mozRequestFullScreen) {
-  	e.mozRequestFullScreen();
+    e.mozRequestFullScreen();
   } else if (e.msRequestFullscreen) {
-  	e.msRequestFullscreen();
+    e.msRequestFullscreen();
   }
 }
 
