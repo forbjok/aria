@@ -1,5 +1,5 @@
 import {inject} from "aurelia-framework";
-import {HttpClient} from "aurelia-http-client";
+import {HttpClient} from "aurelia-fetch-client";
 
 import Cookies from "js-cookie";
 
@@ -11,15 +11,22 @@ export class Claim {
   }
 
   claim() {
-    this.http.post(`/r/${this.roomName}/claim`)
-    .then(response => {
-      this.claimInfo = response.content;
+    return this.http.fetch(`/r/${this.roomName}/claim`, {
+      method: "POST",
+      headers: {
+        "Accept": "application/json"
+      }
+    }).then(response => {
+      if (!response.ok) {
+        this.claimError = response.statusText;
+      }
 
-      // Set password cookie
-      Cookies.set("password", this.claimInfo.password, { path: window.location.pathname });
-    })
-    .catch(error => {
-      this.claimError = "Error";
+      response.json().then((data) => {
+        this.claimInfo = data;
+
+        // Set password cookie
+        Cookies.set("password", this.claimInfo.password, { path: window.location.pathname });
+      });
     });
   }
 
