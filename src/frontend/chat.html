@@ -2,9 +2,10 @@
   <require from="./valueconverters/formattime"></require>
   <require from="./valueconverters/formatpost"></require>
   <require from="./styles/chat.css!"></require>
+  <require from="./attributes/autoscrolling"></require>
   <link rel="stylesheet" href="/dist/styles/chat-${theme}.css">
   <div class="chat">
-    <div ref="postContainer" class="chat-postcontainer">
+    <div ref="postContainer" class="chat-postcontainer" autoscrolling>
       <ul style="list-style-type: none; padding: 0px; margin: 0px;">
         <li class="post" style="" repeat.for="post of posts">
           <div class="post-header">
