@@ -76,6 +76,13 @@ export class AutoscrollingCustomAttribute {
   }
 
   attached() {
-    this._scrollToBottom();
+    /* Brute-force fix for the issue of not scrolling all the way
+       to the bottom due to images not necessarily being fully loaded
+       when this runs. Not an optimal way, but since I haven't been able
+       to find any way to detect when all images are fully loaded,
+       it will have to do until a better solution is found. */
+    setInterval(() => {
+      this._scrollToBottom();
+    }, 2000);
   }
 }
