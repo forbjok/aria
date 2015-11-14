@@ -35,46 +35,31 @@ export class AutoscrollingCustomAttribute {
     let e = this.element;
 
     this._scrollToBottom = debounce(() => {
-      e.scrollTop = e.scrollHeight;
-    }, 100);
-
-    this._observerCallback = debounce(() => {
       if (me.trackBottom) {
-        me._scrollToBottom();
+        e.scrollTop = e.scrollHeight;
       }
     }, 100);
 
-    this._onScroll = debounce((event) => {
+    this._observerCallback = () => {
+      me._scrollToBottom();
+    };
+
+    this._onUserScroll = (event) => {
       if ((e.scrollHeight - e.scrollTop) === e.clientHeight) {
         me.trackBottom = true;
       } else {
         me.trackBottom = false;
       }
-    }, 500);
+    };
 
-    let isResizing = false;
-    let resizingTrackBottom;
-
-    let onWindowResizeEnding = debounce(() => {
-      isResizing = false;
-
-      if (resizingTrackBottom) {
-        me._scrollToBottom();
-      }
-    }, 500);
-
-    this._onWindowResize = (event) => {
-      if (!isResizing) {
-        isResizing = true;
-        resizingTrackBottom = me.trackBottom;
-      }
-
-      onWindowResizeEnding();
+    this._onWindowResize = () => {
+      me._scrollToBottom();
     };
   }
 
   bind() {
-    this.element.addEventListener("scroll", this._onScroll);
+    this.element.addEventListener("wheel", this._onUserScroll);
+    this.element.addEventListener("touchmove", this._onUserScroll);
     window.addEventListener("resize", this._onWindowResize);
 
     this.observer.observe(this.element, {
@@ -84,7 +69,8 @@ export class AutoscrollingCustomAttribute {
   }
 
   unbind() {
-    this.element.removeEventListener("scroll", this._onScroll);
+    this.element.removeEventListener("wheel", this._onUserScroll);
+    this.element.removeEventListener("touchmove", this._onUserScroll);
     window.removeEventListener("resize", this._onWindowResize);
     this.observer.disconnect();
   }
