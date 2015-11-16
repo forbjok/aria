@@ -8,8 +8,8 @@
       <ul style="list-style-type: none; padding: 0px; margin: 0px;">
         <li class="post" style="" repeat.for="post of posts">
           <div class="post-header">
-            <span class="time">${post.posted | formatTime}</span>
             <span class="name">${post.name}</span>
+            <span class="time">${post.posted | formatTime & signal:"update-time"}</span>
           </div>
           <div class="post-body">
             <div if.bind="post.image" class="post-image" class.bind="post.showFullImage ? 'expanded' : ''">

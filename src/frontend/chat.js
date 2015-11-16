@@ -1,4 +1,5 @@
 import {bindable, inject} from "aurelia-framework";
+import {BindingSignaler} from "aurelia-templating-resources";
 
 import io from "socket.io-client";
 import $ from "jquery";
@@ -9,12 +10,15 @@ import filesize from "filesize";
 
 let maxImageSize = 2097152;
 
-@inject(Element)
+@inject(Element, BindingSignaler)
 export class ChatCustomElement {
   @bindable room;
 
-  constructor(element) {
+  constructor(element, signaler) {
     this.element = element;
+
+    // Update post times once a minute
+    setInterval(() => signaler.signal("update-time"), 60000);
 
     this.posts = [];
     this.themes = [
