@@ -1,23 +1,14 @@
 {
-  "name": "aurelia-skeleton-navigation",
-  "version": "0.20.0",
-  "description": "A starter kit for building a standard navigation-style app with Aurelia.",
+  "name": "aria",
+  "version": "0.0.1",
+  "description": "An imageboard-like chat",
+  "main": "src/backend/main.js",
   "keywords": [
-    "aurelia",
-    "navigation",
-    "skeleton"
+    "imageboard",
+    "chat"
   ],
-  "homepage": "http://aurelia.io",
-  "bugs": {
-    "url": "https://github.com/aurelia/skeleton-navigation/issues"
-  },
-  "license": "CC0-1.0",
-  "author": "Rob Eisenberg <rob@bluespire.com> (http://robeisenberg.com/)",
-  "main": "dist/main.js",
-  "repository": {
-    "type": "git",
-    "url": "http://github.com/aurelia/skeleton-navigation"
-  },
+  "license": "MIT",
+  "author": "Forb.Jok <forbjok@gmail.com>",
   "scripts": {
     "test": "gulp test",
     "e2e": "gulp serve e2e"
@@ -39,18 +30,7 @@
     "gulp-less": "^3.0.5",
     "gulp-notify": "^2.2.0",
     "gulp-plumber": "^1.0.1",
-    "gulp-protractor": "^0.0.12",
     "gulp-sourcemaps": "^1.3.0",
-    "gulp-yuidoc": "^0.1.2",
-    "isparta": "^3.1.0",
-    "istanbul": "gotwarlost/istanbul#source-map",
-    "jasmine-core": "^2.1.3",
-    "karma": "^0.12.28",
-    "karma-babel-preprocessor": "^5.2.1",
-    "karma-chrome-launcher": "^0.1.7",
-    "karma-coverage": "douglasduteil/karma-coverage#next",
-    "karma-jasmine": "^0.3.5",
-    "karma-jspm": "2.0.1-beta.2",
     "object.assign": "^4.0.3",
     "require-dir": "^0.3.0",
     "run-sequence": "^1.0.2",
