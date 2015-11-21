@@ -142,7 +142,7 @@ class ChatServer {
     let thumbBackground = this.thumbBackground;
 
     // Serve images
-    app.use(this.imagesUrl, express.static(this.imagesPath));
+    app.use(this.imagesUrl, express.static(this.imagesPath, { maxAge: "1 hour" }));
 
     // Set up multer storage for uploaded images
     let multerStorage = multer.diskStorage({
