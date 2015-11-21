@@ -6,7 +6,9 @@
       <chat room.bind="roomName" socket.bind="socket"></chat>
     </div>
     <div ref="contentContainer" id="contentcontainer" class="contentcontainer">
-      <iframe width="100%" height="100%" src.bind="contentUrl" allowfullscreen webkitallowfullscreen scrolling="no" frameborder="0"></iframe>
+      <object width="100%" height="100%" data.bind="contentUrl">
+        <div class="unsupported-content">Your browser does not support this type of embedded content. You may need to install Flash Player or a similar plugin for your browser.</div>
+      </object>
       <div class="usercontrols-activationzone">
         <div class="usercontrols">
           <a href="#" class="usercontrol" title="Reload" click.trigger="reloadContent()"><span class="fa fa-refresh"></span></a>
