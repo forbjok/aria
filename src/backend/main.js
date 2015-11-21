@@ -53,6 +53,15 @@ app.engine("handlebars", exphbs({
 app.set("view engine", "handlebars");
 app.set("views", path.join(__dirname, "views"));
 
+function vary() {
+  return (req, res, next) => {
+    res.header("Vary", "Accept-Encoding");
+    next();
+  }
+}
+
+app.use(vary())
+
 // Set up room server
 let roomStore = room.store(config.dataStore, config.connectionString);
 let roomServer = room.server(app, io, roomStore, {
