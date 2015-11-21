@@ -6,6 +6,8 @@ let express = require("express");
 let exphbs = require("express-handlebars");
 let socketio = require("socket.io");
 
+let vary = require("./middlewares/vary");
+
 let chat = require("./modules/chat");
 let room = require("./modules/room");
 
@@ -39,6 +41,9 @@ let io = socketio(server);
 app.set("port", config.port);
 app.enable("trust proxy"); // Required for req.ip to work correctly behind a proxy
 
+// Add middlewares
+app.use(vary())
+
 // Serve static shit
 app.use("/dist", express.static(path.join(rootDir, "dist"), { maxAge: "1 minute" }));
 app.use("/jspm_packages", express.static(path.join(rootDir, "jspm_packages"), { maxAge: "1 minute" }));
@@ -52,15 +57,6 @@ app.engine("handlebars", exphbs({
 
 app.set("view engine", "handlebars");
 app.set("views", path.join(__dirname, "views"));
-
-function vary() {
-  return (req, res, next) => {
-    res.header("Vary", "Accept-Encoding");
-    next();
-  }
-}
-
-app.use(vary())
 
 // Set up room server
 let roomStore = room.store(config.dataStore, config.connectionString);
