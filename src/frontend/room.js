@@ -1,16 +1,14 @@
 import {inject} from "aurelia-framework";
 
 import fullscreenUtils from "./utils/fullscreen";
-import {RoomAdminService} from "./services/roomadminservice";
 
 import io from "socket.io-client";
 import $ from "jquery";
 import Cookies from "js-cookie";
 
-@inject(RoomAdminService, "RoomName")
+@inject("RoomName")
 export class Room {
-  constructor(adminService, roomName) {
-    this.adminService = adminService;
+  constructor(roomName) {
     this.roomName = roomName;
   }
 
@@ -30,13 +28,6 @@ export class Room {
     });
 
     socket.connect();
-  }
-
-  activate() {
-    let password = Cookies.get("password");
-    if (password) {
-      return this.adminService.login(password);
-    }
   }
 
   attached() {
@@ -83,29 +74,7 @@ export class Room {
     }
   }
 
-  login() {
-    let password = window.prompt("What's the password?", "");
-    if (password) {
-      return this.adminService.login(password)
-      .then(() => {
-        // Set password cookie
-        Cookies.set("password", password, { path: window.location.pathname });
-      })
-      .catch(() => {
-        window.alert("Nope, that's not it.");
-      });
-    }
-  }
-
-  setContentUrl() {
-    let contentUrl = window.prompt("Enter new content URL:", "");
-    if (contentUrl) {
-      if (contentUrl.indexOf(":") === -1) {
-        // No scheme was present - assume HTTP
-        contentUrl = "http://" + contentUrl;
-      }
-
-      return this.adminService.setContentUrl(contentUrl);
-    }
+  toggleRoomControls() {
+    this.showRoomControls = !this.showRoomControls;
   }
 }

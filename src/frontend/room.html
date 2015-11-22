@@ -1,5 +1,6 @@
 <template>
   <require from="./chat"></require>
+  <require from="./roomcontrols"></require>
   <require from="./styles/room.css!"></require>
   <div ref="room" class="room">
     <div ref="chatContainer" id="chatcontainer" class="chatcontainer">
@@ -18,8 +19,11 @@
         </div>
       </div>
       <div class="admincontrols">
-        <button if.bind="!adminService.isAdmin" type="button" name="login" click.trigger="login()"><span class="fa fa-unlock-alt"></span></button>
-        <button if.bind="adminService.isAdmin" type="button" name="controlpanel" click.trigger="setContentUrl()"><span class="fa fa-wrench"></span></button>
+        <button type="button" name="controlpanel" click.trigger="toggleRoomControls()"><span class="fa fa-wrench"></span></button>
+      </div>
+      <div if.bind="showRoomControls" class="roomcontrols-container">
+        <div class="overlay" click.trigger="toggleRoomControls()"></div>
+        <room-controls class="dialog"></room-controls>
       </div>
     </div>
   </div>
