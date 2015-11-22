@@ -12,8 +12,6 @@ export class Room {
   constructor(adminService, roomName) {
     this.adminService = adminService;
     this.roomName = roomName;
-
-    this.contentUrl = "about:blank";
   }
 
   bind() {
@@ -28,7 +26,7 @@ export class Room {
     });
 
     socket.on("content", (content) => {
-      this.contentUrl = content.url;
+      this._setContent(content.url);
     });
 
     socket.connect();
@@ -68,19 +66,13 @@ export class Room {
     });
   }
 
+  _setContent(url) {
+    this.contentUrl = url;
+    this.embeddedContent = [url];
+  }
+
   reloadContent() {
-    // Store original content URL
-    let contentUrl = this.contentUrl;
-
-    // Set blank content URL to clear content
-    this.contentUrl = null;
-
-    /* The restoration needs to go in a 1 second timeout, because otherwise it
-       doesn't work for some types of content. */
-    setTimeout(() => {
-      // Restore content URL to reload content
-      this.contentUrl = contentUrl;
-    }, 1);
+    this._setContent(this.contentUrl);
   }
 
   toggleFullscreen() {
