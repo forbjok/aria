@@ -1,4 +1,4 @@
-import {bindable, inject} from "aurelia-framework";
+import {bindable, inject, computedFrom} from "aurelia-framework";
 
 import io from "socket.io-client";
 import $ from "jquery";
@@ -26,12 +26,13 @@ export class ChatCustomElement {
     this.postingCooldown = 0;
 
     this.post = {};
+    this.useCompactPostForm = false;
   }
 
   clearPost() {
     this.postForm.reset();
     this.post = {
-      name: Cookies.get("post_name"),
+      name: Cookies.get("post_name") || "",
       comment: ""
     };
   }
@@ -162,16 +163,12 @@ export class ChatCustomElement {
     socket.connect();
   }
 
+  _resizeChatControls() {
+    $(this.postContainer).css("bottom", $(this.chatControls).height() + 4);
+  }
+
   attached() {
-    let resizeChatControls = () => {
-      $(this.postContainer).css("bottom", $(this.chatControls).height() + 4);
-    };
-
-    resizeChatControls();
-
-    $(this.chatControls).resize(() => {
-      resizeChatControls();
-    });
+    this._resizeChatControls();
 
     this.clearPost();
   }
@@ -186,6 +183,14 @@ export class ChatCustomElement {
 
   themeSelected() {
     Cookies.set("theme", this.theme, { path: "/" });
+  }
+
+  toggleCompactPostForm() {
+    this.useCompactPostForm = !this.useCompactPostForm;
+
+    setInterval(() => {
+      this._resizeChatControls();
+    }, 1);
   }
 
   toggleImage(post) {
@@ -211,7 +216,8 @@ export class ChatCustomElement {
     return true;
   }
 
-  get postButtonText() {
+  @computedFrom("postingCooldown", "submitOnCooldown")
+  get postingCooldownText() {
     if (this.postingCooldown > 0) {
       if (this.submitOnCooldown) {
         return `Auto (${this.postingCooldown})`;
@@ -219,7 +225,5 @@ export class ChatCustomElement {
 
       return `${this.postingCooldown}`;
     }
-
-    return "Post";
   }
 }
