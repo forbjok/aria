@@ -23,6 +23,8 @@
           </div>
         </li>
       </ul>
+      <!-- This is part of a workaround for a bug in Chrome causing it to not correctly recalculate the post container layout when the posting form is resized -->
+      <div if.bind="triggerPostLayout" class="after-posts"></div>
     </div>
 
     <div ref="chatControls" class="chatcontrols">

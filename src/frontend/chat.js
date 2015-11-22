@@ -165,6 +165,7 @@ export class ChatCustomElement {
 
   _resizeChatControls() {
     $(this.postContainer).css("bottom", $(this.chatControls).height() + 4);
+    this._triggerPostLayout();
   }
 
   attached() {
@@ -225,5 +226,19 @@ export class ChatCustomElement {
 
       return `${this.postingCooldown}`;
     }
+  }
+
+  /* The purpose of this function is to work around a bug in Chrome that
+     causes it to not recalculate the layout of posts when the posting
+     form is resized. In order to force this, we set "triggerPostLayout"
+     to true briefly before resetting it to false. Because it is bound to
+     an empty div at the end of the post-container with if.bind, it will
+     trigger a layout update. */
+  _triggerPostLayout() {
+    this.triggerPostLayout = true;
+
+    setInterval(() => {
+      this.triggerPostLayout = false;
+    }, 100);
   }
 }
