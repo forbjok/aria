@@ -3,8 +3,17 @@
   <div if.bind="initialized" class="roomcontrols">
     <div if.bind="!authorized" class="login">
       <form class="login-form" submit.delegate="login()">
-        <input type="password" name="password" value.bind="password" autofocus>
-        <button type="submit" name="submit">Log in</button>
+        <table>
+          <tr>
+            <td>Password</td>
+            <td>
+              <input type="password" name="password" value.bind="password">
+            </td>
+            <td>
+              <button type="submit" name="submit"><span class="fa fa-unlock"></span></button>
+            </td>
+          </tr>
+        </table>
       </form>
       <div class="login-error">${loginError}</div>
     </div>
@@ -15,7 +24,7 @@
             <tr>
               <td>Content URL</td>
               <td>
-                <input type="text" name="url" value.bind="contentUrl" autofocus>
+                <input type="text" name="url" value.bind="contentUrl">
               </td>
               <td>
                 <button type="submit" name="submit">Set</button>

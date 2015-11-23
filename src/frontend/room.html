@@ -21,10 +21,10 @@
       <div class="admincontrols">
         <button type="button" name="controlpanel" click.trigger="toggleRoomControls()"><span class="fa fa-wrench"></span></button>
       </div>
-      <div if.bind="showRoomControls" class="roomcontrols-container">
-        <div class="overlay" click.trigger="toggleRoomControls()"></div>
-        <room-controls class="dialog"></room-controls>
-      </div>
+    </div>
+    <div if.bind="showRoomControls" class="roomcontrols-container">
+      <div class="overlay" click.trigger="toggleRoomControls()"></div>
+      <room-controls class="dialog"></room-controls>
     </div>
   </div>
 </template>
