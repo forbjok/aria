@@ -7,21 +7,24 @@ import "jq-ajax-progress";
 
 import filesize from "filesize";
 
+import {LocalRoomSettingsService} from "./services/localroomsettingsservice";
+
 let maxImageSize = 2097152;
 
-@inject(Element)
+@inject(Element, LocalRoomSettingsService)
 export class ChatCustomElement {
   @bindable room;
 
-  constructor(element) {
+  constructor(element, settings) {
     this.element = element;
+    this.settings = settings;
 
     this.posts = [];
     this.themes = [
       { name: "dark", description: "Dark" },
       { name: "yotsubab", description: "Yotsuba B" }
     ];
-    this.theme = Cookies.get("theme") || "dark";
+    this.theme = this.settings.get("chat_theme") || "dark";
     this.posting = false;
     this.postingCooldown = 0;
 
@@ -32,7 +35,7 @@ export class ChatCustomElement {
   clearPost() {
     this.postForm.reset();
     this.post = {
-      name: Cookies.get("post_name") || "",
+      name: this.settings.get("chat_name") || "",
       comment: ""
     };
   }
@@ -105,7 +108,7 @@ export class ChatCustomElement {
     this.posting = true;
 
     // Save name in cookie
-    Cookies.set("post_name", this.post.name, { path: window.location.pathname });
+    this.settings.set("chat_name", this.post.name);
 
     let ajaxPost = $.ajax(this.postUrl, {
       method: "POST",
@@ -183,7 +186,7 @@ export class ChatCustomElement {
   }
 
   themeSelected() {
-    Cookies.set("theme", this.theme, { path: "/" });
+    this.settings.set("chat_theme", this.theme);
   }
 
   toggleCompactPostForm() {

@@ -4,7 +4,6 @@ import fullscreenUtils from "./utils/fullscreen";
 
 import io from "socket.io-client";
 import $ from "jquery";
-import Cookies from "js-cookie";
 
 @inject("RoomName")
 export class Room {
