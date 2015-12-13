@@ -5,6 +5,7 @@ let express = require("express");
 let multer = require("multer");
 let easyimg = require("easyimage");
 let moment = require("moment");
+let xssFilters = require("xss-filters");
 
 let noImageFile = {};
 
@@ -71,7 +72,7 @@ class ChatServer {
     let vm = {
       posted: post.posted,
       name: post.name,
-      comment: post.comment
+      comment: xssFilters.inHTMLData(post.comment)
     };
 
     if (post.image) {
