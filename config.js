@@ -49,6 +49,7 @@ System.config({
     "moment": "github:moment/moment@2.10.6",
     "socket.io-client": "github:socketio/socket.io-client@1.3.7",
     "text": "github:systemjs/plugin-text@0.0.3",
+    "xss-filters": "npm:xss-filters@1.2.6",
     "github:jspm/nodelibs-assert@0.1.0": {
       "assert": "npm:assert@1.3.0"
     },
