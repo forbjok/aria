@@ -2,16 +2,16 @@ import {inject} from "aurelia-framework";
 import {HttpClient} from "aurelia-fetch-client";
 import "fetch";
 
-import {LocalRoomSettingsService} from "./localroomsettingsservice";
+import {LocalRoomAuthService} from "./localroomauthservice";
 
-@inject(HttpClient, LocalRoomSettingsService, "RoomName")
+@inject(HttpClient, LocalRoomAuthService, "RoomName")
 export class RoomAdminService {
-  constructor(http, settings, roomName) {
+  constructor(http, auth, roomName) {
     this.http = http;
-    this.settings = settings;
+    this.auth = auth;
     this.roomName = roomName;
 
-    this.token = this.settings.get("token");
+    this.token = auth.get();
   }
 
   getLoginStatus() {
@@ -52,7 +52,7 @@ export class RoomAdminService {
 
       return response.json().then((res) => {
         this.token = res.token;
-        this.settings.set("token", this.token);
+        this.auth.set(this.token);
 
         this.isAdmin = true;
         return this.isAdmin;

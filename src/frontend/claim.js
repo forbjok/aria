@@ -2,13 +2,13 @@ import {inject} from "aurelia-framework";
 import {HttpClient} from "aurelia-fetch-client";
 import "fetch";
 
-import {LocalRoomSettingsService} from "./services/localroomsettingsservice";
+import {LocalRoomAuthService} from "./services/localroomauthservice";
 
-@inject(HttpClient, LocalRoomSettingsService, "RoomName")
+@inject(HttpClient, LocalRoomAuthService, "RoomName")
 export class Claim {
-  constructor(http, settings, roomName) {
+  constructor(http, auth, roomName) {
     this.http = http;
-    this.settings = settings;
+    this.auth = auth;
     this.roomName = roomName;
   }
 
@@ -25,7 +25,7 @@ export class Claim {
 
       response.json().then((data) => {
         this.claimInfo = data;
-        this.settings.set("token", data.token);
+        this.auth.set(data.token);
       });
     });
   }
