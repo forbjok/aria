@@ -1,6 +1,9 @@
 "use strict";
 
 let bodyParser = require("body-parser");
+let jwt = require("jsonwebtoken");
+let expressjwt = require("express-jwt");
+let ms = require("ms");
 
 class Room {
   constructor(name, options) {
@@ -89,6 +92,12 @@ class RoomServer {
     let app = this.app;
     let baseUrl = this.baseUrl;
 
+    let jwtmw = expressjwt({
+      secret: "sekrit"
+    });
+
+    let jsonBodyParser = bodyParser.json();
+
     app.get(`${baseUrl}/:room`, (req, res) => {
       let roomName = req.params.room;
 
@@ -108,6 +117,39 @@ class RoomServer {
       });
     });
 
+    let createToken = (roomName) => {
+      let payload = {
+        room: roomName
+      };
+
+      let token = jwt.sign(payload, "sekrit", {
+        expiresIn: "7 days"
+      });
+
+      return token;
+    };
+
+    app.post(`${baseUrl}/:room/login`, jsonBodyParser, (req, res) => {
+      let roomName = req.params.room;
+
+      this._getRoom(roomName).then((room) => {
+        let data = req.body;
+
+        if (data.password !== room.password) {
+          res.status(403).send("You are not authorized.");
+          return;
+        }
+
+        res.send({
+          token: createToken(roomName)
+        });
+      });
+    });
+
+    app.post(`${baseUrl}/:room/loggedin`, jwtmw, (req, res) => {
+      res.send();
+    });
+
     app.post(`${baseUrl}/:room/claim`, (req, res) => {
       let roomName = req.params.room;
 
@@ -119,20 +161,20 @@ class RoomServer {
           return;
         }
 
-        res.send(claimInfo);
+        res.send(Object.assign({
+          token: createToken(roomName)
+        }, claimInfo));
       });
     });
 
-    app.post(`${baseUrl}/:room/control`, bodyParser.json(), (req, res) => {
+    app.post(`${baseUrl}/:room/control`,
+      jwtmw,
+      jsonBodyParser,
+      (req, res) => {
       let roomName = req.params.room;
 
       this._getRoom(roomName).then((room) => {
         let data = req.body;
-
-        if (data.password !== room.password) {
-          res.status(403).send("You are not authorized.");
-          return;
-        }
 
         let action = data.action;
         if (action) {

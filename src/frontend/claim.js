@@ -2,12 +2,13 @@ import {inject} from "aurelia-framework";
 import {HttpClient} from "aurelia-fetch-client";
 import "fetch";
 
-import Cookies from "js-cookie";
+import {LocalRoomSettingsService} from "./services/localroomsettingsservice";
 
-@inject(HttpClient, "RoomName")
+@inject(HttpClient, LocalRoomSettingsService, "RoomName")
 export class Claim {
-  constructor(http, roomName) {
+  constructor(http, settings, roomName) {
     this.http = http;
+    this.settings = settings;
     this.roomName = roomName;
   }
 
@@ -17,16 +18,14 @@ export class Claim {
       headers: {
         "Accept": "application/json"
       }
-    }).then(response => {
+    }).then((response) => {
       if (!response.ok) {
         this.claimError = response.statusText;
       }
 
       response.json().then((data) => {
         this.claimInfo = data;
-
-        // Set password cookie
-        Cookies.set("password", this.claimInfo.password, { path: window.location.pathname });
+        this.settings.set("token", data.token);
       });
     });
   }

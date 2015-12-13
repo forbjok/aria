@@ -2,7 +2,6 @@ import {bindable, inject, computedFrom} from "aurelia-framework";
 
 import io from "socket.io-client";
 import $ from "jquery";
-import Cookies from "js-cookie";
 import "jq-ajax-progress";
 
 import filesize from "filesize";

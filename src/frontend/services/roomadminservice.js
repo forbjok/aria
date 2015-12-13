@@ -2,43 +2,66 @@ import {inject} from "aurelia-framework";
 import {HttpClient} from "aurelia-fetch-client";
 import "fetch";
 
-@inject(HttpClient, "RoomName")
+import {LocalRoomSettingsService} from "./localroomsettingsservice";
+
+@inject(HttpClient, LocalRoomSettingsService, "RoomName")
 export class RoomAdminService {
-  constructor(http, roomName) {
+  constructor(http, settings, roomName) {
     this.http = http;
+    this.settings = settings;
     this.roomName = roomName;
+
+    this.token = this.settings.get("token");
   }
 
-  login(password) {
-    if (this.password) {
-      return Promise.resolve(this.isAdmin);
-    }
-
-    let data = {
-      password: password
-    };
-
-    return this.http.fetch(`/r/${this.roomName}/control`, {
+  getLoginStatus() {
+    return this.http.fetch(`/r/${this.roomName}/loggedin`, {
       method: "POST",
-      body: JSON.stringify(data),
       headers: {
         "Accept": "application/json",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${this.token}`
       }
-    }).then(response => {
+    }).then((response) => {
       if (!response.ok) {
         return false;
       }
 
       this.isAdmin = true;
-      this.password = password;
       return this.isAdmin;
+    });
+  }
+
+  login(password) {
+    let data = {
+      password: password
+    };
+
+    return this.http.fetch(`/r/${this.roomName}/login`, {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${this.token}`
+      }
+    }).then((response) => {
+      if (!response.ok) {
+        return false;
+      }
+
+      return response.json().then((res) => {
+        this.token = res.token;
+        this.settings.set("token", this.token);
+
+        this.isAdmin = true;
+        return this.isAdmin;
+      });
     });
   }
 
   action(action) {
     let data = {
-      password: this.password,
       action: action
     };
 
@@ -47,7 +70,8 @@ export class RoomAdminService {
       body: JSON.stringify(data),
       headers: {
         "Accept": "application/json",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${this.token}`
       }
     });
   }

@@ -1,8 +1,6 @@
 import {bindable, inject, customElement} from "aurelia-framework";
 import {RoomAdminService} from "./services/roomadminservice";
 
-import Cookies from "js-cookie";
-
 @customElement("room-controls")
 @inject(Element, RoomAdminService, "RoomName")
 export class RoomControls {
@@ -17,36 +15,18 @@ export class RoomControls {
   }
 
   bind() {
-    let done = () => {
+    this.adminService.getLoginStatus().then((authorized) => {
+      this.authorized = authorized;
       this.initialized = true;
-    };
-
-    let password = Cookies.get("password");
-    if (password) {
-      this._login(password).then(done);
-    } else {
-      done();
-    }
-  }
-
-  _login(password) {
-    return this.adminService.login(password)
-    .then((success) => {
-      if (success) {
-        this.authorized = true;
-      }
-
-      return success;
     });
   }
 
   login() {
     let password = this.password;
-    this._login(password)
+    return this.adminService.login(password)
     .then((success) => {
       if (success) {
-        // Set password cookie
-        Cookies.set("password", password, { path: window.location.pathname });
+        this.authorized = true;
       } else {
         this.loginError = "Nope, that's not it.";
 
