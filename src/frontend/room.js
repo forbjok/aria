@@ -62,7 +62,18 @@ export class Room {
   }
 
   reloadContent() {
-    this._setContent(this.contentUrl);
+    // Store original content URL
+    let contentUrl = this.contentUrl;
+
+    // Set blank content URL to clear content
+    this._setContent(null);
+
+    /* The restoration needs to go in a 1 second timeout, because otherwise it
+       doesn't work for some types of content. */
+    setTimeout(() => {
+      // Restore content URL to reload content
+      this._setContent(contentUrl);
+    }, 1);
   }
 
   toggleFullscreen() {
