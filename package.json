@@ -10,6 +10,7 @@
   "license": "MIT",
   "author": "Forb.Jok <forbjok@gmail.com>",
   "scripts": {
+    "postinstall": "jspm install && typings install",
     "start": "npm run build:live",
     "build:live": "nodemon --exec ts-node --project src/backend -- src/backend/main.ts"
   },
