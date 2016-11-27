@@ -1,15 +1,15 @@
-"use strict";
+/// <reference types="node" />
 
-let path = require("path");
-let http = require("http");
-let express = require("express");
-let exphbs = require("express-handlebars");
-let socketio = require("socket.io");
+import * as path from "path";
+import * as http from "http";
+import * as express from "express";
+import * as exphbs from "express-handlebars";
+import * as socketio from "socket.io";
 
-let vary = require("./middlewares/vary");
+import * as vary from "./middlewares/vary";
 
-let chat = require("./modules/chat");
-let room = require("./modules/room");
+import * as chat from "./modules/chat/index";
+import * as room from "./modules/room/index";
 
 // Root dir
 let rootDir = path.join(__dirname, "../..");
@@ -42,7 +42,7 @@ app.set("port", config.port);
 app.enable("trust proxy"); // Required for req.ip to work correctly behind a proxy
 
 // Add middlewares
-app.use(vary())
+//app.use(vary());
 
 // Serve static shit
 app.use("/dist", express.static(path.join(rootDir, "dist"), { maxAge: "1 minute" }));

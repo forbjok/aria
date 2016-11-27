@@ -1,12 +1,19 @@
-"use strict";
+/// <reference path="../module.d.ts" />
+/// <reference path="roomstore.d.ts" />
 
-let bodyParser = require("body-parser");
-let jwt = require("jsonwebtoken");
-let expressjwt = require("express-jwt");
-let ms = require("ms");
+import * as bodyParser from "body-parser";
+import * as jwt from "jsonwebtoken";
+import * as express from "express";
+import * as expressjwt from "express-jwt";
+import ms = require("ms");
+import * as socketio from "socket.io";
 
 class Room {
-  constructor(name, options) {
+  contentUrl: string;
+  onContentChange: Function;
+  password: string;
+
+  constructor(public name:string, options:any) {
     this.name = name;
 
     Object.assign(this, {
@@ -24,8 +31,13 @@ class Room {
   }
 }
 
-class RoomServer {
-  constructor(app, io, store, options) {
+export class RoomServer implements IServer {
+  rooms: Room[];
+  io: SocketIO.Namespace;
+  ioNamespace: string;
+  baseUrl: string;
+
+  constructor(public app: express.Express, io: SocketIO.Server, public store: IRoomStore, options: any) {
     this.app = app;
     this.store = store;
 
@@ -40,7 +52,7 @@ class RoomServer {
     this._initialize();
   }
 
-  _getRoom(name) {
+  _getRoom(name: string): PromiseLike<Room> {
     let rooms = this.rooms;
 
     if (name in rooms) {
@@ -57,7 +69,7 @@ class RoomServer {
     });
   }
 
-  _createAndReturnRoom(roomInfo) {
+  _createAndReturnRoom(roomInfo: RoomInfo): Room {
     let name = roomInfo.name;
     let io = this.io;
     let store = this.store;
@@ -233,8 +245,6 @@ class RoomServer {
   }
 }
 
-module.exports = {
-  server: (app, io, store, options) => {
-    return new RoomServer(app, io, store, options);
-  }
-};
+export function create(app: express.Express, io: SocketIO.Server, store: IRoomStore, options: any): RoomServer {
+  return new RoomServer(app, io, store, options);
+}

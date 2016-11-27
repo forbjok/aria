@@ -1,25 +1,47 @@
-"use strict";
+import * as Promise from "bluebird";
+import * as pg from "pg";
 
-let Promise = require("bluebird");
-let pg = require("pg");
+interface RoomModel {
+  id?: number;
+  name?: string;
+}
 
-class PgChatStore {
-  constructor(connectionString) {
+interface ImageModel {
+  id?: number;
+  filename?: string;
+  thumbnail_filename?: string;
+  original_filename?: string;
+}
+
+interface PostModel {
+  id?: number;
+  room_id?: number;
+  posted?: string;
+  name?: string;
+  comment?: string;
+  image_id?: number;
+  ip?: string;
+}
+
+class PgChatStore implements IChatStore {
+  private connectionString: string;
+
+  constructor(connectionString: string) {
     this.connectionString = process.env.DATABASE_URL || connectionString || "postgres://aria:aria@localhost:5432/aria";
   }
 
-  _execQuery(sql, params) {
+  _execQuery(sql: string, params: any): PromiseLike<number> {
     return new Promise((resolve, reject) => {
       pg.connect(this.connectionString, (err, client, done) => {
         if (err) {
-          throw new Error(`Error connecting to PostgreSQL server '${this.connectionString}': ${err.cause}`);
+          throw new Error(`Error connecting to PostgreSQL server '${this.connectionString}': ${err.message}`);
         }
 
         client.query(sql, params, (err, result) => {
           done();
 
           if (err) {
-            throw new Error(`Error executing query: ${sql} with parameters ${params}: ${err.cause}`);
+            throw new Error(`Error executing query: ${sql} with parameters ${params}: ${err.message}`);
           }
 
           resolve(result.rowCount);
@@ -28,18 +50,18 @@ class PgChatStore {
     });
   }
 
-  _queryRows(sql, params) {
+  _queryRows(sql: string, params: any): PromiseLike<any[]> {
     return new Promise((resolve, reject) => {
       pg.connect(this.connectionString, (err, client, done) => {
         if (err) {
-          throw new Error(`Error connecting to PostgreSQL server '${this.connectionString}': ${err.cause}`);
+          throw new Error(`Error connecting to PostgreSQL server '${this.connectionString}': ${err.message}`);
         }
 
         client.query(sql, params, (err, result) => {
           done();
 
           if (err) {
-            throw new Error(`Error executing query: ${sql} with parameters ${params}: ${err.cause}`);
+            throw new Error(`Error executing query: ${sql} with parameters ${params}: ${err.message}`);
           }
 
           resolve(result.rows);
@@ -48,9 +70,9 @@ class PgChatStore {
     });
   }
 
-  _insertImage(image) {
+  _insertImage(image: Image): PromiseLike<ImageModel> {
     return this._queryRows(
-      "INSERT INTO images (filename, thumbnail_filename, original_filename)" +
+      "INSERT INTO chat.images (filename, thumbnail_filename, original_filename)" +
       " VALUES ($1, $2, $3)" +
       " RETURNING id;",
       [image.filename, image.thumbnailFilename, image.originalFilename])
@@ -59,10 +81,10 @@ class PgChatStore {
       });
   }
 
-  _insertPost(roomName, post, imageId) {
+  _insertPost(roomName: string, post: Post, imageId: number): PromiseLike<PostModel> {
     return this._queryRows(
-      "INSERT INTO posts (room_id, posted, name, comment, image_id, ip)" +
-      " SELECT (SELECT id FROM rooms WHERE name = $1), $2, $3, $4, $5, $6" +
+      "INSERT INTO chat.posts (room_id, posted, name, comment, image_id, ip)" +
+      " SELECT (SELECT id FROM chat.rooms WHERE name = $1), $2, $3, $4, $5, $6" +
       " RETURNING id;",
       [roomName, post.posted, post.name, post.comment, imageId, post.ip])
       .then((rows) => {
@@ -70,10 +92,10 @@ class PgChatStore {
       });
   }
 
-  getRoom(roomName) {
+  getRoom(roomName: string): PromiseLike<RoomInfo> {
     return this._queryRows(
       "SELECT name" +
-      " FROM rooms" +
+      " FROM chat.rooms" +
       " WHERE name = $1;",
       [roomName])
       .then((rows) => {
@@ -90,13 +112,16 @@ class PgChatStore {
       });
   }
 
-  createRoom(roomName) {
+  createRoom(roomName: string): PromiseLike<RoomInfo> {
     return this._queryRows(
-      "INSERT INTO rooms (name)" +
-      " SELECT $1" +
-      " WHERE NOT EXISTS (SELECT * FROM rooms WHERE name = $1)" +
+      "INSERT INTO chat.rooms (name)" +
+      " SELECT $2" +
+      " WHERE NOT EXISTS (SELECT * FROM chat.rooms WHERE name = $1)" +
       " RETURNING name;",
-      [roomName]).then((rows) => {
+
+      /* We need to pass the same parameter twice to avoid 
+         "inconsistent types deduced for parameter" errors */
+      [roomName, roomName]).then((rows) => {
         if (!rows || rows.length === 0) {
           return;
         }
@@ -105,7 +130,7 @@ class PgChatStore {
       });
   }
 
-  getPosts(roomName, options) {
+  getPosts(roomName: string, options: any): PromiseLike<Post[]> {
     options = options || {};
 
     let limit = "";
@@ -116,9 +141,9 @@ class PgChatStore {
       "SELECT p2.* FROM (" +
       "SELECT p.id, p.posted, p.name, p.comment, p.ip" +
       ", i.filename, i.thumbnail_filename, i.original_filename" +
-      " FROM posts AS p" +
-      " INNER JOIN rooms AS r ON p.room_id = r.id" +
-      " LEFT JOIN images AS i ON p.image_id = i.id" +
+      " FROM chat.posts AS p" +
+      " INNER JOIN chat.rooms AS r ON p.room_id = r.id" +
+      " LEFT JOIN chat.images AS i ON p.image_id = i.id" +
       " WHERE r.name = $1" +
       " ORDER BY p.id DESC" +
       limit +
@@ -129,11 +154,11 @@ class PgChatStore {
         // Transform raw DB rows into valid internal post objects
         let posts = [];
         for (let row of rows) {
-          let post = {
+          let post: Post = {
             posted: row.posted,
             name: row.name,
             comment: row.comment,
-            ip: row.ip
+            ip: row.ip,
           };
 
           if (row.filename) {
@@ -151,7 +176,7 @@ class PgChatStore {
       });
   }
 
-  addPost(roomName, post) {
+  addPost(roomName: string, post: Post): PromiseLike<Post> {
     if (post.image) {
       // Post contained an image - insert image record first
       return this._insertImage(post.image)
@@ -166,10 +191,6 @@ class PgChatStore {
   }
 }
 
-function create(connectionString) {
+export function create(connectionString: string) {
   return new PgChatStore(connectionString);
 }
-
-module.exports = {
-  create: create
-};

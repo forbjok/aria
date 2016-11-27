@@ -1,16 +1,17 @@
-"use strict";
+import * as Promise from "bluebird";
+import * as Sequelize from "sequelize";
 
-let Sequelize = require("sequelize");
+import * as models from "./models";
 
-let models = require("./models");
+export class SequelizeChatStore implements IChatStore {
+  sequelize: Sequelize.Sequelize;
+  schema: string;
+  models: models.ChatModels;
 
-class SequelizeChatStore {
-  constructor(connectionString, options) {
+  constructor(public connectionString: string, options:any) {
     Object.assign(this, {
       schema: "chat"
     }, options);
-
-    this.connectionString = connectionString;
 
     this.sequelize = new Sequelize(this.connectionString, {
       define: {
@@ -19,15 +20,15 @@ class SequelizeChatStore {
       }
     });
 
-    this.models = models(this.sequelize);
-    this.sequelize.createSchema(this.schema)
+    this.models = models.createModels(this.sequelize);
+    this.sequelize.createSchema(this.schema, {})
     .catch(() => {})
     .finally(() => {
       this.sequelize.sync();
     });
   }
 
-  _insertImage(image) {
+  _insertImage(image: Image): PromiseLike<models.ImageInstance> {
     return this.models.Image.create({
       filename: image.filename,
       thumbnail_filename: image.thumbnailFilename,
@@ -37,7 +38,7 @@ class SequelizeChatStore {
     });
   }
 
-  _insertPost(roomName, post, imageId) {
+  _insertPost(roomName: string, post: Post, imageId: number): PromiseLike<models.PostInstance> {
     return this.models.Room.findOne({
       attributes: ["id"],
       where: {
@@ -46,7 +47,7 @@ class SequelizeChatStore {
     }).then((room) => {
       let roomId = room.id;
 
-      let dbPost = this.models.Post.create({
+      return this.models.Post.create({
         room_id: roomId,
         posted: post.posted,
         name: post.name,
@@ -59,7 +60,7 @@ class SequelizeChatStore {
     });
   }
 
-  getRoom(roomName) {
+  getRoom(roomName: string): PromiseLike<RoomInfo> {
     return this.models.Room.findOne({
       where: {
         name: roomName
@@ -77,7 +78,7 @@ class SequelizeChatStore {
     });
   }
 
-  createRoom(roomName) {
+  createRoom(roomName: string): PromiseLike<RoomInfo> {
     return this.models.Room.create({
       name: roomName,
     })
@@ -88,7 +89,7 @@ class SequelizeChatStore {
     });
   }
 
-  getPosts(roomName, options) {
+  getPosts(roomName: string, options: any): PromiseLike<Post[]> {
     options = options || {};
 
     // First, get the room by name
@@ -99,7 +100,7 @@ class SequelizeChatStore {
     }).then((room) => {
       let roomId = room.id;
 
-      let query = {
+      let query: any = {
         where: {
           room_id: roomId
         },
@@ -123,11 +124,13 @@ class SequelizeChatStore {
         // Transform raw DB rows into valid internal post objects
         let posts = [];
         for (let row of rows) {
-          let post = {
+          let post: Post = {
             posted: row.posted,
             name: row.name,
             comment: row.comment,
-            ip: row.ip
+            ip: row.ip,
+
+            image: null
           };
 
           let dbImage = row.image;
@@ -150,25 +153,57 @@ class SequelizeChatStore {
     });
   }
 
-  addPost(roomName, post) {
+  addPost(roomName: string, post: Post): PromiseLike<Post> {
     if (post.image) {
       // Post contained an image - insert image record first
       return this._insertImage(post.image)
       .then((image) => {
         // Insert post record linked to the inserted image
-        return this._insertPost(roomName, post, image.id);
+        return this._insertPost(roomName, post, image.id).then((row) => {
+          let newPost: Post = {
+            posted: row.posted,
+            name: row.name,
+            comment: row.comment,
+            ip: row.ip,
+          };
+
+          let image = row.image;
+          if (image) {
+            newPost.image = {
+              filename: image.filename,
+              thumbnailFilename: image.thumbnail_filename,
+              originalFilename: image.original_filename,
+            };
+          }
+
+          return newPost;
+        });
       });
     }
 
     // No image - insert post without image link
-    return this._insertPost(roomName, post, null);
+    return this._insertPost(roomName, post, null).then((row) => {
+      let newPost: Post = {
+        posted: row.posted,
+        name: row.name,
+        comment: row.comment,
+        ip: row.ip,
+      };
+
+      let image = row.image;
+      if (image) {
+        newPost.image = {
+          filename: image.filename,
+          thumbnailFilename: image.thumbnail_filename,
+          originalFilename: image.original_filename,
+        };
+      }
+
+      return newPost;
+    });
   }
 }
 
-function create(connectionString, options) {
+export function create(connectionString: string, options: any) {
   return new SequelizeChatStore(connectionString, options);
 }
-
-module.exports = {
-  create: create
-};

@@ -1,10 +1,13 @@
-"use strict";
+import * as Sequelize from "sequelize";
+import * as moment from "moment";
+import * as randomstring from "randomstring";
 
-let Sequelize = require("sequelize");
-let moment = require("moment");
-let randomstring = require("randomstring");
+import * as models from "./models";
 
-let models = require("./models");
+interface NewRoomInfo {
+  name: string;
+  password: string;
+}
 
 function generatePassword() {
   return randomstring.generate({
@@ -13,13 +16,15 @@ function generatePassword() {
   });
 }
 
-class SequelizeRoomStore {
-  constructor(connectionString, options) {
+export class SequelizeRoomStore implements IRoomStore {
+  sequelize: Sequelize.Sequelize;
+  models: models.RoomModels;
+  schema: string;
+  
+  constructor(public connectionString: string, options: any) {
     Object.assign(this, {
       schema: "room"
     }, options);
-
-    this.connectionString = connectionString;
 
     this.sequelize = new Sequelize(this.connectionString, {
       define: {
@@ -28,15 +33,15 @@ class SequelizeRoomStore {
       }
     });
 
-    this.models = models(this.sequelize);
-    this.sequelize.createSchema(this.schema)
+    this.models = models.createModels(this.sequelize);
+    this.sequelize.createSchema(this.schema, {})
     .catch(() => {})
     .finally(() => {
       this.sequelize.sync();
     });
   }
 
-  getRoom(roomName) {
+  getRoom(roomName: string): PromiseLike<RoomInfo> {
     return this.models.Room.findOne({
       where: {
         name: roomName
@@ -58,7 +63,7 @@ class SequelizeRoomStore {
     });
   }
 
-  claimRoom(roomName) {
+  claimRoom(roomName: string): PromiseLike<NewRoomInfo> {
     let claimed = moment();
     let expires = moment().add(1, "day");
 
@@ -77,7 +82,7 @@ class SequelizeRoomStore {
     });
   }
 
-  setContentUrl(roomName, contentUrl) {
+  setContentUrl(roomName: string, contentUrl: string): PromiseLike<number> {
     return this.models.Room.findOne({
       where: {
         name: roomName
@@ -92,10 +97,6 @@ class SequelizeRoomStore {
   }
 }
 
-function create(connectionString, options) {
+export function create(connectionString: string, options: any) {
   return new SequelizeRoomStore(connectionString, options);
 }
-
-module.exports = {
-  create: create
-};

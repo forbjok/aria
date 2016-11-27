@@ -1,12 +1,15 @@
-"use strict";
+/// <reference path="../../types/easyimage.d.ts" />
 
-let path = require("path");
-let express = require("express");
-let multer = require("multer");
-let easyimg = require("easyimage");
-let moment = require("moment");
+/// <reference path="../module.d.ts" />
 
-let noImageFile = {};
+import * as path from "path";
+import * as express from "express";
+import * as multer from "multer";
+import * as easyimg from "easyimage";
+import * as moment from "moment";
+import * as socketio from "socket.io";
+
+let noImageFile = <Express.Multer.File>{};
 
 let extensionsByMimetype = {
   "image/png": ".png",
@@ -24,9 +27,10 @@ function stripExtension(filename) {
 }
 
 class ChatRoom {
-  constructor(name, options) {
-    this.name = name;
+  posts: Post[];
+  onPost: Function;
 
+  constructor(public name: string, options: any) {
     Object.assign(this, {
       onPost: () => {}
     }, options);
@@ -36,21 +40,27 @@ class ChatRoom {
     }
   }
 
-  getRecentPosts() {
+  getRecentPosts(): Post[] {
     return this.posts.slice(-50);
   }
 
-  post(post) {
+  post(post: Post) {
     this.posts.push(post);
     this.onPost(post);
   }
 }
 
-class ChatServer {
-  constructor(app, io, store, options) {
-    this.app = app;
-    this.store = store;
+class ChatServer implements IServer {
+  baseUrl: string;
+  ioNamespace: string;
+  imagesPath: string;
+  thumbSize: number;
+  thumbBackground: string;
+  imagesUrl: string;
+  rooms: ChatRoom[];
+  io: SocketIO.Namespace;
 
+  constructor(public app: express.Express, io: SocketIO.Server, public store: IChatStore, options: any) {
     Object.assign(this, {
       baseUrl: "/chat",
       ioNamespace: "/chat",
@@ -67,11 +77,14 @@ class ChatServer {
   }
 
   // Create a post view-model (for websocket use) from an internal post object
-  _postToViewModel(post) {
-    let vm = {
+  _postToViewModel(post: Post): PostViewModel {
+    let vm: PostViewModel = {
       posted: post.posted,
       name: post.name,
-      comment: post.comment
+      comment: post.comment,
+      ip: null,
+
+      image: null,
     };
 
     if (post.image) {
@@ -88,7 +101,7 @@ class ChatServer {
     return vm;
   }
 
-  _getRoom(name) {
+  _getRoom(name: string): PromiseLike<ChatRoom> {
     let rooms = this.rooms;
 
     if (name in rooms) {
@@ -107,7 +120,7 @@ class ChatServer {
     });
   }
 
-  _createAndReturnRoom(roomInfo) {
+  _createAndReturnRoom(roomInfo: RoomInfo): PromiseLike<ChatRoom> {
     let name = roomInfo.name;
     let io = this.io;
     let store = this.store;
@@ -181,11 +194,11 @@ class ChatServer {
 
       console.log(`Got post to room ${roomName}.`);
 
-      let post = {
+      let post: Post = {
         posted: moment().utc().toISOString(),
         name: req.body.name ? req.body.name : "Anonymous",
         comment: req.body.comment,
-        ip: req.ip
+        ip: req.ip,
       };
 
       let imageFile = req.file;
@@ -271,8 +284,6 @@ class ChatServer {
   }
 }
 
-module.exports = {
-  server: (app, io, store, options) => {
-    return new ChatServer(app, io, store, options);
-  }
-};
+export function create(app: express.Express, io: SocketIO.Server, store: IChatStore, options: any): ChatServer {
+  return new ChatServer(app, io, store, options);
+}
