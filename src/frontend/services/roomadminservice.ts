@@ -1,20 +1,27 @@
-import {inject} from "aurelia-framework";
+import {autoinject} from "aurelia-framework";
 import {HttpClient} from "aurelia-fetch-client";
 import "fetch";
 
+import {State} from "../state";
 import {LocalRoomAuthService} from "./localroomauthservice";
 
-@inject(HttpClient, LocalRoomAuthService, "RoomName")
+@autoinject
 export class RoomAdminService {
-  constructor(http, auth, roomName) {
-    this.http = http;
-    this.auth = auth;
-    this.roomName = roomName;
+  private roomName: string;
+  private token: string;
+  private isAdmin: boolean;
+
+  constructor(
+    private http: HttpClient,
+    private auth: LocalRoomAuthService,
+    state: State)
+  {
+    this.roomName = state.roomName;
 
     this.token = auth.get();
   }
 
-  getLoginStatus() {
+  getLoginStatus(): PromiseLike<boolean> {
     return this.http.fetch(`/r/${this.roomName}/loggedin`, {
       method: "POST",
       headers: {
@@ -32,7 +39,7 @@ export class RoomAdminService {
     });
   }
 
-  login(password) {
+  login(password: string): PromiseLike<boolean> {
     let data = {
       password: password
     };
@@ -47,7 +54,8 @@ export class RoomAdminService {
       }
     }).then((response) => {
       if (!response.ok) {
-        return false;
+        /* TODO: Figure out why Promise.resolve is required here but not in other cases */
+        return Promise.resolve(false);
       }
 
       return response.json().then((res) => {
@@ -60,7 +68,7 @@ export class RoomAdminService {
     });
   }
 
-  action(action) {
+  action(action: any) {
     let data = {
       action: action
     };

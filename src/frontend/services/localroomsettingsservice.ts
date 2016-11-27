@@ -1,13 +1,20 @@
-import {inject} from "aurelia-framework";
+import {autoinject} from "aurelia-framework";
 
+import {State} from "../state";
 import {LocalStorageService} from "./localstorageservice";
 
-@inject(LocalStorageService, "RoomName")
+@autoinject
 export class LocalRoomSettingsService
 {
-  constructor(localStorageService, roomName) {
-    this.localStorageService = localStorageService;
-    this.roomName = roomName;
+  private roomName: string;
+  private settingsKeyName: string;
+  private settings: any[]
+
+  constructor(
+    private localStorageService: LocalStorageService,
+    state: State)
+  {
+    this.roomName = state.roomName;
     this.settingsKeyName = `room_${this.roomName}`;
 
     this.load();
@@ -21,7 +28,7 @@ export class LocalRoomSettingsService
     this.localStorageService.set(this.settingsKeyName, this.settings);
   }
 
-  get(name, defaultValue) {
+  get(name: string, defaultValue: any) {
     if (name in this.settings) {
       return this.settings[name];
     }
@@ -29,7 +36,7 @@ export class LocalRoomSettingsService
     return defaultValue;
   }
 
-  set(name, value) {
+  set(name: string, value: any) {
     this.settings[name] = value;
     this.save();
   }

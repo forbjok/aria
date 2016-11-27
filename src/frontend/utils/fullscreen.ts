@@ -1,5 +1,8 @@
-let fullscreenEnabled = document.fullscreenEnabled || document.webkitFullscreenEnabled || document.mozFullScreenEnabled || document.msFullscreenEnabled;
-let exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+let mozDocument: any = document;
+let msDocument: any = document;
+
+let fullscreenEnabled = document.fullscreenEnabled || document.webkitFullscreenEnabled || mozDocument.mozFullScreenEnabled || msDocument.msFullscreenEnabled;
+let exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen || mozDocument.mozCancelFullScreen || msDocument.msExitFullscreen;
 
 function requestFullscreen(e) {
   if (e.requestFullscreen) {
@@ -14,7 +17,7 @@ function requestFullscreen(e) {
 }
 
 function isInFullscreen() {
-  return (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) ? true : false;
+  return (document.fullscreenElement || document.webkitFullscreenElement || msDocument.mozFullScreenElement || msDocument.msFullscreenElement) ? true : false;
 }
 
 export default {

@@ -1,13 +1,25 @@
-import {bindable, inject, customElement} from "aurelia-framework";
+import {autoinject, bindable, customElement} from "aurelia-framework";
+
+import {State} from "./state";
 import {RoomAdminService} from "./services/roomadminservice";
 
 @customElement("room-controls")
-@inject(Element, RoomAdminService, "RoomName")
+@autoinject
 export class RoomControls {
-  constructor(element, adminService, roomName) {
-    this.element = element;
-    this.adminService = adminService;
-    this.roomName = roomName;
+  private roomName: string;
+  private initialized: boolean;
+  private authorized: boolean;
+  private contentUrl: string;
+
+  public password: string;
+  public loginError: string;
+
+  constructor(
+    private element: Element,
+    private adminService: RoomAdminService,
+    state: State)
+  {
+    this.roomName = state.roomName;
 
     this.initialized = false;
     this.authorized = false;

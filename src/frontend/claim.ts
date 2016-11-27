@@ -1,15 +1,24 @@
-import {inject} from "aurelia-framework";
+import {autoinject} from "aurelia-framework";
 import {HttpClient} from "aurelia-fetch-client";
 import "fetch";
 
+import {State} from "./state";
 import {LocalRoomAuthService} from "./services/localroomauthservice";
 
-@inject(HttpClient, LocalRoomAuthService, "RoomName")
+@autoinject
 export class Claim {
-  constructor(http, auth, roomName) {
-    this.http = http;
+  private roomName: string;
+
+  public claimError: string;
+  public claimInfo: ClaimInfo;
+
+  constructor(
+    private http: HttpClient,
+    private auth: LocalRoomAuthService,
+    private state: State)
+  {
     this.auth = auth;
-    this.roomName = roomName;
+    this.roomName = state.roomName;
   }
 
   claim() {
@@ -23,7 +32,7 @@ export class Claim {
         this.claimError = response.statusText;
       }
 
-      response.json().then((data) => {
+      response.json().then((data: ClaimInfo) => {
         this.claimInfo = data;
         this.auth.set(data.token);
       });

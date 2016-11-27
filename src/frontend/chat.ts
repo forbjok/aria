@@ -1,29 +1,45 @@
-import {bindable, inject, computedFrom} from "aurelia-framework";
+import {autoinject, bindable, computedFrom} from "aurelia-framework";
 
-import io from "socket.io-client";
-import $ from "jquery";
+import * as io from "socket.io-client";
+import * as $ from "jquery";
 import "jq-ajax-progress";
 
-import filesize from "filesize";
+import * as filesize from "filesize";
 
 import {LocalRoomSettingsService} from "./services/localroomsettingsservice";
 
 let maxImageSize = 2097152;
 
-@inject(Element, LocalRoomSettingsService)
+@autoinject
 export class ChatCustomElement {
-  @bindable room;
+  @bindable room: string;
 
-  constructor(element, settings) {
-    this.element = element;
-    this.settings = settings;
+  postContainer: HTMLDivElement;
+  chatControls: HTMLDivElement;
 
+  posts: any[]
+  themes: Theme[]
+  theme: string;
+  posting: boolean;
+  postingCooldown: number;
+  post: any;
+  postForm: HTMLFormElement;
+  useCompactPostForm: boolean;
+  postingProgress: string;
+  submitOnCooldown: boolean;
+  triggerPostLayout: boolean;
+
+  constructor(
+    private element: Element,
+    private settings: LocalRoomSettingsService)
+  {
     this.posts = [];
     this.themes = [
       { name: "dark", description: "Dark" },
       { name: "yotsubab", description: "Yotsuba B" }
     ];
-    this.theme = this.settings.get("chat_theme") || "dark";
+
+    this.theme = this.settings.get("chat_theme", null) || "dark";
     this.posting = false;
     this.postingCooldown = 0;
 
@@ -34,7 +50,7 @@ export class ChatCustomElement {
   clearPost() {
     this.postForm.reset();
     this.post = {
-      name: this.settings.get("chat_name") || "",
+      name: this.settings.get("chat_name", null) || "",
       comment: ""
     };
   }
@@ -116,9 +132,11 @@ export class ChatCustomElement {
       processData: false
     });
 
-    ajaxPost.uploadProgress((e) => {
+    /* TODO: Check if this actually works */
+    let ajaxPostAny: any = ajaxPost;
+    ajaxPostAny.uploadProgress((e) => {
       if (e.lengthComputable) {
-        let percentComplete = parseInt((e.loaded / e.total) * 100, 10);
+        let percentComplete = Math.round((e.loaded / e.total) * 100);
         this.postingProgress = `${percentComplete}%`;
       } else {
         this.postingProgress = "Posting...";

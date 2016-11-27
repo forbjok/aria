@@ -1,14 +1,27 @@
-import {inject} from "aurelia-framework";
+import {autoinject} from "aurelia-framework";
 
+import {State} from "./state";
 import fullscreenUtils from "./utils/fullscreen";
 
-import io from "socket.io-client";
-import $ from "jquery";
+import * as io from "socket.io-client";
+import * as $ from "jquery";
 
-@inject("RoomName")
+@autoinject
 export class Room {
-  constructor(roomName) {
-    this.roomName = roomName;
+  private room: HTMLDivElement;
+  private chatContainer: HTMLDivElement;
+  private contentContainer: HTMLDivElement;
+  
+  private roomName: string;
+  private contentUrl: string;
+  private embeddedContent: string[]
+
+  public showRoomControls: boolean;
+
+  constructor(
+    state: State)
+  {
+    this.roomName = state.roomName;
   }
 
   bind() {

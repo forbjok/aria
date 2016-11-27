@@ -1,7 +1,7 @@
-import moment from "moment";
+import * as moment from "moment";
 
 export class FormatTimeValueConverter {
-  toView(value) {
+  toView(value: string): string {
     let now = moment();
     let time = moment(value);
 

@@ -1,21 +1,27 @@
-import {inject} from "aurelia-framework";
+import {autoinject} from "aurelia-framework";
 
-function debounce(fn, delay) {
+function debounce(fn: Function, delay: number): Function {
   let timer = null;
 
-  return function() {
+  return function(...args: any[]) {
     clearTimeout(timer);
 
     timer = setTimeout(() => {
-      fn.apply(this, arguments);
+      fn.apply(this, args);
     }, delay);
   }
 }
 
-@inject(Element)
+@autoinject
 export class AutoscrollingCustomAttribute {
-  constructor(element) {
-    this.element = element;
+  private trackBottom: boolean;
+  private observer: MutationObserver;
+  private _observerCallback: MutationCallback;
+  private _scrollToBottom: Function;
+  private _onUserScroll: any;
+  private _onWindowResize: any;
+
+  constructor(private element: Element) {
     this.trackBottom = true;
 
     /* Create event callbacks.

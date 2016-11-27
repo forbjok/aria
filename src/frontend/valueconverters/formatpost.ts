@@ -1,7 +1,7 @@
-import xssFilters from "xss-filters";
+import * as xssFilters from "xss-filters";
 
 export class FormatPostValueConverter {
-  toView(value) {
+  toView(value: string): string {
     if (!value) {
       return value;
     }
