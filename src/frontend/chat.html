@@ -29,27 +29,32 @@
 
     <div ref="chatControls" class="chatcontrols">
       <form ref="postForm" submit.delegate="submitPost()">
-        <table if.bind="!useCompactPostForm" class="chatcontrols-table">
-          <tr>
-            <td>Name</td>
-            <td><input name="name" type="text" value.bind="post.name" placeholder="Anonymous" readonly.bind="posting"></td>
-          </tr>
-          <tr>
-            <td>Comment</td>
-            <td><textarea name="comment" value.bind="post.comment" maxlength="600" class="comment-field" wrap="soft" readonly.bind="posting" keypress.trigger="submitOnEnterKeypress($event)" autofocus></textarea></td>
-          </tr>
-          <tr>
-            <td>Image</td>
-            <td><input name="image" type="file" accept="image/*" change.delegate="imageSelected($event)" disabled.bind="posting" keypress.trigger="submitOnEnterKeypress($event)" click.trigger="clearFileOnShiftClick($event)"></td>
-          </tr>
-          <tr>
-            <td></td>
-            <td>
-              <button id="postbutton" type="submit" disabled.bind="!canSubmitPost">${postingCooldownText || 'Post'}</button>
-              <span class="progress">${postingProgress}</span>
-            </td>
-          </tr>
-        </table>
+        <div if.bind="!useCompactPostForm">
+          <table class="chatcontrols-table">
+            <tr>
+              <td>Name</td>
+              <td><input name="name" type="text" value.bind="post.name" placeholder="Anonymous" readonly.bind="posting"></td>
+            </tr>
+            <tr>
+              <td>Comment</td>
+              <td><textarea name="comment" value.bind="post.comment" maxlength="600" class="comment-field" wrap="soft" readonly.bind="posting" keypress.trigger="submitOnEnterKeypress($event)" autofocus></textarea></td>
+            </tr>
+            <tr>
+              <td>Image</td>
+              <td><input name="image" type="file" accept="image/*" change.delegate="imageSelected($event)" disabled.bind="posting" keypress.trigger="submitOnEnterKeypress($event)" click.trigger="clearFileOnShiftClick($event)"></td>
+            </tr>
+            <tr>
+              <td></td>
+              <td>
+                <button id="postbutton" type="submit" disabled.bind="!canSubmitPost">${postingCooldownText || 'Post'}</button>
+                <span class="progress">${postingProgress}</span>
+              </td>
+            </tr>
+          </table>
+          <div class="version-text">
+            ${versionText}
+          </div>
+        </div>
         <div if.bind="useCompactPostForm" class="chatcontrols-table">
           <textarea name="comment" value.bind="post.comment" maxlength="600" class="comment-field" wrap="soft" readonly.bind="posting" keypress.trigger="submitOnEnterKeypress($event)" autofocus></textarea>
           <button id="postbutton" type="submit" disabled.bind="!canSubmitPost">${postingCooldownText || postingProgress || 'Post'}</button>

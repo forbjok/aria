@@ -6,6 +6,7 @@ import "jq-ajax-progress";
 
 import * as filesize from "filesize";
 
+import {version} from "./version";
 import {LocalRoomSettingsService} from "./services/localroomsettingsservice";
 
 let maxImageSize = 2097152;
@@ -28,6 +29,8 @@ export class ChatCustomElement {
   postingProgress: string;
   submitOnCooldown: boolean;
   triggerPostLayout: boolean;
+
+  public versionText: string = `v${version}`;
 
   constructor(
     private element: Element,
