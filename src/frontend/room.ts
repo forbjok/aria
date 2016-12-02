@@ -1,5 +1,6 @@
 import {autoinject} from "aurelia-framework";
 
+import {version} from "./version";
 import {State} from "./state";
 import fullscreenUtils from "./utils/fullscreen";
 
@@ -11,11 +12,12 @@ export class Room {
   private room: HTMLDivElement;
   private chatContainer: HTMLDivElement;
   private contentContainer: HTMLDivElement;
-  
+
   private roomName: string;
   private contentUrl: string;
-  private embeddedContent: string[]
+  private embeddedContent: string[];
 
+  public versionText: string = `v${version}`;
   public showRoomControls: boolean;
 
   constructor(
