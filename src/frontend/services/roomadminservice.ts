@@ -65,6 +65,8 @@ export class RoomAdminService {
         this.isAdmin = true;
         return this.isAdmin;
       });
+    }).catch(() => {
+      return false;
     });
   }
 
