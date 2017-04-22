@@ -25,10 +25,5 @@
     "aurelia-templating-resources": "github:aurelia/templating-resources",
     "aurelia-templating-router": "github:aurelia/templating-router"
   },
-  "globalDependencies": {
-    "filesize": "registry:dt/filesize#3.2.1+20160412140448",
-    "jquery": "registry:dt/jquery#1.10.0+20160929162922",
-    "socket.io-client": "registry:dt/socket.io-client#1.4.4+20160317120654",
-    "xss-filters": "registry:dt/xss-filters#0.0.0+20160316155526"
-  }
+  "globalDependencies": {}
 }
