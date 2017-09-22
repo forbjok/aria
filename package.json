@@ -79,8 +79,8 @@
       "jq-ajax-progress": "github:likerRr/jq-ajax-progress@^0.1.6",
       "jquery": "npm:jquery@^3.0.0",
       "moment": "github:moment/moment@^2.10.6",
-      "socket.io-client": "github:socketio/socket.io-client@^1.7.2",
-      "text": "github:systemjs/plugin-text@^0.0.9",
+      "socket.io-client": "npm:socket.io-client@^2.0.3",
+      "text": "github:systemjs/plugin-text@^0.0.11",
       "xss-filters": "npm:xss-filters@^1.2.6"
     },
     "devDependencies": {}
