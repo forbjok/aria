@@ -72,7 +72,7 @@ export class SequelizeChatStore implements IChatStore {
       }
 
       // Room was found, return it
-      return {
+      return <RoomInfo> {
         name: room.name
       };
     });
@@ -83,7 +83,7 @@ export class SequelizeChatStore implements IChatStore {
       name: roomName,
     })
     .then((room) => {
-      return {
+      return <RoomInfo> {
         name: room.name
       };
     });
