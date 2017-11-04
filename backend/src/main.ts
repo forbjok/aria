@@ -13,6 +13,7 @@ import * as room from "./modules/room/index";
 
 // Root dir
 let rootDir = path.join(__dirname, "../..");
+let frontendDir = path.join(rootDir, "frontend");
 
 // Default configuration
 let config = {
@@ -45,9 +46,9 @@ app.enable("trust proxy"); // Required for req.ip to work correctly behind a pro
 //app.use(vary());
 
 // Serve static shit
-app.use("/dist", express.static(path.join(rootDir, "dist"), { maxAge: "1 minute" }));
-app.use("/jspm_packages", express.static(path.join(rootDir, "jspm_packages"), { maxAge: "1 minute" }));
-app.use("/config.js", express.static(path.join(rootDir, "config.js"), { maxAge: "1 minute" }));
+app.use("/dist", express.static(path.join(frontendDir, "dist"), { maxAge: "1 minute" }));
+app.use("/jspm_packages", express.static(path.join(frontendDir, "jspm_packages"), { maxAge: "1 minute" }));
+app.use("/config.js", express.static(path.join(frontendDir, "config.js"), { maxAge: "1 minute" }));
 
 // Set up view engine
 app.engine("handlebars", exphbs({
