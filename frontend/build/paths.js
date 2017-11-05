@@ -1,4 +1,4 @@
-var appRoot = 'src/frontend/';
+var appRoot = 'src/';
 var outputRoot = 'dist/';
 var exporSrvtRoot = 'export/'
 
