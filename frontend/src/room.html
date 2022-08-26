@@ -1,17 +1,16 @@
 <template>
   <require from="./chat"></require>
   <require from="./roomcontrols"></require>
-  <require from="./styles/room.css!"></require>
   <div ref="room" class="room">
     <div ref="chatContainer" id="chatcontainer" class="chatcontainer">
       <chat room.bind="roomName"></chat>
     </div>
     <div ref="contentContainer" id="contentcontainer" class="contentcontainer">
-      <object repeat.for="contentUrl of embeddedContent" width="100%" height="100%" data.bind="contentUrl">
+      <iframe width="100%" height="100%" src.bind="contentUrl">
         <param name="wmode" value="opaque">
         <param name="bgcolor" value="#000000">
         <div class="unsupported-content">Your browser does not support this type of embedded content. You may need to install Flash Player or a similar plugin for your browser.</div>
-      </object>
+      </iframe>
       <div class="usercontrols-activationzone">
         <div class="usercontrols">
           <a href="#" class="usercontrol" title="Reload" click.trigger="reloadContent()"><span class="fa fa-refresh"></span></a>

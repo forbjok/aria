@@ -1,3 +1,3 @@
 export class State {
-  public roomName: string;
+  public roomName?: string;
 }

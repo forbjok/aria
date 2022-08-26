@@ -1,28 +1,36 @@
 import {autoinject} from "aurelia-framework";
 import {HttpClient} from "aurelia-fetch-client";
-import "fetch";
+import { Router } from "aurelia-router";
 
-import {State} from "./state";
 import {LocalRoomAuthService} from "./services/localroomauthservice";
+import { State } from "state";
+
+import "styles/claim.less";
 
 @autoinject
 export class Claim {
-  private roomName: string;
-
   public claimError: string;
   public claimInfo: ClaimInfo;
 
   constructor(
     private http: HttpClient,
     private auth: LocalRoomAuthService,
-    private state: State)
-  {
+    private state: State,
+    private router: Router,
+  ) {
     this.auth = auth;
-    this.roomName = state.roomName;
+  }
+
+  activate(params: { roomName: string }) {
+    if (!this.state.roomName) {
+      this.router.navigateToRoute('room', params);
+    }
   }
 
   claim() {
-    return this.http.fetch(`/r/${this.roomName}/claim`, {
+    console.log('DO CLAIM', this.state.roomName);
+
+    return this.http.fetch(`/api/r/${this.state.roomName}/claim`, {
       method: "POST",
       headers: {
         "Accept": "application/json"

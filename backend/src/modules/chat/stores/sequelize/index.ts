@@ -1,10 +1,10 @@
 import * as Promise from "bluebird";
-import * as Sequelize from "sequelize";
+import { Sequelize } from "sequelize";
 
 import * as models from "./models";
 
 export class SequelizeChatStore implements IChatStore {
-  sequelize: Sequelize.Sequelize;
+  sequelize: Sequelize;
   schema: string;
   models: models.ChatModels;
 
@@ -28,7 +28,7 @@ export class SequelizeChatStore implements IChatStore {
     });
   }
 
-  _insertImage(image: Image): PromiseLike<models.ImageInstance> {
+  _insertImage(image: Image): PromiseLike<models.ImageModel> {
     return this.models.Image.create({
       filename: image.filename,
       thumbnail_filename: image.thumbnailFilename,
@@ -38,7 +38,7 @@ export class SequelizeChatStore implements IChatStore {
     });
   }
 
-  _insertPost(roomName: string, post: Post, imageId: number): PromiseLike<models.PostInstance> {
+  _insertPost(roomName: string, post: Post, imageId: number): PromiseLike<models.PostModel> {
     return this.models.Room.findOne({
       attributes: ["id"],
       where: {

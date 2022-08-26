@@ -1,13 +1,16 @@
 import {autoinject, bindable, computedFrom} from "aurelia-framework";
 
-import * as io from "socket.io-client";
+import io from "socket.io-client";
 import * as $ from "jquery";
 import "jq-ajax-progress";
 
-import * as filesize from "filesize";
+import filesize from "filesize";
 
 import {version} from "./version";
 import {LocalRoomSettingsService} from "./services/localroomsettingsservice";
+
+import "styles/chat.less";
+import "styles/chat-dark.less";
 
 let maxImageSize = 2097152;
 
@@ -59,7 +62,7 @@ export class ChatCustomElement {
   }
 
   get postUrl() {
-    return `/chat/${this.room}/post`;
+    return `/api/chat/${this.room}/post`;
   }
 
   get canSubmitPost() {
@@ -95,13 +98,15 @@ export class ChatCustomElement {
 
         if (this.submitOnCooldown) {
           this.submitOnCooldown = false;
-          this.submitPost();
+          this.submitPost(null);
         }
       }
     }, 1000);
   }
 
-  submitPost() {
+  submitPost(event: any) {
+    event.preventDefault();
+
     if (!this.canSubmitPost) {
       return;
     }
@@ -128,16 +133,21 @@ export class ChatCustomElement {
     // Save name in cookie
     this.settings.set("chat_name", this.post.name);
 
+    console.log('AY');
+
+
     let ajaxPost = $.ajax(this.postUrl, {
       method: "POST",
       data: formData,
       contentType: false,
-      processData: false
+      processData: false,
     });
+
+    console.log('BEE', ajaxPost);
 
     /* TODO: Check if this actually works */
     let ajaxPostAny: any = ajaxPost;
-    ajaxPostAny.uploadProgress((e) => {
+    ajaxPostAny.progress((e) => {
       if (e.lengthComputable) {
         let percentComplete = Math.round((e.loaded / e.total) * 100);
         this.postingProgress = `${percentComplete}%`;
@@ -168,11 +178,13 @@ export class ChatCustomElement {
   }
 
   bind() {
+    const url = window.location.origin + "/chat";
+
     /* We have to use this window.location.origin + "/namespace" workaround
        because of a bug in socket.io causing the port number to be omitted,
        that's apparently been there for ages and yet still hasn't been fixed
        in a release. Get your shit together, Socket.io people. */
-    let socket = io(window.location.origin + "/chat", { autoConnect: false });
+    let socket = io(url, { path: "/aria-ws", autoConnect: false });
 
     socket.on("connect", () => {
       this.posts = [];
@@ -223,7 +235,7 @@ export class ChatCustomElement {
 
   submitOnEnterKeypress(event) {
     if (event.keyCode === 13 && !event.shiftKey) {
-      this.submitPost();
+      this.submitPost(event);
       return false;
     }
 

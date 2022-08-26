@@ -3,6 +3,8 @@ import {autoinject, bindable, customElement} from "aurelia-framework";
 import {State} from "./state";
 import {RoomAdminService} from "./services/roomadminservice";
 
+import "styles/roomcontrols.less";
+
 @customElement("room-controls")
 @autoinject
 export class RoomControls {
@@ -17,8 +19,8 @@ export class RoomControls {
   constructor(
     private element: Element,
     private adminService: RoomAdminService,
-    state: State)
-  {
+    state: State,
+  ) {
     this.roomName = state.roomName;
 
     this.initialized = false;

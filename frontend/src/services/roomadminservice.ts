@@ -1,6 +1,5 @@
 import {autoinject} from "aurelia-framework";
 import {HttpClient} from "aurelia-fetch-client";
-import "fetch";
 
 import {State} from "../state";
 import {LocalRoomAuthService} from "./localroomauthservice";
@@ -14,15 +13,15 @@ export class RoomAdminService {
   constructor(
     private http: HttpClient,
     private auth: LocalRoomAuthService,
-    state: State)
-  {
+    state: State,
+  ) {
     this.roomName = state.roomName;
 
     this.token = auth.get();
   }
 
   getLoginStatus(): PromiseLike<boolean> {
-    return this.http.fetch(`/r/${this.roomName}/loggedin`, {
+    return this.http.fetch(`/api/r/${this.roomName}/loggedin`, {
       method: "POST",
       headers: {
         "Accept": "application/json",
@@ -44,7 +43,7 @@ export class RoomAdminService {
       password: password
     };
 
-    return this.http.fetch(`/r/${this.roomName}/login`, {
+    return this.http.fetch(`/api/r/${this.roomName}/login`, {
       method: "POST",
       body: JSON.stringify(data),
       headers: {
@@ -75,7 +74,7 @@ export class RoomAdminService {
       action: action
     };
 
-    return this.http.fetch(`/r/${this.roomName}/control`, {
+    return this.http.fetch(`/api/r/${this.roomName}/control`, {
       method: "POST",
       body: JSON.stringify(data),
       headers: {

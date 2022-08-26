@@ -1,5 +1,4 @@
 <template>
-  <require from="./styles/roomcontrols.css!"></require>
   <div if.bind="initialized" class="roomcontrols">
     <div if.bind="!authorized" class="login">
       <form class="login-form" submit.delegate="login()">

@@ -1,27 +1,20 @@
 import {Aurelia} from 'aurelia-framework';
+import environment from '../config/environment.json';
+import {PLATFORM} from 'aurelia-framework';
+import { State } from 'state';
 
-import {State} from "./state";
-
-export function configure(aurelia: Aurelia) {
+export function configure(aurelia: Aurelia): void {
   aurelia.use
     .standardConfiguration()
-    .developmentLogging();
+    .feature(PLATFORM.moduleName('resources/index'));
 
-  // Uncomment the line below to enable animation.
-  // aurelia.use.plugin('aurelia-animator-css');
+  aurelia.use.developmentLogging(environment.debug ? 'debug' : 'warn');
 
-  // Anyone wanting to use HTMLImports to load views, will need to install the following plugin.
-  // aurelia.use.plugin('aurelia-html-import-template-loader')
+  if (environment.testing) {
+    aurelia.use.plugin(PLATFORM.moduleName('aurelia-testing'));
+  }
 
-  aurelia.start().then(a => {
-    let attributes: any = a.host.attributes;
+  aurelia.use.singleton(State, () => new State());
 
-    let start = attributes.start.value;
-
-    let state = new State();
-    state.roomName = attributes.room.value;
-    aurelia.use.instance(State, state);
-    
-    a.setRoot(start);
-  });
+  aurelia.start().then(() => aurelia.setRoot(PLATFORM.moduleName('app')));
 }

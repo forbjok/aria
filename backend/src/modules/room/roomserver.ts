@@ -115,16 +115,14 @@ export class RoomServer implements IServer {
 
       this._getRoom(roomName).then((room) => {
         if (!room) {
-          // Room was not found, render claim page
-          res.render("claim", {
-            room: roomName
-          });
+          // Room was not found
+          res.send(404);
           return;
         }
 
-        // Room was found, render room
-        res.render("room", {
-          room: roomName
+        // Room was found
+        res.send({
+          name: roomName,
         });
       });
     });

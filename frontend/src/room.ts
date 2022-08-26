@@ -1,10 +1,14 @@
 import {autoinject} from "aurelia-framework";
+import { HttpClient } from "aurelia-fetch-client";
+import { Router } from "aurelia-router";
 
-import {State} from "./state";
+import { State } from "./state";
 import fullscreenUtils from "./utils/fullscreen";
 
-import * as io from "socket.io-client";
+import io from "socket.io-client";
 import * as $ from "jquery";
+
+import "styles/room.less";
 
 @autoinject
 export class Room {
@@ -19,9 +23,23 @@ export class Room {
   public showRoomControls: boolean;
 
   constructor(
-    state: State)
-  {
-    this.roomName = state.roomName;
+    private router: Router,
+    private state: State,
+    private http: HttpClient,
+  ) {
+  }
+
+  async activate(params: { roomName: string }) {
+    this.roomName = params.roomName;
+    this.state.roomName = this.roomName;
+
+    console.log('ACT ROOM', this.roomName);
+
+    let roomExists = await this.checkRoomExists();
+
+    if (!roomExists) {
+      this.router.navigateToRoute('claim', { roomName: this.roomName });
+    }
   }
 
   bind() {
@@ -29,13 +47,15 @@ export class Room {
        because of a bug in socket.io causing the port number to be omitted,
        that's apparently been there for ages and yet still hasn't been fixed
        in a release. Get your shit together, Socket.io people. */
-    let socket = io(window.location.origin + "/room", { autoConnect: false });
+    let socket = io(window.location.origin + "/room", { path: "/aria-ws", autoConnect: false });
 
     socket.on("connect", () => {
       socket.emit("join", this.roomName);
+      console.log('JOINED');
     });
 
     socket.on("content", (content) => {
+      console.log('CONTENT', content);
       this._setContent(content.url);
     });
 
@@ -99,5 +119,17 @@ export class Room {
 
   toggleRoomControls() {
     this.showRoomControls = !this.showRoomControls;
+  }
+
+  private checkRoomExists(): PromiseLike<boolean> {
+    return this.http.fetch(`/api/r/${this.roomName}`, {
+      method: "GET",
+    }).then((response) => {
+      if (!response.ok) {
+        return false;
+      }
+
+      return true;
+    });
   }
 }

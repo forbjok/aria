@@ -1,8 +1,6 @@
 <template>
   <require from="./valueconverters/formattime"></require>
   <require from="./valueconverters/formatpost"></require>
-  <require from="./styles/chat.css!"></require>
-  <link rel="stylesheet" href="/dist/styles/chat-${theme}.css">
   <div class="chat">
     <div ref="postContainer" class="chat-postcontainer">
       <ul>
@@ -28,7 +26,7 @@
     </div>
 
     <div ref="chatControls" class="chatcontrols">
-      <form ref="postForm" submit.delegate="submitPost()">
+      <form ref="postForm" submit.delegate="submitPost($event)">
         <div if.bind="!useCompactPostForm">
           <table class="chatcontrols-table">
             <tr>

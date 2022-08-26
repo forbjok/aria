@@ -1,4 +1,4 @@
-import * as Sequelize from "sequelize";
+import { Sequelize } from "sequelize";
 import * as moment from "moment";
 import * as randomstring from "randomstring";
 
@@ -17,7 +17,7 @@ function generatePassword() {
 }
 
 export class SequelizeRoomStore implements IRoomStore {
-  sequelize: Sequelize.Sequelize;
+  sequelize: Sequelize;
   models: models.RoomModels;
   schema: string;
   

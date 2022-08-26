@@ -1,34 +1,31 @@
-import * as Sequelize from "sequelize";
+import { DataTypes, InferAttributes, InferCreationAttributes, Model, ModelStatic, Sequelize } from "sequelize";
 
-export interface RoomAttributes {
-  id?: number;
-  name?: string;
-  content_url?: string;
-  password?: string;
-  claimed?: Date;
-  expires?: Date;
+
+export class RoomModel extends Model<InferAttributes<RoomModel>, InferCreationAttributes<RoomModel>> {
+  declare id?: number;
+  declare name?: string;
+  declare content_url?: string;
+  declare password?: string;
+  declare claimed?: Date;
+  declare expires?: Date;
 }
-
-export interface RoomInstance extends Sequelize.Instance<RoomAttributes>, RoomAttributes {}
-
-export interface RoomModel extends Sequelize.Model<RoomInstance, RoomAttributes> {}
 
 export interface RoomModels {
-  Room: RoomModel;
+  Room: ModelStatic<RoomModel>;
 }
 
-export function createModels(sequelize: Sequelize.Sequelize): RoomModels {
-  let Room = sequelize.define<RoomInstance, RoomAttributes>("rooms", {
+export function createModels(sequelize: Sequelize): RoomModels {
+  let Room = sequelize.define("rooms", {
     id: {
-      type: Sequelize.INTEGER,
+      type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true
     },
-    name: Sequelize.STRING(50),
-    content_url: Sequelize.STRING(2000),
-    password: Sequelize.STRING(6),
-    claimed: Sequelize.DATE,
-    expires: Sequelize.DATE
+    name: DataTypes.STRING(50),
+    content_url: DataTypes.STRING(2000),
+    password: DataTypes.STRING(6),
+    claimed: DataTypes.DATE,
+    expires: DataTypes.DATE
   });
 
   return {
