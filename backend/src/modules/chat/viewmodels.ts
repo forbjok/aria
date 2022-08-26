@@ -1,14 +1,14 @@
-interface RoomViewModel {
+export interface RoomViewModel {
   name: string;
 }
 
-interface ImageViewModel {
+export interface ImageViewModel {
   url: string;
   thumbUrl: string;
   originalFilename: string;
 }
 
-interface PostViewModel {
+export interface PostViewModel {
   posted: string;
   name: string;
   comment: string;

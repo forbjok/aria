@@ -1,5 +1,3 @@
-/// <reference types="node" />
-
 import * as path from "path";
 import * as http from "http";
 import * as express from "express";
@@ -22,7 +20,7 @@ let config = {
 
 // Load config file if it is present
 try {
-  let configFile = process.env.CONFIG || path.join(__dirname, "config.js");
+  let configFile = process.env.CONFIG || path.join(__dirname, "config.ts");
 
   Object.assign(config, require(configFile));
 } catch(e) {}
@@ -33,7 +31,7 @@ let imagesPath = path.join(config.uploadsPath, "images");
 // Create Express app and HTTP server
 let app = express();
 let server = http.createServer(app);
-let io = socketio(server, { path: "/aria-ws"});
+let io = new socketio.Server(server, { path: "/aria-ws"});
 
 // Set up Express app
 app.set("port", config.port);

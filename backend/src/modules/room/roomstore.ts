@@ -1,15 +1,15 @@
-interface IRoomStore {
+export interface IRoomStore {
     getRoom(roomName: string): PromiseLike<RoomInfo>;
     claimRoom(roomName: string): PromiseLike<NewRoomInfo>;
     setContentUrl(roomName: string, contentUrl: string): PromiseLike<number>;
 }
 
-interface NewRoomInfo {
+export interface NewRoomInfo {
   name: string;
   password: string;
 }
 
-interface RoomInfo {
+export interface RoomInfo {
   name: string;
   password: string;
   contentUrl: string;

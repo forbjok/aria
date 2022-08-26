@@ -1,12 +1,12 @@
-/// <reference path="../module.d.ts" />
-/// <reference path="roomstore.d.ts" />
-
 import * as bodyParser from "body-parser";
 import * as jwt from "jsonwebtoken";
 import * as express from "express";
-import * as expressjwt from "express-jwt";
+import { expressjwt } from "express-jwt";
 import ms = require("ms");
 import * as socketio from "socket.io";
+
+import { IRoomStore, RoomInfo } from "./roomstore";
+import { IServer } from "../module";
 
 class Room {
   contentUrl: string;
@@ -33,11 +33,11 @@ class Room {
 
 export class RoomServer implements IServer {
   rooms: Room[];
-  io: SocketIO.Namespace;
+  io: socketio.Namespace;
   ioNamespace: string;
   baseUrl: string;
 
-  constructor(public app: express.Express, io: SocketIO.Server, public store: IRoomStore, options: any) {
+  constructor(public app: express.Express, io: socketio.Server, public store: IRoomStore, options: any) {
     this.app = app;
     this.store = store;
 
@@ -105,7 +105,8 @@ export class RoomServer implements IServer {
     let baseUrl = this.baseUrl;
 
     let jwtmw = expressjwt({
-      secret: "sekrit"
+      secret: "sekrit",
+      algorithms: ["HS256"],
     });
 
     let jsonBodyParser = bodyParser.json();
@@ -243,6 +244,6 @@ export class RoomServer implements IServer {
   }
 }
 
-export function create(app: express.Express, io: SocketIO.Server, store: IRoomStore, options: any): RoomServer {
+export function create(app: express.Express, io: socketio.Server, store: IRoomStore, options: any): RoomServer {
   return new RoomServer(app, io, store, options);
 }

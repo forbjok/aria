@@ -1,25 +1,25 @@
 import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model, ModelStatic, Optional, Sequelize } from "sequelize";
 
 export class RoomModel extends Model<InferAttributes<RoomModel>, InferCreationAttributes<RoomModel>> {
-  declare id?: CreationOptional<number>;
-  declare name?: string;
+  declare id: CreationOptional<number>;
+  declare name: string;
 }
 
 export class ImageModel extends Model<InferAttributes<ImageModel>, InferCreationAttributes<ImageModel>> {
-  declare id?: CreationOptional<number>;
-  declare filename?: string;
-  declare thumbnail_filename?: string;
-  declare original_filename?: string;
+  declare id: CreationOptional<number>;
+  declare filename: string;
+  declare thumbnail_filename: string;
+  declare original_filename: string;
 }
 
 export class PostModel extends Model<InferAttributes<PostModel>, InferCreationAttributes<PostModel>> {
-  declare id?: CreationOptional<number>;
-  declare room_id?: number;
-  declare posted?: string;
-  declare name?: string;
-  declare comment?: string;
+  declare id: CreationOptional<number>;
+  declare room_id: number;
+  declare posted: CreationOptional<string>;
+  declare name: string;
+  declare comment: string;
   declare image_id?: number;
-  declare ip?: string;
+  declare ip: string;
 
   room?: RoomModel;
   image?: ImageModel;
@@ -58,7 +58,7 @@ export function createModels(sequelize: Sequelize): ChatModels {
   Post.belongsTo(Image, { as: "image", foreignKey: "image_id", onDelete: "SET NULL" });
 
   return {
-    Room: Room,
+    Room: <ModelStatic<RoomModel>> Room,
     Image: Image,
     Post: Post
   };

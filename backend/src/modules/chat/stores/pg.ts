@@ -1,5 +1,5 @@
-import * as Promise from "bluebird";
 import * as pg from "pg";
+import { IChatStore, Image, Post, RoomInfo } from "../chatstore";
 
 interface RoomModel {
   id?: number;
@@ -182,12 +182,12 @@ class PgChatStore implements IChatStore {
       return this._insertImage(post.image)
       .then((image) => {
         // Insert post record linked to the inserted image
-        return this._insertPost(roomName, post, image.id);
+        return <PromiseLike<Post>> this._insertPost(roomName, post, image.id);
       });
     }
 
     // No image - insert post without image link
-    return this._insertPost(roomName, post, null);
+    return <PromiseLike<Post>> this._insertPost(roomName, post, null);
   }
 }
 

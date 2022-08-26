@@ -1,5 +1,5 @@
-import * as Promise from "bluebird";
 import { Sequelize } from "sequelize";
+import { IChatStore, Image, Post, RoomInfo } from "../../chatstore";
 
 import * as models from "./models";
 

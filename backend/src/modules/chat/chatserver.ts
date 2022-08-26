@@ -1,7 +1,3 @@
-/// <reference path="../../types/easyimage.d.ts" />
-
-/// <reference path="../module.d.ts" />
-
 import * as path from "path";
 import * as express from "express";
 import * as multer from "multer";
@@ -9,7 +5,11 @@ import * as easyimg from "easyimage";
 import * as moment from "moment";
 import * as socketio from "socket.io";
 
-let noImageFile = <Express.Multer.File>{};
+import { IChatStore, Post, RoomInfo } from "./chatstore";
+import { PostViewModel } from "./viewmodels";
+import { IServer } from "../module";
+
+let noImageFile = <multer.File>{};
 
 let extensionsByMimetype = {
   "image/png": ".png",
@@ -58,9 +58,9 @@ class ChatServer implements IServer {
   thumbBackground: string;
   imagesUrl: string;
   rooms: ChatRoom[];
-  io: SocketIO.Namespace;
+  io: socketio.Namespace;
 
-  constructor(public app: express.Express, io: SocketIO.Server, public store: IChatStore, options: any) {
+  constructor(public app: express.Express, io: socketio.Server, public store: IChatStore, options: any) {
     Object.assign(this, {
       baseUrl: "/chat",
       ioNamespace: "/chat",
@@ -201,7 +201,7 @@ class ChatServer implements IServer {
         ip: req.ip,
       };
 
-      let imageFile = req.file;
+      let imageFile = (req as multer.File).file;
 
       if (imageFile) {
         if (imageFile === noImageFile) {
@@ -284,6 +284,6 @@ class ChatServer implements IServer {
   }
 }
 
-export function create(app: express.Express, io: SocketIO.Server, store: IChatStore, options: any): ChatServer {
+export function create(app: express.Express, io: socketio.Server, store: IChatStore, options: any): ChatServer {
   return new ChatServer(app, io, store, options);
 }

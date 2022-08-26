@@ -1,6 +1,6 @@
-import * as Promise from "bluebird";
 import * as pg from "pg";
 import * as randomstring from "randomstring";
+import { IRoomStore, NewRoomInfo, RoomInfo } from "../roomstore";
 
 function generatePassword() {
   return randomstring.generate({

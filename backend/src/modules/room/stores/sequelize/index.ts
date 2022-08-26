@@ -3,6 +3,7 @@ import * as moment from "moment";
 import * as randomstring from "randomstring";
 
 import * as models from "./models";
+import { IRoomStore, RoomInfo } from "../../roomstore";
 
 interface NewRoomInfo {
   name: string;
