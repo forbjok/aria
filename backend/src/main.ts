@@ -3,6 +3,7 @@
 import * as path from "path";
 import * as http from "http";
 import * as express from "express";
+import { getCacheFolder } from "platform-folders";
 import * as socketio from "socket.io";
 
 import * as chat from "./modules/chat/index";
@@ -14,7 +15,7 @@ let rootDir = path.join(__dirname, "../..");
 // Default configuration
 let config = {
   port: process.env.PORT || 5000,
-  uploadsPath: process.env.UPLOADS_PATH || path.join(rootDir, "uploads"),
+  uploadsPath: process.env.UPLOADS_PATH || path.join(getCacheFolder(), "aria", "uploads"),
   dataStore: "sequelize",
   connectionString: process.env.DATABASE_URL || "postgres://aria:aria@localhost/aria"
 };
