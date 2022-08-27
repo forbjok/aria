@@ -124,15 +124,13 @@ export class ChatCustomElement {
 
         if (this.submitOnCooldown) {
           this.submitOnCooldown = false;
-          this.submitPost(null);
+          this.submitPost();
         }
       }
     }, 1000);
   }
 
-  submitPost(event: Event) {
-    event.preventDefault();
-
+  submitPost() {
     if (!this.canSubmitPost) {
       return;
     }
@@ -257,7 +255,7 @@ export class ChatCustomElement {
 
   submitOnEnterKeypress(event: KeyboardEvent) {
     if (event.key === "enter" && !event.shiftKey) {
-      this.submitPost(event);
+      this.submitPost();
       return false;
     }
 
