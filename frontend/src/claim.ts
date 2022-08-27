@@ -5,7 +5,8 @@ import { Router } from "aurelia-router";
 import {LocalRoomAuthService} from "./services/localroomauthservice";
 import { State } from "state";
 
-import "styles/claim.less";
+import "styles/claim.scss";
+import { ClaimInfo } from "interfaces";
 
 @autoinject
 export class Claim {

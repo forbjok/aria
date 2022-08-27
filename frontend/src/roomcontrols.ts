@@ -3,7 +3,7 @@ import {autoinject, bindable, customElement} from "aurelia-framework";
 import {State} from "./state";
 import {RoomAdminService} from "./services/roomadminservice";
 
-import "styles/roomcontrols.less";
+import "styles/roomcontrols.scss";
 
 @customElement("room-controls")
 @autoinject

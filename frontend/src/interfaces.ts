@@ -1,10 +1,10 @@
-interface ClaimInfo {
+export interface ClaimInfo {
   name: string;
   password: string;
   token: string;
 }
 
-interface Theme {
+export interface Theme {
   name: string;
   description: string;
 }

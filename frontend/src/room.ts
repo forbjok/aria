@@ -8,7 +8,7 @@ import fullscreenUtils from "./utils/fullscreen";
 import io from "socket.io-client";
 import * as $ from "jquery";
 
-import "styles/room.less";
+import "styles/room.scss";
 
 @autoinject
 export class Room {

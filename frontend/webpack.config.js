@@ -219,12 +219,15 @@ module.exports = ({ production }, { analyze, hmr, port, host }) => ({
         use: cssRules
       },
       {
-        test: /\.less$/i,
+        test: /\.s[ac]ss$/i,
         use: [
+          // Creates `style` nodes from JS strings
           "style-loader",
+          // Translates CSS into CommonJS
           "css-loader",
-          "less-loader"
-        ]
+          // Compiles Sass to CSS
+          "sass-loader",
+        ],
       },
       // Skip minimize in production build to avoid complain on unescaped < such as
       // <span>${ c < 5 ? c : 'many' }</span>

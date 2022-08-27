@@ -8,9 +8,10 @@ import filesize from "filesize";
 
 import {version} from "./version";
 import {LocalRoomSettingsService} from "./services/localroomsettingsservice";
+import { Theme } from "interfaces";
 
-import "styles/chat.less";
-import "styles/chat-dark.less";
+import "styles/chat.scss";
+import "styles/chat-dark.scss";
 
 let maxImageSize = 2097152;
 
