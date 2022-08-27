@@ -11,7 +11,7 @@
           </div>
           <div class="post-body">
             <div if.bind="post.image" class="post-image" class.bind="post.showFullImage ? 'expanded' : ''">
-              <a href.bind="post.image.url" click.trigger="$parent.toggleImage(post)">
+              <a href.bind="post.image.url" click.trigger="$parent.toggleImage(post)" target="_blank">
                 <img class="thumbnail" src.bind="post.image.thumbUrl" title.bind="post.image.originalFilename">
                 <img if.bind="post.showFullImage" class="expanded-image" src.bind="post.image.url">
               </a>
