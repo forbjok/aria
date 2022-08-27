@@ -17,12 +17,16 @@ function generatePassword() {
   });
 }
 
+export interface SequelizeRoomStoreOptions {
+  schema?: string;
+}
+
 export class SequelizeRoomStore implements IRoomStore {
   sequelize: Sequelize;
   models: models.RoomModels;
   schema: string;
   
-  constructor(public connectionString: string, options: any) {
+  constructor(public connectionString: string, options: SequelizeRoomStoreOptions) {
     Object.assign(this, {
       schema: "room"
     }, options);
@@ -42,62 +46,61 @@ export class SequelizeRoomStore implements IRoomStore {
     });
   }
 
-  getRoom(roomName: string): PromiseLike<RoomInfo> {
-    return this.models.Room.findOne({
+  async getRoom(roomName: string): Promise<RoomInfo> {
+    let room = await this.models.Room.findOne({
       where: {
         name: roomName
       }
-    }).then((room) => {
-      if (!room) {
-        // Room was not found - return nothing
-        return;
-      }
-
-      // Room was found, return it
-      return {
-        name: room.name,
-        contentUrl: room.content_url,
-        password: room.password,
-        claimed: room.claimed,
-        expires: room.expires
-      };
     });
+
+    if (!room) {
+      // Room was not found - return nothing
+      return;
+    }
+
+    // Room was found, return it
+    return {
+      name: room.name,
+      contentUrl: room.content_url,
+      password: room.password,
+      claimed: room.claimed,
+      expires: room.expires,
+    };
   }
 
-  claimRoom(roomName: string): PromiseLike<NewRoomInfo> {
+  async claimRoom(roomName: string): Promise<NewRoomInfo> {
     let claimed = moment();
     let expires = moment().add(1, "day");
 
-    return this.models.Room.create({
+    let room = await this.models.Room.create({
       name: roomName,
       content_url: "about:blank",
       password: generatePassword(),
       claimed: claimed.toDate(),
-      expires: expires.toDate()
-    })
-    .then((room) => {
-      return {
-        name: room.name,
-        password: room.password
-      };
+      expires: expires.toDate(),
     });
+
+    return {
+      name: room.name,
+      password: room.password,
+    };
   }
 
-  setContentUrl(roomName: string, contentUrl: string): PromiseLike<number> {
-    return this.models.Room.findOne({
+  async setContentUrl(roomName: string, contentUrl: string): Promise<number> {
+    let room = await this.models.Room.findOne({
       where: {
-        name: roomName
+        name: roomName,
       }
-    }).then((room) => {
-      return room.update({
-        content_url: contentUrl
-      }).then(() => {
-        return 1;
-      });
     });
+
+    await room.update({
+      content_url: contentUrl,
+    });
+
+    return 1;
   }
 }
 
-export function create(connectionString: string, options: any) {
+export function create(connectionString: string, options: SequelizeRoomStoreOptions) {
   return new SequelizeRoomStore(connectionString, options);
 }

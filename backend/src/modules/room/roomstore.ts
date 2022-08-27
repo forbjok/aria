@@ -1,7 +1,7 @@
 export interface IRoomStore {
-    getRoom(roomName: string): PromiseLike<RoomInfo>;
-    claimRoom(roomName: string): PromiseLike<NewRoomInfo>;
-    setContentUrl(roomName: string, contentUrl: string): PromiseLike<number>;
+    getRoom(roomName: string): Promise<RoomInfo>;
+    claimRoom(roomName: string): Promise<NewRoomInfo>;
+    setContentUrl(roomName: string, contentUrl: string): Promise<number>;
 }
 
 export interface NewRoomInfo {

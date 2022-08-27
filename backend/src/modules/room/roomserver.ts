@@ -2,10 +2,9 @@ import * as bodyParser from "body-parser";
 import * as jwt from "jsonwebtoken";
 import * as express from "express";
 import { expressjwt } from "express-jwt";
-import ms = require("ms");
 import * as socketio from "socket.io";
 
-import { IRoomStore, RoomInfo } from "./roomstore";
+import { IRoomStore, NewRoomInfo, RoomInfo } from "./roomstore";
 import { IServer } from "../module";
 
 class Room {
@@ -31,13 +30,18 @@ class Room {
   }
 }
 
+export interface RoomServerOptions {
+  baseUrl: string;
+  ioNamespace: string;
+}
+
 export class RoomServer implements IServer {
   rooms: Room[];
   io: socketio.Namespace;
-  ioNamespace: string;
   baseUrl: string;
+  ioNamespace: string;
 
-  constructor(public app: express.Express, io: socketio.Server, public store: IRoomStore, options: any) {
+  constructor(public app: express.Express, io: socketio.Server, public store: IRoomStore, options: RoomServerOptions) {
     this.app = app;
     this.store = store;
 
@@ -52,21 +56,21 @@ export class RoomServer implements IServer {
     this._initialize();
   }
 
-  _getRoom(name: string): PromiseLike<Room> {
+  async _getRoom(name: string): Promise<Room> {
     let rooms = this.rooms;
 
     if (name in rooms) {
       return Promise.resolve(rooms[name]);
     }
 
-    return this.store.getRoom(name).then((roomInfo) => {
-      if (!roomInfo) {
-        console.log(`Room ${name} not found.`);
-        return;
-      }
+    let roomInfo = await this.store.getRoom(name);
 
-      return this._createAndReturnRoom(roomInfo);
-    });
+    if (!roomInfo) {
+      console.log(`Room ${name} not found.`);
+      return;
+    }
+
+    return this._createAndReturnRoom(roomInfo);
   }
 
   _createAndReturnRoom(roomInfo: RoomInfo): Room {
@@ -87,10 +91,8 @@ export class RoomServer implements IServer {
     return room;
   }
 
-  _claimRoom(name) {
-    return this.store.claimRoom(name).then((claimInfo) => {
-      return claimInfo;
-    });
+  async _claimRoom(name): Promise<NewRoomInfo> {
+    return await this.store.claimRoom(name);
   }
 
   _initialize() {
@@ -100,7 +102,7 @@ export class RoomServer implements IServer {
     this._setupSocket();
   }
 
-  _setupExpress() {
+  async _setupExpress() {
     let app = this.app;
     let baseUrl = this.baseUrl;
 
@@ -111,20 +113,20 @@ export class RoomServer implements IServer {
 
     let jsonBodyParser = bodyParser.json();
 
-    app.get(`${baseUrl}/:room`, (req, res) => {
+    app.get(`${baseUrl}/:room`, async (req, res) => {
       let roomName = req.params.room;
 
-      this._getRoom(roomName).then((room) => {
-        if (!room) {
-          // Room was not found
-          res.send(404);
-          return;
-        }
+      let room = await this._getRoom(roomName);
 
-        // Room was found
-        res.send({
-          name: roomName,
-        });
+      if (!room) {
+        // Room was not found
+        res.send(404);
+        return;
+      }
+
+      // Room was found
+      res.send({
+        name: roomName,
       });
     });
 
@@ -140,20 +142,20 @@ export class RoomServer implements IServer {
       return token;
     };
 
-    app.post(`${baseUrl}/:room/login`, jsonBodyParser, (req, res) => {
+    app.post(`${baseUrl}/:room/login`, jsonBodyParser, async (req, res) => {
       let roomName = req.params.room;
 
-      this._getRoom(roomName).then((room) => {
-        let data = req.body;
+      let room = await this._getRoom(roomName);
 
-        if (data.password !== room.password) {
-          res.status(403).send("You are not authorized.");
-          return;
-        }
+      let data = req.body;
 
-        res.send({
-          token: createToken(roomName)
-        });
+      if (data.password !== room.password) {
+        res.status(403).send("You are not authorized.");
+        return;
+      }
+
+      res.send({
+        token: createToken(roomName)
       });
     });
 
@@ -161,43 +163,43 @@ export class RoomServer implements IServer {
       res.send();
     });
 
-    app.post(`${baseUrl}/:room/claim`, (req, res) => {
+    app.post(`${baseUrl}/:room/claim`, async (req, res) => {
       let roomName = req.params.room;
 
-      this._claimRoom(roomName).then((claimInfo) => {
-        if (!claimInfo) {
-          console.log(`Room ${roomName} could not be claimed.`);
+      let claimInfo = await this._claimRoom(roomName);
+      if (!claimInfo) {
+        console.log(`Room ${roomName} could not be claimed.`);
 
-          res.status(403).send("Room has already been claimed.");
-          return;
-        }
+        res.status(403).send("Room has already been claimed.");
+        return;
+      }
 
-        res.send(Object.assign({
-          token: createToken(roomName)
-        }, claimInfo));
+      res.send({
+        token: createToken(roomName),
+        ...claimInfo,
       });
     });
 
     app.post(`${baseUrl}/:room/control`,
       jwtmw,
       jsonBodyParser,
-      (req, res) => {
+      async (req, res) => {
       let roomName = req.params.room;
 
-      this._getRoom(roomName).then((room) => {
-        let data = req.body;
+      let room = await this._getRoom(roomName);
 
-        let action = data.action;
-        if (action) {
-          switch(action.action) {
-            case "set content url":
-            room.setContentUrl(action.url);
-            break;
-          }
+      let data = req.body;
+
+      let action = data.action;
+      if (action) {
+        switch(action.action) {
+          case "set content url":
+          room.setContentUrl(action.url);
+          break;
         }
+      }
 
-        res.send();
-      });
+      res.send();
     });
   }
 
@@ -210,7 +212,7 @@ export class RoomServer implements IServer {
 
       let roomsJoined = {};
 
-      socket.on("join", (roomName) => {
+      socket.on("join", async (roomName) => {
         if (roomName in roomsJoined) {
           return;
         }
@@ -218,18 +220,19 @@ export class RoomServer implements IServer {
         console.log(`${ip}: Joining room ${roomName}!`);
 
         roomsJoined[roomName] = true;
-        this._getRoom(roomName).then((room) => {
-          socket.join(roomName);
 
-          if (!room) {
-            // Room did not exist, return without sending content
-            return;
-          }
+        let room = await this._getRoom(roomName);
 
-          let contentUrl = room.getContentUrl();
+        socket.join(roomName);
 
-          socket.emit("content", { url: contentUrl });
-        });
+        if (!room) {
+          // Room did not exist, return without sending content
+          return;
+        }
+
+        let contentUrl = room.getContentUrl();
+
+        socket.emit("content", { url: contentUrl });
       });
 
       socket.on("leave", (roomName) => {
@@ -244,6 +247,6 @@ export class RoomServer implements IServer {
   }
 }
 
-export function create(app: express.Express, io: socketio.Server, store: IRoomStore, options: any): RoomServer {
+export function create(app: express.Express, io: socketio.Server, store: IRoomStore, options: RoomServerOptions): RoomServer {
   return new RoomServer(app, io, store, options);
 }

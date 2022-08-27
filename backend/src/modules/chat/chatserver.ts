@@ -26,11 +26,16 @@ function stripExtension(filename) {
   return path.basename(filename, path.extname(filename));
 }
 
+export interface ChatRoomOptions {
+  posts: Post[];
+  onPost: Function;
+}
+
 class ChatRoom {
   posts: Post[];
   onPost: Function;
 
-  constructor(public name: string, options: any) {
+  constructor(public name: string, options: ChatRoomOptions) {
     Object.assign(this, {
       onPost: () => {}
     }, options);
@@ -50,6 +55,14 @@ class ChatRoom {
   }
 }
 
+export interface ChatServerOptions {
+  baseUrl: string;
+  ioNamespace: string;
+  imagesPath: string;
+  thumbSize: number;
+  thumbBackground: string;
+}
+
 class ChatServer implements IServer {
   baseUrl: string;
   ioNamespace: string;
@@ -60,7 +73,7 @@ class ChatServer implements IServer {
   rooms: ChatRoom[];
   io: socketio.Namespace;
 
-  constructor(public app: express.Express, io: socketio.Server, public store: IChatStore, options: any) {
+  constructor(public app: express.Express, io: socketio.Server, public store: IChatStore, options: ChatServerOptions) {
     Object.assign(this, {
       baseUrl: "/chat",
       ioNamespace: "/chat",
@@ -101,43 +114,43 @@ class ChatServer implements IServer {
     return vm;
   }
 
-  _getRoom(name: string): PromiseLike<ChatRoom> {
+  async _getRoom(name: string): Promise<ChatRoom> {
     let rooms = this.rooms;
 
     if (name in rooms) {
-      return Promise.resolve(rooms[name]);
+      return rooms[name];
     }
 
-    return this.store.getRoom(name).then((roomInfo) => {
-      if (!roomInfo) {
-        console.log(`Chatroom ${name} not found. Creating it.`);
-        return this.store.createRoom(name).then((room) => {
-          return this._createAndReturnRoom(room);
-        });
-      }
+    let roomInfo = await this.store.getRoom(name);
 
-      return this._createAndReturnRoom(roomInfo);
-    });
-  }
+    if (!roomInfo) {
+      console.log(`Chatroom ${name} not found. Creating it.`);
 
-  _createAndReturnRoom(roomInfo: RoomInfo): PromiseLike<ChatRoom> {
+      let room = await this.store.createRoom(name);
+
+      return await this._createAndReturnRoom(room);
+    }
+
+    return await this._createAndReturnRoom(roomInfo);
+}
+
+  async _createAndReturnRoom(roomInfo: RoomInfo): Promise<ChatRoom> {
     let name = roomInfo.name;
     let io = this.io;
     let store = this.store;
 
     // Retrieve recent posts from database
-    return store.getPosts(name, { limit: 50 }).then((posts) => {
-      let room = new ChatRoom(name, {
-        posts: posts,
-        onPost: (post) => {
-          store.addPost(name, post);
-          io.to(name).emit("post", this._postToViewModel(post));
-        }
-      });
-
-      this.rooms[name] = room;
-      return room;
+    let posts = await store.getPosts(name, { limit: 50 });
+    let room = new ChatRoom(name, {
+      posts: posts,
+      onPost: (post) => {
+        store.addPost(name, post);
+        io.to(name).emit("post", this._postToViewModel(post));
+      }
     });
+
+    this.rooms[name] = room;
+    return room;
   }
 
   _initialize() {
@@ -147,7 +160,7 @@ class ChatServer implements IServer {
     this._setupSocket();
   }
 
-  _setupExpress() {
+  async _setupExpress() {
     let app = this.app;
     let imagesPath = this.imagesPath;
     let baseUrl = this.baseUrl;
@@ -183,13 +196,12 @@ class ChatServer implements IServer {
       }
     });
 
-    let emitPost = (roomName, post) => {
-      return this._getRoom(roomName).then((room) => {
-        room.post(post);
-      });
+    let emitPost = async (roomName, post) => {
+      let room = await this._getRoom(roomName);
+      room.post(post);
     }
 
-    app.post(`${baseUrl}/:room/post`, upload.single("image"), (req, res) => {
+    app.post(`${baseUrl}/:room/post`, upload.single("image"), async (req, res) => {
       let roomName = req.params.room;
 
       console.log(`Got post to room ${roomName}.`);
@@ -212,28 +224,26 @@ class ChatServer implements IServer {
         let filename = imageFile.filename;
         let thumbFilename = "thumb-" + stripExtension(filename) + ".jpg";
 
-        easyimg.resize({
+        let file = await easyimg.resize({
           src: imageFile.path,
           dst: path.join(imagesPath, thumbFilename),
           width: thumbSize,
           height: thumbSize,
           quality: 80,
           background: thumbBackground
-        }).then((file) => {
-          post.image = {
-            filename: filename,
-            thumbnailFilename: thumbFilename,
-            originalFilename: imageFile.originalname
-          }
+        });
 
-          emitPost(roomName, post).then(() => {
-            res.send();
-          });
-        });
+        post.image = {
+          filename: filename,
+          thumbnailFilename: thumbFilename,
+          originalFilename: imageFile.originalname
+        }
+
+        await emitPost(roomName, post);
+        res.send();
       } else {
-        emitPost(roomName, post).then(() => {
-          res.send();
-        });
+        await emitPost(roomName, post);
+        res.send();
       }
     });
   }
@@ -247,7 +257,7 @@ class ChatServer implements IServer {
 
       let roomsJoined = {};
 
-      socket.on("join", (roomName) => {
+      socket.on("join", async (roomName) => {
         if (roomName in roomsJoined) {
           return;
         }
@@ -255,21 +265,21 @@ class ChatServer implements IServer {
         console.log(`${ip}: Joining chatroom ${roomName}!`);
 
         roomsJoined[roomName] = true;
-        this._getRoom(roomName).then((room) => {
-          socket.join(roomName);
+        let room = await this._getRoom(roomName);
 
-          if (!room) {
-            // Room did not exist, return without sending content
-            return;
-          }
+        socket.join(roomName);
 
-          console.log(`${ip}: Sending recent posts.`);
-          let recentPosts = room.getRecentPosts();
+        if (!room) {
+          // Room did not exist, return without sending content
+          return;
+        }
 
-          for (let post of recentPosts) {
-            socket.emit("post", this._postToViewModel(post));
-          }
-        });
+        console.log(`${ip}: Sending recent posts.`);
+        let recentPosts = room.getRecentPosts();
+
+        for (let post of recentPosts) {
+          socket.emit("post", this._postToViewModel(post));
+        }
       });
 
       socket.on("leave", (roomName) => {
@@ -284,6 +294,6 @@ class ChatServer implements IServer {
   }
 }
 
-export function create(app: express.Express, io: socketio.Server, store: IChatStore, options: any): ChatServer {
+export function create(app: express.Express, io: socketio.Server, store: IChatStore, options: ChatServerOptions): ChatServer {
   return new ChatServer(app, io, store, options);
 }
