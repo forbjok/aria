@@ -16,6 +16,26 @@ import "styles/chat-yotsubab.scss";
 
 let maxImageSize = 2097152;
 
+interface Image {
+  url: string;
+  thumbUrl: string;
+  originalFilename: string;
+}
+
+interface Post {
+  name: string;
+  comment: string;
+  image?: Image;
+  posted: string;
+  showFullImage: boolean;
+}
+
+interface NewPost {
+  name: string;
+  comment: string;
+  image?: File;
+}
+
 @autoinject
 export class ChatCustomElement {
   @bindable room: string;
@@ -23,12 +43,12 @@ export class ChatCustomElement {
   postContainer: HTMLDivElement;
   chatControls: HTMLDivElement;
 
-  posts: any[]
+  posts: Post[]
   themes: Theme[]
   theme: string;
   posting: boolean;
   postingCooldown: number;
-  post: any;
+  post: NewPost;
   postForm: HTMLFormElement;
   useCompactPostForm: boolean;
   postingProgress: string;
@@ -51,16 +71,20 @@ export class ChatCustomElement {
     this.posting = false;
     this.postingCooldown = 0;
 
-    this.post = {};
+    this.post = this.createEmptyPost();
     this.useCompactPostForm = false;
+  }
+
+  createEmptyPost(): NewPost {
+    return {
+      name: this.settings.get("chat_name", null) || "",
+      comment: "",
+    };
   }
 
   clearPost() {
     this.postForm.reset();
-    this.post = {
-      name: this.settings.get("chat_name", null) || "",
-      comment: ""
-    };
+    this.post = this.createEmptyPost();
   }
 
   get postUrl() {
@@ -106,7 +130,7 @@ export class ChatCustomElement {
     }, 1000);
   }
 
-  submitPost(event: any) {
+  submitPost(event: Event) {
     event.preventDefault();
 
     if (!this.canSubmitPost) {
@@ -206,8 +230,9 @@ export class ChatCustomElement {
     this.clearPost();
   }
 
-  imageSelected(event) {
-    this.post.image = event.target.files[0];
+  imageSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.post.image = input.files[0];
 
     if (this.post.image && this.post.image.size > maxImageSize) {
       alert(`The selected file is bigger than the maximum allowed size of ${filesize(maxImageSize)}`);
@@ -226,12 +251,12 @@ export class ChatCustomElement {
     }, 1);
   }
 
-  toggleImage(post) {
+  toggleImage(post: Post) {
     post.showFullImage = !post.showFullImage;
   }
 
-  submitOnEnterKeypress(event) {
-    if (event.keyCode === 13 && !event.shiftKey) {
+  submitOnEnterKeypress(event: KeyboardEvent) {
+    if (event.key === "enter" && !event.shiftKey) {
       this.submitPost(event);
       return false;
     }
@@ -239,7 +264,7 @@ export class ChatCustomElement {
     return true;
   }
 
-  clearFileOnShiftClick(event) {
+  clearFileOnShiftClick(event: KeyboardEvent) {
     if (event.shiftKey) {
       $(event.target).val("");
       delete this.post.image;

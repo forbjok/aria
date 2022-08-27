@@ -29,8 +29,6 @@ export class Claim {
   }
 
   async claim() {
-    console.log('DO CLAIM', this.state.roomName);
-
     let response = await this.http.fetch(`/api/r/${this.state.roomName}/claim`, {
       method: "POST",
       headers: {

@@ -85,7 +85,7 @@ export class Room {
     });
   }
 
-  _setContent(url) {
+  _setContent(url: string) {
     this.contentUrl = url;
     this.embeddedContent = [url];
   }
