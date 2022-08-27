@@ -1,6 +1,6 @@
 {
   "name": "aria",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "An imageboard-like chat",
   "main": "src/main.ts",
   "keywords": [
