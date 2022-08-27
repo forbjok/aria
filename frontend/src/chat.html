@@ -1,7 +1,7 @@
 <template>
   <require from="./valueconverters/formattime"></require>
   <require from="./valueconverters/formatpost"></require>
-  <div class="chat">
+  <div class="chat" class.bind="`theme-${theme}`">
     <div ref="postContainer" class="chat-postcontainer">
       <ul>
         <li class="post" repeat.for="post of posts">

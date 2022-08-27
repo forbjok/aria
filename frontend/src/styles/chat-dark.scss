@@ -1,34 +1,36 @@
 @import url(https://fonts.googleapis.com/css?family=Roboto);
 
 .chat {
-  font-family: "Roboto", sans-serif;
-  font-size: 0.8rem;
-
-  background: black;
-  color: white;
-
-  .post-image {
-    .filename {
-      color: #C4C4C4;
-    }
-  }
-
-  .chat-postcontainer {
-    .post:nth-child(odd) {
-      background: #121212;
-    }
-  }
-
-  .post {
-    .comment {
-      a {
-        color: #898ED6;
-        text-decoration: none;
+  &.theme-dark {
+    font-family: "Roboto", sans-serif;
+    font-size: 0.8rem;
+  
+    background: black;
+    color: white;
+  
+    .post-image {
+      .filename {
+        color: #C4C4C4;
       }
     }
-  }
-
-  .chatcontrols {
-    background: #282828;
+  
+    .chat-postcontainer {
+      .post:nth-child(odd) {
+        background: #121212;
+      }
+    }
+  
+    .post {
+      .comment {
+        a {
+          color: #898ED6;
+          text-decoration: none;
+        }
+      }
+    }
+  
+    .chatcontrols {
+      background: #282828;
+    }  
   }
 }

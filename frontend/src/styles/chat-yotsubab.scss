@@ -1,29 +1,31 @@
 .chat {
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 0.8rem;
-
-  background: #EEF2FF;
-  color: black;
-
-  .chat-postcontainer {
-    padding-left: 2px;
-    padding-right: 2px;
-  }
-
-  .post {
-    background-color: #D6DAF0;
-    border: 1px solid #B7C5D9;
-    border-left: none;
-    border-top: none;
-    padding: 2px;
-    margin: 2px;
-    min-width: 250px;
-
-    .comment {
-      a {
-        color: #34345C;
-        text-decoration: none;
-      }
+  &.theme-yotsubab {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.8rem;
+  
+    background: #EEF2FF;
+    color: black;
+  
+    .chat-postcontainer {
+      padding-left: 2px;
+      padding-right: 2px;
     }
+  
+    .post {
+      background-color: #D6DAF0;
+      border: 1px solid #B7C5D9;
+      border-left: none;
+      border-top: none;
+      padding: 2px;
+      margin: 2px;
+      min-width: 250px;
+  
+      .comment {
+        a {
+          color: #34345C;
+          text-decoration: none;
+        }
+      }
+    }  
   }
 }

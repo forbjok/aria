@@ -12,6 +12,7 @@ import { Theme } from "interfaces";
 
 import "styles/chat.scss";
 import "styles/chat-dark.scss";
+import "styles/chat-yotsubab.scss";
 
 let maxImageSize = 2097152;
 
