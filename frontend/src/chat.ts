@@ -135,17 +135,12 @@ export class ChatCustomElement {
     // Save name in cookie
     this.settings.set("chat_name", this.post.name);
 
-    console.log('AY');
-
-
     let ajaxPost = $.ajax(this.postUrl, {
       method: "POST",
       data: formData,
       contentType: false,
       processData: false,
     });
-
-    console.log('BEE', ajaxPost);
 
     /* TODO: Check if this actually works */
     let ajaxPostAny: any = ajaxPost;

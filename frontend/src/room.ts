@@ -33,8 +33,6 @@ export class Room {
     this.roomName = params.roomName;
     this.state.roomName = this.roomName;
 
-    console.log('ACT ROOM', this.roomName);
-
     let roomExists = await this.checkRoomExists();
 
     if (!roomExists) {
@@ -51,11 +49,9 @@ export class Room {
 
     socket.on("connect", () => {
       socket.emit("join", this.roomName);
-      console.log('JOINED');
     });
 
     socket.on("content", (content) => {
-      console.log('CONTENT', content);
       this._setContent(content.url);
     });
 
