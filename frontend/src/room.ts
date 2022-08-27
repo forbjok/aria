@@ -121,15 +121,15 @@ export class Room {
     this.showRoomControls = !this.showRoomControls;
   }
 
-  private checkRoomExists(): PromiseLike<boolean> {
-    return this.http.fetch(`/api/r/${this.roomName}`, {
+  private async checkRoomExists(): Promise<boolean> {
+    let response = await this.http.fetch(`/api/r/${this.roomName}`, {
       method: "GET",
-    }).then((response) => {
-      if (!response.ok) {
-        return false;
-      }
-
-      return true;
     });
+
+    if (!response.ok) {
+      return false;
+    }
+
+    return true;
   }
 }

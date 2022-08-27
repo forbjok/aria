@@ -28,33 +28,32 @@ export class RoomControls {
     this.contentUrl = "";
   }
 
-  bind() {
-    this.adminService.getLoginStatus().then((authorized) => {
-      this.authorized = authorized;
-      this.initialized = true;
-    });
+  async bind() {
+    let authorized = await this.adminService.getLoginStatus();
+    
+    this.authorized = authorized;
+    this.initialized = true;
   }
 
-  login() {
+  async login() {
     let password = this.password;
-    return this.adminService.login(password)
-    .then((success) => {
-      if (success) {
-        this.authorized = true;
-      } else {
-        this.loginError = "Nope, that's not it.";
+    let success = await this.adminService.login(password);
 
-        setTimeout(() => {
-          this.loginError = "";
-        }, 2000);
-      }
+    if (success) {
+      this.authorized = true;
+    } else {
+      this.loginError = "Nope, that's not it.";
 
-      this.password = "";
-      return success;
-    });
+      setTimeout(() => {
+        this.loginError = "";
+      }, 2000);
+    }
+
+    this.password = "";
+    return success;
   }
 
-  setContent() {
+  async setContent() {
     let contentUrl = this.contentUrl;
 
     if (contentUrl) {
@@ -63,10 +62,8 @@ export class RoomControls {
         contentUrl = "http://" + contentUrl;
       }
 
-      return this.adminService.setContentUrl(contentUrl)
-      .then(() => {
-        this.contentUrl = "";
-      });
+      await this.adminService.setContentUrl(contentUrl);
+      this.contentUrl = "";
     }
   }
 }

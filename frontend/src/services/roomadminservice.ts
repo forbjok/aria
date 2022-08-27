@@ -20,53 +20,57 @@ export class RoomAdminService {
     this.token = auth.get();
   }
 
-  getLoginStatus(): PromiseLike<boolean> {
-    return this.http.fetch(`/api/r/${this.roomName}/loggedin`, {
+  async getLoginStatus(): Promise<boolean> {
+    let response = await this.http.fetch(`/api/r/${this.roomName}/loggedin`, {
       method: "POST",
       headers: {
         "Accept": "application/json",
         "Content-Type": "application/json",
         "Authorization": `Bearer ${this.token}`
       }
-    }).then((response) => {
-      if (!response.ok) {
-        return false;
-      }
-
-      this.isAdmin = true;
-      return this.isAdmin;
     });
+
+    if (!response.ok) {
+      return false;
+    }
+
+    this.isAdmin = true;
+    return this.isAdmin;
   }
 
-  login(password: string): PromiseLike<boolean> {
+  async login(password: string): Promise<boolean> {
     let data = {
       password: password
     };
 
-    return this.http.fetch(`/api/r/${this.roomName}/login`, {
-      method: "POST",
-      body: JSON.stringify(data),
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${this.token}`
-      }
-    }).then((response) => {
-      if (!response.ok) {
-        /* TODO: Figure out why Promise.resolve is required here but not in other cases */
-        return Promise.resolve(false);
-      }
+    let response: Response;
 
-      return response.json().then((res) => {
-        this.token = res.token;
-        this.auth.set(this.token);
-
-        this.isAdmin = true;
-        return this.isAdmin;
+    try {
+      response = await this.http.fetch(`/api/r/${this.roomName}/login`, {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${this.token}`
+        }
       });
-    }).catch(() => {
+    } catch {
       return false;
-    });
+    }
+
+    if (!response.ok) {
+      /* TODO: Figure out why Promise.resolve is required here but not in other cases */
+      return Promise.resolve(false);
+    }
+
+    let res = await response.json();
+    
+    this.token = res.token;
+    this.auth.set(this.token);
+
+    this.isAdmin = true;
+    return this.isAdmin;
   }
 
   action(action: any) {

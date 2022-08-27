@@ -27,24 +27,24 @@ export class Claim {
     }
   }
 
-  claim() {
+  async claim() {
     console.log('DO CLAIM', this.state.roomName);
 
-    return this.http.fetch(`/api/r/${this.state.roomName}/claim`, {
+    let response = await this.http.fetch(`/api/r/${this.state.roomName}/claim`, {
       method: "POST",
       headers: {
         "Accept": "application/json"
       }
-    }).then((response) => {
-      if (!response.ok) {
-        this.claimError = response.statusText;
-      }
-
-      response.json().then((data: ClaimInfo) => {
-        this.claimInfo = data;
-        this.auth.set(data.token);
-      });
     });
+
+    if (!response.ok) {
+      this.claimError = response.statusText;
+    }
+
+    let data: ClaimInfo = await response.json();
+
+    this.claimInfo = data;
+    this.auth.set(data.token);
   }
 
   reload() {
