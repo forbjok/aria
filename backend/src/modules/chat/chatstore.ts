@@ -3,6 +3,7 @@ export interface QueryOptions {
 }
 
 export interface IChatStore {
+  connect(): Promise<void>;
   getRoom(roomName: string): Promise<RoomInfo>;
   createRoom(roomName: string): Promise<RoomInfo>;
   getPosts(roomName: string, options: QueryOptions): Promise<Post[]>;
