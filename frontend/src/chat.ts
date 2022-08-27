@@ -6,9 +6,9 @@ import "jq-ajax-progress";
 
 import filesize from "filesize";
 
-import {version} from "./version";
 import {LocalRoomSettingsService} from "./services/localroomsettingsservice";
 import { Theme } from "interfaces";
+import { VERSION } from "./version";
 
 import "styles/chat.scss";
 import "styles/chat-dark.scss";
@@ -35,7 +35,7 @@ export class ChatCustomElement {
   submitOnCooldown: boolean;
   triggerPostLayout: boolean;
 
-  public versionText: string = `v${version}`;
+  public versionText: string = `v${VERSION}`;
 
   constructor(
     private element: Element,

@@ -1,1 +1,1 @@
-export let version: string = "0.0.2";
+export const VERSION = "0.0.2";

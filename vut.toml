@@ -1,0 +1,21 @@
+[general]
+ignore = [
+    "**/.git",
+    "**/node_modules",
+]
+
+[authoritative-version-source]
+type = "vut"
+
+[file-updaters.'version.ts']
+type = "regex"
+replacers = [
+  { regexes = '(VERSION = ")(.*)(";)' },
+]
+
+[[update-version-sources]]
+globs = "**"
+
+[[update-files]]
+globs = "**/version.ts"
+updater = "version.ts"
