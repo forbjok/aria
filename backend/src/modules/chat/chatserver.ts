@@ -5,9 +5,9 @@ import * as easyimg from "easyimage";
 import * as moment from "moment";
 import * as socketio from "socket.io";
 
-import { IChatStore, Post, RoomInfo } from "./chatstore";
 import { PostViewModel } from "./viewmodels";
 import { IServer } from "../module";
+import { IAriaStore, Post, RoomInfo } from "../../store";
 
 let noImageFile = <multer.File>{};
 
@@ -73,7 +73,7 @@ class ChatServer implements IServer {
   rooms: ChatRoom[];
   io: socketio.Namespace;
 
-  constructor(public app: express.Express, io: socketio.Server, public store: IChatStore, options: ChatServerOptions) {
+  constructor(public app: express.Express, io: socketio.Server, public store: IAriaStore, options: ChatServerOptions) {
     Object.assign(this, {
       baseUrl: "/chat",
       ioNamespace: "/chat",
@@ -92,7 +92,7 @@ class ChatServer implements IServer {
   // Create a post view-model (for websocket use) from an internal post object
   _postToViewModel(post: Post): PostViewModel {
     let vm: PostViewModel = {
-      posted: post.posted,
+      posted: post.postedAt,
       name: post.name,
       comment: post.comment,
       ip: null,
@@ -105,9 +105,9 @@ class ChatServer implements IServer {
       let imagesUrl = this.imagesUrl;
 
       vm.image = {
-        url: imagesUrl + "/" + image.filename,
-        thumbUrl: imagesUrl + "/" + image.thumbnailFilename,
-        originalFilename: image.originalFilename
+        url: imagesUrl + "/" + image.path,
+        thumbUrl: imagesUrl + "/" + image.thumbnailPath,
+        originalFilename: image.filename
       };
     }
 
@@ -124,11 +124,8 @@ class ChatServer implements IServer {
     let roomInfo = await this.store.getRoom(name);
 
     if (!roomInfo) {
-      console.log(`Chatroom ${name} not found. Creating it.`);
-
-      let room = await this.store.createRoom(name);
-
-      return await this._createAndReturnRoom(room);
+      console.log(`Chatroom ${name} not found.`);
+      return null;
     }
 
     return await this._createAndReturnRoom(roomInfo);
@@ -207,7 +204,7 @@ class ChatServer implements IServer {
       console.log(`Got post to room ${roomName}.`);
 
       let post: Post = {
-        posted: moment().utc().toISOString(),
+        postedAt: moment().utc().toISOString(),
         name: req.body.name ? req.body.name : "Anonymous",
         comment: req.body.comment,
         ip: req.ip,
@@ -234,9 +231,9 @@ class ChatServer implements IServer {
         });
 
         post.image = {
-          filename: filename,
-          thumbnailFilename: thumbFilename,
-          originalFilename: imageFile.originalname
+          path: filename,
+          thumbnailPath: thumbFilename,
+          filename: imageFile.originalname
         }
 
         await emitPost(roomName, post);
@@ -294,6 +291,6 @@ class ChatServer implements IServer {
   }
 }
 
-export function create(app: express.Express, io: socketio.Server, store: IChatStore, options: ChatServerOptions): ChatServer {
+export function create(app: express.Express, io: socketio.Server, store: IAriaStore, options: ChatServerOptions): ChatServer {
   return new ChatServer(app, io, store, options);
 }

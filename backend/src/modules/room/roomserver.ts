@@ -4,8 +4,8 @@ import * as express from "express";
 import { expressjwt } from "express-jwt";
 import * as socketio from "socket.io";
 
-import { IRoomStore, NewRoomInfo, RoomInfo } from "./roomstore";
 import { IServer } from "../module";
+import { IAriaStore, RoomInfo } from "../../store";
 
 class Room {
   contentUrl: string;
@@ -41,7 +41,7 @@ export class RoomServer implements IServer {
   baseUrl: string;
   ioNamespace: string;
 
-  constructor(public app: express.Express, io: socketio.Server, public store: IRoomStore, options: RoomServerOptions) {
+  constructor(public app: express.Express, io: socketio.Server, public store: IAriaStore, options: RoomServerOptions) {
     this.app = app;
     this.store = store;
 
@@ -91,8 +91,8 @@ export class RoomServer implements IServer {
     return room;
   }
 
-  async _claimRoom(name): Promise<NewRoomInfo> {
-    return await this.store.claimRoom(name);
+  async _claimRoom(name): Promise<RoomInfo> {
+    return await this.store.createRoom(name);
   }
 
   _initialize() {
@@ -247,6 +247,6 @@ export class RoomServer implements IServer {
   }
 }
 
-export function create(app: express.Express, io: socketio.Server, store: IRoomStore, options: RoomServerOptions): RoomServer {
+export function create(app: express.Express, io: socketio.Server, store: IAriaStore, options: RoomServerOptions): RoomServer {
   return new RoomServer(app, io, store, options);
 }

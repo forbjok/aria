@@ -2,28 +2,32 @@ export interface QueryOptions {
   limit?: number;
 }
 
-export interface IChatStore {
+export interface IAriaStore {
   connect(): Promise<void>;
+  migrate(): Promise<void>;
   getRoom(roomName: string): Promise<RoomInfo>;
   createRoom(roomName: string): Promise<RoomInfo>;
   getPosts(roomName: string, options: QueryOptions): Promise<Post[]>;
   addPost(roomName: string, post: Post): Promise<Post>;
+  setContentUrl(roomName: string, contentUrl: string): Promise<number>;
 }
 
 export interface RoomInfo {
   name: string;
+  password: string;
+  contentUrl: string;
 }
 
 export interface Image {
+  path: string;
+  thumbnailPath: string;
   filename: string;
-  thumbnailFilename: string;
-  originalFilename: string;
 }
 
 export interface Post {
-  posted: string;
+  postedAt: string;
   name: string;
   comment: string;
-  ip: string;
   image?: Image;
+  ip: string;
 }

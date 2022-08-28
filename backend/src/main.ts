@@ -6,6 +6,7 @@ import * as socketio from "socket.io";
 
 import * as chat from "./modules/chat/index";
 import * as room from "./modules/room/index";
+import { PgAriaStore } from "./store/postgres";
 
 async function main(): Promise<void> {
   // Root dir
@@ -15,7 +16,6 @@ async function main(): Promise<void> {
   let config = {
     port: process.env.PORT || 5000,
     uploadsPath: process.env.UPLOADS_PATH || path.join(getCacheFolder(), "aria", "uploads"),
-    dataStore: "postgres",
     connectionString: process.env.DATABASE_URL || "postgres://aria:aria@localhost/aria"
   };
 
@@ -38,17 +38,17 @@ async function main(): Promise<void> {
   app.set("port", config.port);
   app.enable("trust proxy"); // Required for req.ip to work correctly behind a proxy
 
+  const store = new PgAriaStore(config.connectionString);
+  await store.connect();
+  await store.migrate();
+
   // Set up room server
-  let roomStore = room.store(config.dataStore, config.connectionString);
-  await roomStore.connect();
-  let roomServer = room.server(app, io, roomStore, {
+  let roomServer = room.server(app, io, store, {
     baseUrl: "/api/r",
   });
 
   // Set up chat server
-  let chatStore = chat.store(config.dataStore, config.connectionString);
-  await chatStore.connect();
-  let chatServer = chat.server(app, io, chatStore, {
+  let chatServer = chat.server(app, io, store, {
     baseUrl: "/api/chat",
     imagesPath: imagesPath
   });
