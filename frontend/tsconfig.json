@@ -14,6 +14,7 @@
     "baseUrl": "src",
     "resolveJsonModule": true,
     "importHelpers": true,
+    "alwaysStrict": true,
     "strictNullChecks": true
   },
   "include": ["src", "test"],
