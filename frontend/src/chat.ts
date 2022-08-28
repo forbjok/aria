@@ -227,6 +227,8 @@ export class ChatCustomElement {
 
   imageSelected(event: Event) {
     const input = event.target as HTMLInputElement;
+    if (!input || !input.files) return;
+
     this.post.image = input.files[0];
 
     if (this.post.image && this.post.image.size > maxImageSize) {

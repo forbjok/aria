@@ -9,6 +9,8 @@ export class LocalRoomAuthService {
   private authKeyName: string;
 
   constructor(private localStorageService: LocalStorageService, state: State) {
+    if (!state.roomName) throw new Error("No room set in state");
+
     this.roomName = state.roomName;
     this.authKeyName = `room_${this.roomName}_auth`;
   }

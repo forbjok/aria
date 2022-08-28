@@ -1,6 +1,5 @@
 import { autoinject, bindable, customElement } from "aurelia-framework";
 
-import { State } from "./state";
 import { RoomAdminService } from "./services/roomadminservice";
 
 import "styles/roomcontrols.scss";
@@ -8,17 +7,14 @@ import "styles/roomcontrols.scss";
 @customElement("room-controls")
 @autoinject
 export class RoomControls {
-  private roomName: string;
-  private initialized: boolean;
-  private authorized: boolean;
-  private contentUrl: string;
+  public initialized: boolean;
+  public authorized: boolean;
+  public contentUrl: string;
 
   public password: string;
   public loginError: string;
 
-  constructor(private element: Element, private adminService: RoomAdminService, state: State) {
-    this.roomName = state.roomName;
-
+  constructor(private adminService: RoomAdminService) {
     this.initialized = false;
     this.authorized = false;
     this.contentUrl = "";

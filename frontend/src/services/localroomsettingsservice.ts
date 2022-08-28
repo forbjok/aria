@@ -10,6 +10,8 @@ export class LocalRoomSettingsService {
   private settings: any[];
 
   constructor(private localStorageService: LocalStorageService, state: State) {
+    if (!state.roomName) throw new Error("No room set in state");
+
     this.roomName = state.roomName;
     this.settingsKeyName = `room_${this.roomName}`;
 

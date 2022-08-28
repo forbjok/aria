@@ -11,6 +11,8 @@ export class RoomAdminService {
   private isAdmin: boolean;
 
   constructor(private http: HttpClient, private auth: LocalRoomAuthService, state: State) {
+    if (!state.roomName) throw new Error("No room set in state");
+
     this.roomName = state.roomName;
 
     this.token = auth.get();

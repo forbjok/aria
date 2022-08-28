@@ -90,7 +90,7 @@ export class Room {
     const contentUrl = this.contentUrl;
 
     // Set blank content URL to clear content
-    this._setContent(null);
+    this._setContent("");
 
     /* The restoration needs to go in a 1 second timeout, because otherwise it
        doesn't work for some types of content. */

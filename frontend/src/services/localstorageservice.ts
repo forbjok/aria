@@ -4,7 +4,10 @@ export class LocalStorageService {
   }
 
   get(name: string): any {
-    return JSON.parse(window.localStorage.getItem(this._getKeyName(name)));
+    const json = window.localStorage.getItem(this._getKeyName(name));
+    if (!json) return null;
+
+    return JSON.parse(json);
   }
 
   set(name: string, value: any) {

@@ -3,7 +3,7 @@ import { autoinject } from "aurelia-framework";
 type AnyFn = (...args: any[]) => any;
 
 function debounce(fn: AnyFn, delay: number): AnyFn {
-  let timer = null;
+  let timer: NodeJS.Timeout | undefined;
 
   return function (...args: any[]) {
     clearTimeout(timer);
