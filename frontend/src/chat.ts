@@ -1,8 +1,8 @@
 import { autoinject, bindable, computedFrom } from "aurelia-framework";
 
+import axios from "axios";
 import io from "socket.io-client";
 import * as $ from "jquery";
-import "jq-ajax-progress";
 
 import filesize from "filesize";
 
@@ -127,7 +127,7 @@ export class ChatCustomElement {
     }, 1000);
   }
 
-  submitPost() {
+  async submitPost() {
     if (!this.canSubmitPost) {
       return;
     }
@@ -154,43 +154,32 @@ export class ChatCustomElement {
     // Save name in cookie
     this.settings.set("chat_name", this.post.name);
 
-    const ajaxPost = $.ajax(this.postUrl, {
-      method: "POST",
-      data: formData,
-      contentType: false,
-      processData: false,
-    });
+    try {
+      await axios.post(this.postUrl, formData, {
+        onUploadProgress: (e) => {
+          if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100);
+            this.postingProgress = `${percentComplete}%`;
+          } else {
+            this.postingProgress = "Posting...";
+          }
+        },
+      });
 
-    /* TODO: Check if this actually works */
-    const ajaxPostAny: any = ajaxPost;
-    ajaxPostAny.progress((e) => {
-      if (e.lengthComputable) {
-        const percentComplete = Math.round((e.loaded / e.total) * 100);
-        this.postingProgress = `${percentComplete}%`;
-      } else {
-        this.postingProgress = "Posting...";
-      }
-    });
-
-    ajaxPost.done(() => {
       this.postingProgress = "Posted.";
       this.clearPost();
 
       // Activate posting cooldown
       this._activatePostingCooldown();
-    });
-
-    ajaxPost.fail((jqXHR, textStatus, errorThrown) => {
+    } catch (err) {
       // Display the error response from the server
-      this.postingProgress = jqXHR.responseText;
+      this.postingProgress = err;
 
       // Activate posting cooldown
       this._activatePostingCooldown();
-    });
-
-    ajaxPost.always(() => {
+    } finally {
       this.posting = false;
-    });
+    }
   }
 
   bind() {
