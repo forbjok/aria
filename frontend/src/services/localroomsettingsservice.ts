@@ -1,19 +1,15 @@
-import {autoinject} from "aurelia-framework";
+import { autoinject } from "aurelia-framework";
 
-import {State} from "../state";
-import {LocalStorageService} from "./localstorageservice";
+import { State } from "../state";
+import { LocalStorageService } from "./localstorageservice";
 
 @autoinject
-export class LocalRoomSettingsService
-{
+export class LocalRoomSettingsService {
   private roomName: string;
   private settingsKeyName: string;
-  private settings: any[]
+  private settings: any[];
 
-  constructor(
-    private localStorageService: LocalStorageService,
-    state: State)
-  {
+  constructor(private localStorageService: LocalStorageService, state: State) {
     this.roomName = state.roomName;
     this.settingsKeyName = `room_${this.roomName}`;
 

@@ -1,8 +1,8 @@
-import {autoinject} from "aurelia-framework";
-import {HttpClient} from "aurelia-fetch-client";
+import { autoinject } from "aurelia-framework";
+import { HttpClient } from "aurelia-fetch-client";
 
-import {State} from "../state";
-import {LocalRoomAuthService} from "./localroomauthservice";
+import { State } from "../state";
+import { LocalRoomAuthService } from "./localroomauthservice";
 
 @autoinject
 export class RoomAdminService {
@@ -10,11 +10,7 @@ export class RoomAdminService {
   private token: string;
   private isAdmin: boolean;
 
-  constructor(
-    private http: HttpClient,
-    private auth: LocalRoomAuthService,
-    state: State,
-  ) {
+  constructor(private http: HttpClient, private auth: LocalRoomAuthService, state: State) {
     this.roomName = state.roomName;
 
     this.token = auth.get();
@@ -24,10 +20,10 @@ export class RoomAdminService {
     let response = await this.http.fetch(`/api/r/${this.roomName}/loggedin`, {
       method: "POST",
       headers: {
-        "Accept": "application/json",
+        Accept: "application/json",
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${this.token}`
-      }
+        Authorization: `Bearer ${this.token}`,
+      },
     });
 
     if (!response.ok) {
@@ -40,7 +36,7 @@ export class RoomAdminService {
 
   async login(password: string): Promise<boolean> {
     let data = {
-      password: password
+      password: password,
     };
 
     let response: Response;
@@ -50,10 +46,10 @@ export class RoomAdminService {
         method: "POST",
         body: JSON.stringify(data),
         headers: {
-          "Accept": "application/json",
+          Accept: "application/json",
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${this.token}`
-        }
+          Authorization: `Bearer ${this.token}`,
+        },
       });
     } catch {
       return false;
@@ -65,7 +61,7 @@ export class RoomAdminService {
     }
 
     let res = await response.json();
-    
+
     this.token = res.token;
     this.auth.set(this.token);
 
@@ -75,24 +71,24 @@ export class RoomAdminService {
 
   action(action: any) {
     let data = {
-      action: action
+      action: action,
     };
 
     return this.http.fetch(`/api/r/${this.roomName}/control`, {
       method: "POST",
       body: JSON.stringify(data),
       headers: {
-        "Accept": "application/json",
+        Accept: "application/json",
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${this.token}`
-      }
+        Authorization: `Bearer ${this.token}`,
+      },
     });
   }
 
   setContentUrl(url) {
     return this.action({
       action: "set content url",
-      url: url
+      url: url,
     });
   }
 }

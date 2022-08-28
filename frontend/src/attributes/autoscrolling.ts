@@ -1,15 +1,15 @@
-import {autoinject} from "aurelia-framework";
+import { autoinject } from "aurelia-framework";
 
 function debounce(fn: Function, delay: number): Function {
   let timer = null;
 
-  return function(...args: any[]) {
+  return function (...args: any[]) {
     clearTimeout(timer);
 
     timer = setTimeout(() => {
       fn.apply(this, args);
     }, delay);
-  }
+  };
 }
 
 @autoinject
@@ -51,7 +51,7 @@ export class AutoscrollingCustomAttribute {
     };
 
     this._onUserScroll = (event) => {
-      if ((e.scrollHeight - e.scrollTop) === e.clientHeight) {
+      if (e.scrollHeight - e.scrollTop === e.clientHeight) {
         me.trackBottom = true;
       } else {
         me.trackBottom = false;
@@ -70,7 +70,7 @@ export class AutoscrollingCustomAttribute {
 
     this.observer.observe(this.element, {
       childList: true,
-      subtree: true
+      subtree: true,
     });
   }
 

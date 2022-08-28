@@ -1,4 +1,4 @@
-import {autoinject, bindable, computedFrom} from "aurelia-framework";
+import { autoinject, bindable, computedFrom } from "aurelia-framework";
 
 import io from "socket.io-client";
 import * as $ from "jquery";
@@ -6,7 +6,7 @@ import "jq-ajax-progress";
 
 import filesize from "filesize";
 
-import {LocalRoomSettingsService} from "./services/localroomsettingsservice";
+import { LocalRoomSettingsService } from "./services/localroomsettingsservice";
 import { Theme } from "interfaces";
 import { VERSION } from "./version";
 
@@ -43,8 +43,8 @@ export class ChatCustomElement {
   postContainer: HTMLDivElement;
   chatControls: HTMLDivElement;
 
-  posts: Post[]
-  themes: Theme[]
+  posts: Post[];
+  themes: Theme[];
   theme: string;
   posting: boolean;
   postingCooldown: number;
@@ -57,14 +57,11 @@ export class ChatCustomElement {
 
   public versionText: string = `v${VERSION}`;
 
-  constructor(
-    private element: Element,
-    private settings: LocalRoomSettingsService)
-  {
+  constructor(private element: Element, private settings: LocalRoomSettingsService) {
     this.posts = [];
     this.themes = [
       { name: "dark", description: "Dark" },
-      { name: "yotsubab", description: "Yotsuba B" }
+      { name: "yotsubab", description: "Yotsuba B" },
     ];
 
     this.theme = this.settings.get("chat_theme", null) || "dark";

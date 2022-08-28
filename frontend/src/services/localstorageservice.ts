@@ -1,5 +1,4 @@
-export class LocalStorageService
-{
+export class LocalStorageService {
   _getKeyName(name: string): string {
     return `aria_${name}`;
   }

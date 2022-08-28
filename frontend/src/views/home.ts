@@ -1,2 +1,1 @@
-export class Home {
-}
+export class Home {}

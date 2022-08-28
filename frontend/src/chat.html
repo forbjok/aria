@@ -12,8 +12,8 @@
           <div class="post-body">
             <div if.bind="post.image" class="post-image" class.bind="post.showFullImage ? 'expanded' : ''">
               <a href.bind="post.image.url" click.trigger="$parent.toggleImage(post)" target="_blank">
-                <img class="thumbnail" src.bind="post.image.thumbUrl" title.bind="post.image.originalFilename">
-                <img if.bind="post.showFullImage" class="expanded-image" src.bind="post.image.url">
+                <img class="thumbnail" src.bind="post.image.thumbUrl" title.bind="post.image.originalFilename" />
+                <img if.bind="post.showFullImage" class="expanded-image" src.bind="post.image.url" />
               </a>
               <div class="filename">${post.image.originalFilename}</div>
             </div>
@@ -31,39 +31,83 @@
           <table class="chatcontrols-table">
             <tr>
               <td>Name</td>
-              <td><input name="name" type="text" value.bind="post.name" placeholder="Anonymous" readonly.bind="posting"></td>
+              <td>
+                <input name="name" type="text" value.bind="post.name" placeholder="Anonymous" readonly.bind="posting" />
+              </td>
             </tr>
             <tr>
               <td>Comment</td>
-              <td><textarea name="comment" value.bind="post.comment" maxlength="600" class="comment-field" wrap="soft" readonly.bind="posting" keypress.trigger="submitOnEnterKeypress($event)" autofocus></textarea></td>
+              <td>
+                <textarea
+                  name="comment"
+                  value.bind="post.comment"
+                  maxlength="600"
+                  class="comment-field"
+                  wrap="soft"
+                  readonly.bind="posting"
+                  keypress.trigger="submitOnEnterKeypress($event)"
+                  autofocus
+                ></textarea>
+              </td>
             </tr>
             <tr>
               <td>Image</td>
-              <td><input name="image" type="file" accept="image/*" change.delegate="imageSelected($event)" disabled.bind="posting" keypress.trigger="submitOnEnterKeypress($event)" click.trigger="clearFileOnShiftClick($event)"></td>
+              <td>
+                <input
+                  name="image"
+                  type="file"
+                  accept="image/*"
+                  change.delegate="imageSelected($event)"
+                  disabled.bind="posting"
+                  keypress.trigger="submitOnEnterKeypress($event)"
+                  click.trigger="clearFileOnShiftClick($event)"
+                />
+              </td>
             </tr>
             <tr>
               <td></td>
               <td>
-                <button id="postbutton" type="submit" disabled.bind="!canSubmitPost">${postingCooldownText || 'Post'}</button>
+                <button id="postbutton" type="submit" disabled.bind="!canSubmitPost">
+                  ${postingCooldownText || 'Post'}
+                </button>
                 <span class="progress">${postingProgress}</span>
               </td>
             </tr>
           </table>
-          <div class="version-text">
-            ${versionText}
-          </div>
+          <div class="version-text">${versionText}</div>
         </div>
         <div if.bind="useCompactPostForm" class="chatcontrols-table">
-          <textarea name="comment" value.bind="post.comment" maxlength="600" class="comment-field" wrap="soft" readonly.bind="posting" keypress.trigger="submitOnEnterKeypress($event)" autofocus></textarea>
-          <button id="postbutton" type="submit" disabled.bind="!canSubmitPost">${postingCooldownText || postingProgress || 'Post'}</button>
-          <input name="image" type="file" accept="image/*" change.delegate="imageSelected($event)" disabled.bind="posting" keypress.trigger="submitOnEnterKeypress($event)" click.trigger="clearFileOnShiftClick($event)">
+          <textarea
+            name="comment"
+            value.bind="post.comment"
+            maxlength="600"
+            class="comment-field"
+            wrap="soft"
+            readonly.bind="posting"
+            keypress.trigger="submitOnEnterKeypress($event)"
+            autofocus
+          ></textarea>
+          <button id="postbutton" type="submit" disabled.bind="!canSubmitPost">
+            ${postingCooldownText || postingProgress || 'Post'}
+          </button>
+          <input
+            name="image"
+            type="file"
+            accept="image/*"
+            change.delegate="imageSelected($event)"
+            disabled.bind="posting"
+            keypress.trigger="submitOnEnterKeypress($event)"
+            click.trigger="clearFileOnShiftClick($event)"
+          />
         </div>
       </form>
       <div class="options">
         <select if.bind="!useCompactPostForm" value.bind="theme" change.delegate="themeSelected()">
           <option repeat.for="theme of themes" value.bind="theme.name">${theme.description}</option>
         </select>
-        <button type="button" click.trigger="toggleCompactPostForm()" title="Toggle compact post form"><span class="fa" class.bind="useCompactPostForm ? 'fa-caret-up' : 'fa-caret-down'"></span></button>
+        <button type="button" click.trigger="toggleCompactPostForm()" title="Toggle compact post form">
+          <span class="fa" class.bind="useCompactPostForm ? 'fa-caret-up' : 'fa-caret-down'"></span>
+        </button>
       </div>
     </div>
   </div>

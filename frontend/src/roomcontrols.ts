@@ -1,7 +1,7 @@
-import {autoinject, bindable, customElement} from "aurelia-framework";
+import { autoinject, bindable, customElement } from "aurelia-framework";
 
-import {State} from "./state";
-import {RoomAdminService} from "./services/roomadminservice";
+import { State } from "./state";
+import { RoomAdminService } from "./services/roomadminservice";
 
 import "styles/roomcontrols.scss";
 
@@ -16,11 +16,7 @@ export class RoomControls {
   public password: string;
   public loginError: string;
 
-  constructor(
-    private element: Element,
-    private adminService: RoomAdminService,
-    state: State,
-  ) {
+  constructor(private element: Element, private adminService: RoomAdminService, state: State) {
     this.roomName = state.roomName;
 
     this.initialized = false;
@@ -30,7 +26,7 @@ export class RoomControls {
 
   async bind() {
     let authorized = await this.adminService.getLoginStatus();
-    
+
     this.authorized = authorized;
     this.initialized = true;
   }

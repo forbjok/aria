@@ -2,30 +2,30 @@
   &.theme-yotsubab {
     font-family: Arial, Helvetica, sans-serif;
     font-size: 0.8rem;
-  
-    background: #EEF2FF;
+
+    background: #eef2ff;
     color: black;
-  
+
     .chat-postcontainer {
       padding-left: 2px;
       padding-right: 2px;
     }
-  
+
     .post {
-      background-color: #D6DAF0;
-      border: 1px solid #B7C5D9;
+      background-color: #d6daf0;
+      border: 1px solid #b7c5d9;
       border-left: none;
       border-top: none;
       padding: 2px;
       margin: 2px;
       min-width: 250px;
-  
+
       .comment {
         a {
-          color: #34345C;
+          color: #34345c;
           text-decoration: none;
         }
       }
-    }  
+    }
   }
 }

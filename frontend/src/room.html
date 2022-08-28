@@ -7,18 +7,27 @@
     </div>
     <div ref="contentContainer" id="contentcontainer" class="contentcontainer">
       <iframe width="100%" height="100%" src.bind="contentUrl">
-        <param name="wmode" value="opaque">
-        <param name="bgcolor" value="#000000">
-        <div class="unsupported-content">Your browser does not support this type of embedded content. You may need to install Flash Player or a similar plugin for your browser.</div>
+        <param name="wmode" value="opaque" />
+        <param name="bgcolor" value="#000000" />
+        <div class="unsupported-content">
+          Your browser does not support this type of embedded content. You may need to install Flash Player or a similar
+          plugin for your browser.
+        </div>
       </iframe>
       <div class="usercontrols-activationzone">
         <div class="usercontrols">
-          <a href="#" class="usercontrol" title="Reload" click.trigger="reloadContent()"><span class="fa fa-refresh"></span></a>
-          <a href="#" class="usercontrol" title="Fullscreen" click.trigger="toggleFullscreen()"><span class="fa fa-television"></span></a>
+          <a href="#" class="usercontrol" title="Reload" click.trigger="reloadContent()"
+            ><span class="fa fa-refresh"></span
+          ></a>
+          <a href="#" class="usercontrol" title="Fullscreen" click.trigger="toggleFullscreen()"
+            ><span class="fa fa-television"></span
+          ></a>
         </div>
       </div>
       <div class="admincontrols">
-        <button type="button" name="controlpanel" click.trigger="toggleRoomControls()"><span class="fa fa-wrench"></span></button>
+        <button type="button" name="controlpanel" click.trigger="toggleRoomControls()">
+          <span class="fa fa-wrench"></span>
+        </button>
       </div>
     </div>
     <div if.bind="showRoomControls" class="roomcontrols-container">

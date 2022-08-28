@@ -1,4 +1,4 @@
-import {autoinject} from "aurelia-framework";
+import { autoinject } from "aurelia-framework";
 import { HttpClient } from "aurelia-fetch-client";
 import { Router } from "aurelia-router";
 
@@ -22,12 +22,7 @@ export class Room {
 
   public showRoomControls: boolean;
 
-  constructor(
-    private router: Router,
-    private state: State,
-    private http: HttpClient,
-  ) {
-  }
+  constructor(private router: Router, private state: State, private http: HttpClient) {}
 
   async activate(params: { roomName: string }) {
     this.roomName = params.roomName;
@@ -36,7 +31,7 @@ export class Room {
     let roomExists = await this.checkRoomExists();
 
     if (!roomExists) {
-      this.router.navigateToRoute('claim', { roomName: this.roomName });
+      this.router.navigateToRoute("claim", { roomName: this.roomName });
     }
   }
 

@@ -1,7 +1,7 @@
 @import url(https://fonts.googleapis.com/css?family=Roboto);
 
 body {
-  background: #EEF2FF;
+  background: #eef2ff;
 }
 
 .claim {
@@ -27,6 +27,10 @@ body {
 
     .password {
       text-decoration: underline;
+    }
+
+    .claim-result-text {
+      margin: 20px;
     }
   }
 

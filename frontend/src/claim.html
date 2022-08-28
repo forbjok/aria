@@ -5,10 +5,10 @@
       <button type="button" name="claim" class="claim-button" click.trigger="claim()">Claim</button>
     </div>
     <div if.bind="claimInfo" class="claim-result">
-      <p>
+      <div class="claim-result-text">
         <div class="claimed-text">You have claimed /${claimInfo.name}/.</div>
         <div class="password-text">The password is: <span class="password">${claimInfo.password}</span></div>
-      </p>
+      </div>
       <button type="button" name="enter" class="enter-button" click.trigger="reload()">Enter</button>
     </div>
     <div if.bind="claimError" class="claim-error">
