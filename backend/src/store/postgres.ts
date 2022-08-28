@@ -69,16 +69,15 @@ export class PgAriaStore implements IAriaStore {
   }
 
   async getRoom(roomName: string): Promise<RoomInfo> {
-    const rows = await this._queryRows<RoomModel>(
-      "SELECT name, password, content_url" +
-      " FROM get_room_by_name($1);",
-      [roomName]);
+    const rows = await this._queryRows<RoomModel>("SELECT name, password, content_url FROM get_room_by_name($1);", [
+      roomName,
+    ]);
 
     if (!rows || rows.length === 0) {
       return;
     }
 
-    let r = rows[0];
+    const r = rows[0];
 
     return {
       name: r.name,
@@ -95,7 +94,7 @@ export class PgAriaStore implements IAriaStore {
       return;
     }
 
-    let r = rows[0];
+    const r = rows[0];
 
     return {
       name: r.name,
@@ -108,10 +107,9 @@ export class PgAriaStore implements IAriaStore {
     options = options || {};
 
     let limit = "";
-    if (options.limit)
-      limit = ` LIMIT ${options.limit}`;
+    if (options.limit) limit = ` LIMIT ${options.limit}`;
 
-    let sql =
+    const sql =
       "SELECT p2.* FROM (" +
       " SELECT (p.p).id, (p.p).created_at, (p.p).name, (p.p).comment," +
       "  (p.i).path, (p.i).tn_path, (p.i).filename" +
@@ -123,9 +121,9 @@ export class PgAriaStore implements IAriaStore {
     const rows = await this._queryRows<PostModel>(sql, [roomName]);
 
     // Transform raw DB rows into valid internal post objects
-    let posts = [];
+    const posts = [];
     for (let row of rows) {
-      let post: Post = {
+      const post: Post = {
         postedAt: row.created_at,
         name: row.name,
         comment: row.comment,
@@ -147,7 +145,7 @@ export class PgAriaStore implements IAriaStore {
   }
 
   async addPost(roomName: string, post: Post): Promise<Post> {
-    const new_post: NewPost = {
+    const newPost: NewPost = {
       name: post.name,
       comment: post.comment,
       ip: post.ip,
@@ -163,8 +161,8 @@ export class PgAriaStore implements IAriaStore {
         size: -1,
         width: -1,
         height: -1,
-        content_type: '',
-        tn_content_type: '',
+        content_type: "",
+        tn_content_type: "",
         path: i.path,
         tn_path: i.thumbnailPath,
       };
@@ -173,15 +171,16 @@ export class PgAriaStore implements IAriaStore {
     // Create post
     const rows = await this._queryRows<PostModel>(
       "SELECT * FROM create_post($1, " +
-      "jsonb_populate_record(NULL::new_post, $2), " +
-      "jsonb_populate_record(NULL::new_image, $3));",
-      [roomName, new_post, image]);
+        "jsonb_populate_record(NULL::new_post, $2), " +
+        "jsonb_populate_record(NULL::new_image, $3));",
+      [roomName, newPost, image]
+    );
 
     if (!rows || rows.length === 0) {
       return;
     }
 
-    let r = rows[0];
+    const r = rows[0];
 
     return {
       name: r.name,

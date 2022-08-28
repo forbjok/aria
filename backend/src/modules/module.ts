@@ -1,9 +1,6 @@
+export interface IDataStore {}
 
-export interface IDataStore {
-}
-
-export interface IServer {
-}
+export interface IServer {}
 
 export interface IModule {
   server: IServer;

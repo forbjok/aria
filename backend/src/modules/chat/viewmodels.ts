@@ -13,6 +13,6 @@ export interface PostViewModel {
   name: string;
   comment: string;
   ip: string;
-  
+
   image: ImageViewModel;
 }

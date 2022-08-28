@@ -7,24 +7,27 @@ import * as socketio from "socket.io";
 import { IServer } from "../module";
 import { IAriaStore, RoomInfo } from "../../store";
 
+interface RoomOptions {
+  password?: string;
+  contentUrl?: string;
+  onContentChange?: Function;
+}
+
 class Room {
-  contentUrl: string;
-  onContentChange: Function;
-  password: string;
+  public password: string;
 
-  constructor(public name:string, options:any) {
-    this.name = name;
+  private contentUrl: string;
+  private onContentChange: Function = () => {};
 
-    Object.assign(this, {
-      onContentChange: () => {}
-    }, options);
+  constructor(public name: string, options: RoomOptions) {
+    Object.assign(this, options);
   }
 
-  getContentUrl() {
+  public getContentUrl() {
     return this.contentUrl;
   }
 
-  setContentUrl(url) {
+  public setContentUrl(url) {
     this.contentUrl = url;
     this.onContentChange(this.contentUrl);
   }
@@ -32,95 +35,92 @@ class Room {
 
 export interface RoomServerOptions {
   baseUrl: string;
-  ioNamespace: string;
+  ioNamespace?: string;
 }
 
 export class RoomServer implements IServer {
-  rooms: Room[];
-  io: socketio.Namespace;
-  baseUrl: string;
-  ioNamespace: string;
+  private rooms: Room[] = [];
+  private io: socketio.Namespace;
+  private baseUrl: string = "/r";
+  private ioNamespace: string = "/room";
 
-  constructor(public app: express.Express, io: socketio.Server, public store: IAriaStore, options: RoomServerOptions) {
-    this.app = app;
-    this.store = store;
-
-    Object.assign(this, {
-      baseUrl: "/r",
-      ioNamespace: "/room",
-    }, options);
-
-    this.rooms = [];
+  constructor(
+    private app: express.Express,
+    io: socketio.Server,
+    private store: IAriaStore,
+    options: RoomServerOptions
+  ) {
+    Object.assign(this, options);
 
     this.io = io.of(this.ioNamespace);
-    this._initialize();
+    this.initialize();
   }
 
-  async _getRoom(name: string): Promise<Room> {
-    let rooms = this.rooms;
+  private async getRoom(name: string): Promise<Room> {
+    const rooms = this.rooms;
 
     if (name in rooms) {
       return Promise.resolve(rooms[name]);
     }
 
-    let roomInfo = await this.store.getRoom(name);
+    const roomInfo = await this.store.getRoom(name);
 
     if (!roomInfo) {
       console.log(`Room ${name} not found.`);
       return;
     }
 
-    return this._createAndReturnRoom(roomInfo);
+    return this.createAndReturnRoom(roomInfo);
   }
 
-  _createAndReturnRoom(roomInfo: RoomInfo): Room {
-    let name = roomInfo.name;
-    let io = this.io;
-    let store = this.store;
+  private createAndReturnRoom(roomInfo: RoomInfo): Room {
+    const name = roomInfo.name;
+    const io = this.io;
+    const store = this.store;
 
-    let room = new Room(name, {
+    const room = new Room(name, {
       password: roomInfo.password,
       contentUrl: roomInfo.contentUrl,
       onContentChange: (contentUrl) => {
         store.setContentUrl(name, contentUrl);
         io.to(name).emit("content", { url: contentUrl });
-      }
+      },
     });
 
     this.rooms[name] = room;
     return room;
   }
 
-  async _claimRoom(name): Promise<RoomInfo> {
+  private async claimRoom(name): Promise<RoomInfo> {
     return await this.store.createRoom(name);
   }
 
-  _initialize() {
+  private initialize() {
     console.log(`Initializing RoomServer on ${this.baseUrl}`);
 
-    this._setupExpress();
-    this._setupSocket();
+    this.setupExpress();
+    this.setupSocket();
   }
 
-  async _setupExpress() {
-    let app = this.app;
-    let baseUrl = this.baseUrl;
+  private async setupExpress() {
+    const app = this.app;
+    const baseUrl = this.baseUrl;
 
-    let jwtmw = expressjwt({
+    const jwtmw = expressjwt({
       secret: "sekrit",
       algorithms: ["HS256"],
     });
 
-    let jsonBodyParser = bodyParser.json();
+    const jsonBodyParser = bodyParser.json();
 
     app.get(`${baseUrl}/:room`, async (req, res) => {
-      let roomName = req.params.room;
+      const roomName = req.params.room;
 
-      let room = await this._getRoom(roomName);
+      const room = await this.getRoom(roomName);
 
       if (!room) {
         // Room was not found
-        res.send(404);
+        res.sendStatus(404);
         return;
       }
 
@@ -130,24 +130,24 @@ export class RoomServer implements IServer {
       });
     });
 
-    let createToken = (roomName) => {
-      let payload = {
-        room: roomName
+    const createToken = (roomName) => {
+      const payload = {
+        room: roomName,
       };
 
-      let token = jwt.sign(payload, "sekrit", {
-        expiresIn: "7 days"
+      const token = jwt.sign(payload, "sekrit", {
+        expiresIn: "7 days",
       });
 
       return token;
     };
 
     app.post(`${baseUrl}/:room/login`, jsonBodyParser, async (req, res) => {
-      let roomName = req.params.room;
+      const roomName = req.params.room;
 
-      let room = await this._getRoom(roomName);
+      const room = await this.getRoom(roomName);
 
-      let data = req.body;
+      const data = req.body;
 
       if (data.password !== room.password) {
         res.status(403).send("You are not authorized.");
@@ -155,7 +155,7 @@ export class RoomServer implements IServer {
       }
 
       res.send({
-        token: createToken(roomName)
+        token: createToken(roomName),
       });
     });
 
@@ -164,9 +164,9 @@ export class RoomServer implements IServer {
     });
 
     app.post(`${baseUrl}/:room/claim`, async (req, res) => {
-      let roomName = req.params.room;
+      const roomName = req.params.room;
 
-      let claimInfo = await this._claimRoom(roomName);
+      const claimInfo = await this.claimRoom(roomName);
       if (!claimInfo) {
         console.log(`Room ${roomName} could not be claimed.`);
 
@@ -180,22 +180,19 @@ export class RoomServer implements IServer {
       });
     });
 
-    app.post(`${baseUrl}/:room/control`,
-      jwtmw,
-      jsonBodyParser,
-      async (req, res) => {
-      let roomName = req.params.room;
+    app.post(`${baseUrl}/:room/control`, jwtmw, jsonBodyParser, async (req, res) => {
+      const roomName = req.params.room;
 
-      let room = await this._getRoom(roomName);
+      const room = await this.getRoom(roomName);
 
-      let data = req.body;
+      const data = req.body;
 
-      let action = data.action;
+      const action = data.action;
       if (action) {
-        switch(action.action) {
+        switch (action.action) {
           case "set content url":
-          room.setContentUrl(action.url);
-          break;
+            room.setContentUrl(action.url);
+            break;
         }
       }
 
@@ -203,14 +200,14 @@ export class RoomServer implements IServer {
     });
   }
 
-  _setupSocket() {
-    let io = this.io;
+  private setupSocket() {
+    const io = this.io;
 
     io.on("connection", (socket) => {
-      let ip = socket.handshake.address;
+      const ip = socket.handshake.address;
       console.log(`${ip}: Room connected!`);
 
-      let roomsJoined = {};
+      const roomsJoined = {};
 
       socket.on("join", async (roomName) => {
         if (roomName in roomsJoined) {
@@ -221,7 +218,7 @@ export class RoomServer implements IServer {
 
         roomsJoined[roomName] = true;
 
-        let room = await this._getRoom(roomName);
+        const room = await this.getRoom(roomName);
 
         socket.join(roomName);
 
@@ -230,9 +227,7 @@ export class RoomServer implements IServer {
           return;
         }
 
-        let contentUrl = room.getContentUrl();
-
-        socket.emit("content", { url: contentUrl });
+        socket.emit("content", { url: room.getContentUrl() });
       });
 
       socket.on("leave", (roomName) => {
@@ -245,8 +240,4 @@ export class RoomServer implements IServer {
       });
     });
   }
-}
-
-export function create(app: express.Express, io: socketio.Server, store: IAriaStore, options: RoomServerOptions): RoomServer {
-  return new RoomServer(app, io, store, options);
 }
