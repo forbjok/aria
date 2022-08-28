@@ -6,8 +6,9 @@ import * as moment from "moment";
 import * as socketio from "socket.io";
 
 import { PostViewModel } from "./viewmodels";
-import { IServer } from "../module";
 import { IAriaStore, Post, RoomInfo } from "../../store";
+
+type AnyFn = (...args: any[]) => any;
 
 const noImageFile = <multer.File>{};
 
@@ -28,12 +29,12 @@ function stripExtension(filename) {
 
 export interface ChatRoomOptions {
   posts: Post[];
-  onPost?: Function;
+  onPost?: AnyFn;
 }
 
 class ChatRoom {
-  private posts: Post[] = [];
-  private onPost: Function = () => {};
+  private readonly posts: Post[] = [];
+  private readonly onPost?: AnyFn;
 
   constructor(public name: string, options: ChatRoomOptions) {
     Object.assign(this, options);
@@ -45,7 +46,7 @@ class ChatRoom {
 
   public post(post: Post) {
     this.posts.push(post);
-    this.onPost(post);
+    if (this.onPost) this.onPost(post);
   }
 }
 
@@ -57,20 +58,20 @@ export interface ChatServerOptions {
   thumbBackground?: string;
 }
 
-export class ChatServer implements IServer {
-  private baseUrl: string = "/chat";
-  private ioNamespace: string = "/chat";
-  private imagesPath: string;
-  private thumbSize: number = 100;
-  private thumbBackground: string = "#D6DAF0";
-  private imagesUrl: string;
+export class ChatServer {
+  private readonly baseUrl: string = "/chat";
+  private readonly ioNamespace: string = "/chat";
+  private readonly imagesPath: string;
+  private readonly thumbSize: number = 100;
+  private readonly thumbBackground: string = "#D6DAF0";
+  private readonly imagesUrl: string;
   private rooms: ChatRoom[];
-  private io: socketio.Namespace;
+  private readonly io: socketio.Namespace;
 
   constructor(
-    private app: express.Express,
+    private readonly app: express.Express,
     io: socketio.Server,
-    private store: IAriaStore,
+    private readonly store: IAriaStore,
     options: ChatServerOptions
   ) {
     Object.assign(this, options);
@@ -82,7 +83,7 @@ export class ChatServer implements IServer {
     this.initialize();
   }
 
-  private async getRoom(name: string): Promise<ChatRoom> {
+  private async getRoom(name: string): Promise<ChatRoom | null> {
     const rooms = this.rooms;
 
     if (name in rooms) {
@@ -91,7 +92,7 @@ export class ChatServer implements IServer {
 
     const roomInfo = await this.store.getRoom(name);
 
-    if (!roomInfo) {
+    if (roomInfo == null) {
       console.log(`Chatroom ${name} not found.`);
       return null;
     }
@@ -163,6 +164,8 @@ export class ChatServer implements IServer {
 
     const emitPost = async (roomName, post) => {
       const room = await this.getRoom(roomName);
+      if (room == null) return;
+
       room.post(post);
     };
 
@@ -235,7 +238,7 @@ export class ChatServer implements IServer {
 
         socket.join(roomName);
 
-        if (!room) {
+        if (room == null) {
           // Room did not exist, return without sending content
           return;
         }
@@ -243,7 +246,7 @@ export class ChatServer implements IServer {
         console.log(`${ip}: Sending recent posts.`);
         const recentPosts = room.getRecentPosts();
 
-        for (let post of recentPosts) {
+        for (const post of recentPosts) {
           socket.emit("post", this.postToViewModel(post));
         }
       });
@@ -263,14 +266,13 @@ export class ChatServer implements IServer {
   private postToViewModel(post: Post): PostViewModel {
     const vm: PostViewModel = {
       posted: post.postedAt,
-      name: post.name,
-      comment: post.comment,
-      ip: null,
+      name: post.name || "Anonymous",
+      comment: post.comment || "",
 
       image: null,
     };
 
-    if (post.image) {
+    if (post.image != null) {
       const image = post.image;
       const imagesUrl = this.imagesUrl;
 

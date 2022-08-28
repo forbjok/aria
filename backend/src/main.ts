@@ -1,5 +1,6 @@
 import * as path from "path";
 import * as http from "http";
+import * as errorhandler from "errorhandler";
 import * as express from "express";
 import { getCacheFolder } from "platform-folders";
 import * as socketio from "socket.io";
@@ -15,13 +16,6 @@ async function main(): Promise<void> {
     uploadsPath: process.env.UPLOADS_PATH || path.join(getCacheFolder(), "aria", "uploads"),
     connectionString: process.env.DATABASE_URL || "postgres://aria:aria@localhost/aria",
   };
-
-  // Load config file if it is present
-  try {
-    const configFile = process.env.CONFIG || path.join(__dirname, "config.ts");
-
-    Object.assign(config, require(configFile));
-  } catch (e) {}
 
   // Paths
   const imagesPath = path.join(config.uploadsPath, "images");
@@ -52,8 +46,6 @@ async function main(): Promise<void> {
 
   // error handling middleware should be loaded after the loading the routes
   if (app.get("env") == "development") {
-    const errorhandler = require("errorhandler");
-
     app.use(errorhandler());
   }
 

@@ -1,4 +1,4 @@
-import { Client } from "pg";
+import { Client, QueryResultRow } from "pg";
 import { migrate } from "postgres-migrations";
 import { IAriaStore, Post, RoomInfo } from ".";
 import { generatePassword } from "../util/passwordgen";
@@ -40,8 +40,8 @@ interface NewImage {
 }
 
 export class PgAriaStore implements IAriaStore {
-  private client: Client;
-  private connectionString: string;
+  private readonly client: Client;
+  private readonly connectionString: string;
 
   constructor(connectionString: string) {
     this.connectionString = process.env.DATABASE_URL || connectionString || "postgres://aria:aria@localhost:5432/aria";
@@ -62,19 +62,19 @@ export class PgAriaStore implements IAriaStore {
     return result.rowCount;
   }
 
-  async _queryRows<R>(sql: string, params: any): Promise<R[]> {
+  async _queryRows<R extends QueryResultRow>(sql: string, params: any): Promise<R[]> {
     const result = await this.client.query<R>(sql, params);
 
     return result.rows;
   }
 
-  async getRoom(roomName: string): Promise<RoomInfo> {
+  async getRoom(roomName: string): Promise<RoomInfo | null> {
     const rows = await this._queryRows<RoomModel>("SELECT name, password, content_url FROM get_room_by_name($1);", [
       roomName,
     ]);
 
     if (!rows || rows.length === 0) {
-      return;
+      return null;
     }
 
     const r = rows[0];
@@ -91,7 +91,7 @@ export class PgAriaStore implements IAriaStore {
     const rows = await this._queryRows<RoomModel>("SELECT * FROM create_room($1, $2);", [roomName, password]);
 
     if (!rows || rows.length === 0) {
-      return;
+      throw new Error("Could not create room");
     }
 
     const r = rows[0];
@@ -121,8 +121,8 @@ export class PgAriaStore implements IAriaStore {
     const rows = await this._queryRows<PostModel>(sql, [roomName]);
 
     // Transform raw DB rows into valid internal post objects
-    const posts = [];
-    for (let row of rows) {
+    const posts: Post[] = [];
+    for (const row of rows) {
       const post: Post = {
         postedAt: row.created_at,
         name: row.name,
@@ -132,8 +132,8 @@ export class PgAriaStore implements IAriaStore {
 
       if (row.filename) {
         post.image = {
-          path: row.path,
-          thumbnailPath: row.tn_path,
+          path: row.path || "",
+          thumbnailPath: row.tn_path || "",
           filename: row.filename,
         };
       }
@@ -151,9 +151,9 @@ export class PgAriaStore implements IAriaStore {
       ip: post.ip,
     };
 
-    let image: NewImage;
+    let image: NewImage | null = null;
 
-    if (post.image) {
+    if (post.image != null) {
       const i = post.image;
 
       image = {
@@ -177,7 +177,7 @@ export class PgAriaStore implements IAriaStore {
     );
 
     if (!rows || rows.length === 0) {
-      return;
+      throw new Error("Failed to create post");
     }
 
     const r = rows[0];

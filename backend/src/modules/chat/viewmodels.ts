@@ -12,7 +12,6 @@ export interface PostViewModel {
   posted: string;
   name: string;
   comment: string;
-  ip: string;
 
-  image: ImageViewModel;
+  image: ImageViewModel | null;
 }

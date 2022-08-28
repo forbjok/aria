@@ -4,20 +4,21 @@ import * as express from "express";
 import { expressjwt } from "express-jwt";
 import * as socketio from "socket.io";
 
-import { IServer } from "../module";
 import { IAriaStore, RoomInfo } from "../../store";
+
+type AnyFn = (...args: any[]) => any;
 
 interface RoomOptions {
   password?: string;
   contentUrl?: string;
-  onContentChange?: Function;
+  onContentChange?: AnyFn;
 }
 
 class Room {
   public password: string;
 
   private contentUrl: string;
-  private onContentChange: Function = () => {};
+  private readonly onContentChange: AnyFn;
 
   constructor(public name: string, options: RoomOptions) {
     Object.assign(this, options);
@@ -29,7 +30,7 @@ class Room {
 
   public setContentUrl(url) {
     this.contentUrl = url;
-    this.onContentChange(this.contentUrl);
+    if (this.onContentChange) this.onContentChange(this.contentUrl);
   }
 }
 
@@ -38,16 +39,16 @@ export interface RoomServerOptions {
   ioNamespace?: string;
 }
 
-export class RoomServer implements IServer {
+export class RoomServer {
   private rooms: Room[] = [];
-  private io: socketio.Namespace;
-  private baseUrl: string = "/r";
-  private ioNamespace: string = "/room";
+  private readonly io: socketio.Namespace;
+  private readonly baseUrl: string = "/r";
+  private readonly ioNamespace: string = "/room";
 
   constructor(
-    private app: express.Express,
+    private readonly app: express.Express,
     io: socketio.Server,
-    private store: IAriaStore,
+    private readonly store: IAriaStore,
     options: RoomServerOptions
   ) {
     Object.assign(this, options);
@@ -56,18 +57,18 @@ export class RoomServer implements IServer {
     this.initialize();
   }
 
-  private async getRoom(name: string): Promise<Room> {
+  private async getRoom(name: string): Promise<Room | null> {
     const rooms = this.rooms;
 
     if (name in rooms) {
-      return Promise.resolve(rooms[name]);
+      return await Promise.resolve(rooms[name]);
     }
 
     const roomInfo = await this.store.getRoom(name);
 
-    if (!roomInfo) {
+    if (roomInfo == null) {
       console.log(`Room ${name} not found.`);
-      return;
+      return null;
     }
 
     return this.createAndReturnRoom(roomInfo);
@@ -118,7 +119,7 @@ export class RoomServer implements IServer {
 
       const room = await this.getRoom(roomName);
 
-      if (!room) {
+      if (room == null) {
         // Room was not found
         res.sendStatus(404);
         return;
@@ -146,6 +147,10 @@ export class RoomServer implements IServer {
       const roomName = req.params.room;
 
       const room = await this.getRoom(roomName);
+      if (room == null) {
+        res.sendStatus(404);
+        return;
+      }
 
       const data = req.body;
 
@@ -184,6 +189,10 @@ export class RoomServer implements IServer {
       const roomName = req.params.room;
 
       const room = await this.getRoom(roomName);
+      if (room == null) {
+        res.sendStatus(404);
+        return;
+      }
 
       const data = req.body;
 
@@ -222,7 +231,7 @@ export class RoomServer implements IServer {
 
         socket.join(roomName);
 
-        if (!room) {
+        if (room == null) {
           // Room did not exist, return without sending content
           return;
         }

@@ -3,13 +3,13 @@ export interface QueryOptions {
 }
 
 export interface IAriaStore {
-  connect(): Promise<void>;
-  migrate(): Promise<void>;
-  getRoom(roomName: string): Promise<RoomInfo>;
-  createRoom(roomName: string): Promise<RoomInfo>;
-  getPosts(roomName: string, options: QueryOptions): Promise<Post[]>;
-  addPost(roomName: string, post: Post): Promise<Post>;
-  setContentUrl(roomName: string, contentUrl: string): Promise<number>;
+  connect: () => Promise<void>;
+  migrate: () => Promise<void>;
+  getRoom: (roomName: string) => Promise<RoomInfo | null>;
+  createRoom: (roomName: string) => Promise<RoomInfo>;
+  getPosts: (roomName: string, options: QueryOptions) => Promise<Post[]>;
+  addPost: (roomName: string, post: Post) => Promise<Post>;
+  setContentUrl: (roomName: string, contentUrl: string) => Promise<number>;
 }
 
 export interface RoomInfo {
@@ -26,8 +26,8 @@ export interface Image {
 
 export interface Post {
   postedAt: string;
-  name: string;
-  comment: string;
+  name?: string;
+  comment?: string;
   image?: Image;
   ip: string;
 }
