@@ -6,9 +6,9 @@ export interface IAriaStore {
   connect: () => Promise<void>;
   migrate: () => Promise<void>;
   getRoom: (roomName: string) => Promise<RoomInfo | null>;
-  createRoom: (roomName: string) => Promise<RoomInfo>;
+  createRoom: (roomName: string) => Promise<RoomInfo | null>;
   getPosts: (roomName: string, options: QueryOptions) => Promise<Post[]>;
-  addPost: (roomName: string, post: Post) => Promise<Post>;
+  addPost: (roomName: string, post: Post) => Promise<Post | null>;
   setContentUrl: (roomName: string, contentUrl: string) => Promise<number>;
 }
 

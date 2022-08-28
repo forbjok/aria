@@ -8,7 +8,7 @@ import * as socketio from "socket.io";
 import { PostViewModel } from "./viewmodels";
 import { IAriaStore, Post, RoomInfo } from "../../store";
 
-type AnyFn = (...args: any[]) => any;
+type OnPostFn = (post: Post) => void;
 
 const noImageFile = <multer.File>{};
 
@@ -29,12 +29,12 @@ function stripExtension(filename) {
 
 export interface ChatRoomOptions {
   posts: Post[];
-  onPost?: AnyFn;
+  onPost?: OnPostFn;
 }
 
 class ChatRoom {
   private readonly posts: Post[] = [];
-  private readonly onPost?: AnyFn;
+  private readonly onPost?: OnPostFn;
 
   constructor(public name: string, options: ChatRoomOptions) {
     Object.assign(this, options);
@@ -109,8 +109,10 @@ export class ChatServer {
     const posts = await store.getPosts(name, { limit: 50 });
     const room = new ChatRoom(name, {
       posts: posts,
-      onPost: (post) => {
-        store.addPost(name, post);
+      onPost: async (post) => {
+        const addedPost = await store.addPost(name, post);
+        if (!addedPost) return;
+
         io.to(name).emit("post", this.postToViewModel(post));
       },
     });

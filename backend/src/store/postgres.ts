@@ -74,12 +74,12 @@ export class PgAriaStore implements IAriaStore {
     };
   }
 
-  async createRoom(roomName: string): Promise<RoomInfo> {
+  async createRoom(roomName: string): Promise<RoomInfo | null> {
     const password = generatePassword();
     const rows = await this.queryRows<RoomModel>("SELECT * FROM create_room($1, $2);", [roomName, password]);
 
     if (!rows || rows.length === 0) {
-      throw new Error("Could not create room");
+      return null;
     }
 
     const r = rows[0];
@@ -132,7 +132,7 @@ export class PgAriaStore implements IAriaStore {
     return posts;
   }
 
-  async addPost(roomName: string, post: Post): Promise<Post> {
+  async addPost(roomName: string, post: Post): Promise<Post | null> {
     const newPost: NewPost = {
       name: post.name,
       comment: post.comment,
@@ -165,7 +165,7 @@ export class PgAriaStore implements IAriaStore {
     );
 
     if (!rows || rows.length === 0) {
-      throw new Error("Failed to create post");
+      return null;
     }
 
     const r = rows[0];

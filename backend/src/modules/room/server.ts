@@ -92,7 +92,7 @@ export class RoomServer {
     return room;
   }
 
-  private async claimRoom(name): Promise<RoomInfo> {
+  private async claimRoom(name): Promise<RoomInfo | null> {
     return await this.store.createRoom(name);
   }
 
