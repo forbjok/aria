@@ -1,13 +1,13 @@
-let mozDocument: any = document;
-let msDocument: any = document;
-let webkitDocument: any = document;
+const mozDocument: any = document;
+const msDocument: any = document;
+const webkitDocument: any = document;
 
-let fullscreenEnabled =
+const fullscreenEnabled =
   document.fullscreenEnabled ||
   webkitDocument.webkitFullscreenEnabled ||
   mozDocument.mozFullScreenEnabled ||
   msDocument.msFullscreenEnabled;
-let exitFullscreen =
+const exitFullscreen =
   document.exitFullscreen ||
   webkitDocument.webkitExitFullscreen ||
   mozDocument.mozCancelFullScreen ||

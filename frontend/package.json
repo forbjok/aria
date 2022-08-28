@@ -69,7 +69,8 @@
     "start": "webpack server",
     "build:dev": "webpack",
     "analyze": "webpack --env production --analyze",
-    "test": "au test"
+    "test": "au test",
+    "lint": "eslint src/**/*.{js,ts} --quiet --fix"
   },
   "engines": {
     "node": ">=14.15.0"

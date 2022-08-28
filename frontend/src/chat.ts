@@ -14,7 +14,7 @@ import "styles/chat.scss";
 import "styles/chat-dark.scss";
 import "styles/chat-yotsubab.scss";
 
-let maxImageSize = 2097152;
+const maxImageSize = 2097152;
 
 interface Image {
   url: string;
@@ -55,7 +55,7 @@ export class ChatCustomElement {
   submitOnCooldown: boolean;
   triggerPostLayout: boolean;
 
-  public versionText: string = `v${VERSION}`;
+  public versionText = `v${VERSION}`;
 
   constructor(private element: Element, private settings: LocalRoomSettingsService) {
     this.posts = [];
@@ -94,8 +94,8 @@ export class ChatCustomElement {
       return false;
     }
 
-    let post = this.post;
-    let image = post.image;
+    const post = this.post;
+    const image = post.image;
 
     // Disallow posts with neither comment nor image
     if (!post.comment && !image) {
@@ -112,7 +112,7 @@ export class ChatCustomElement {
 
   _activatePostingCooldown() {
     this.postingCooldown = 5;
-    let cooldownInterval = setInterval(() => {
+    const cooldownInterval = setInterval(() => {
       this.postingCooldown -= 1;
 
       if (this.postingCooldown <= 0) {
@@ -137,10 +137,10 @@ export class ChatCustomElement {
       return;
     }
 
-    let post = this.post;
-    let image = post.image;
+    const post = this.post;
+    const image = post.image;
 
-    let formData = new FormData();
+    const formData = new FormData();
     formData.append("name", post.name);
     formData.append("comment", post.comment);
 
@@ -154,7 +154,7 @@ export class ChatCustomElement {
     // Save name in cookie
     this.settings.set("chat_name", this.post.name);
 
-    let ajaxPost = $.ajax(this.postUrl, {
+    const ajaxPost = $.ajax(this.postUrl, {
       method: "POST",
       data: formData,
       contentType: false,
@@ -162,10 +162,10 @@ export class ChatCustomElement {
     });
 
     /* TODO: Check if this actually works */
-    let ajaxPostAny: any = ajaxPost;
+    const ajaxPostAny: any = ajaxPost;
     ajaxPostAny.progress((e) => {
       if (e.lengthComputable) {
-        let percentComplete = Math.round((e.loaded / e.total) * 100);
+        const percentComplete = Math.round((e.loaded / e.total) * 100);
         this.postingProgress = `${percentComplete}%`;
       } else {
         this.postingProgress = "Posting...";
@@ -200,7 +200,7 @@ export class ChatCustomElement {
        because of a bug in socket.io causing the port number to be omitted,
        that's apparently been there for ages and yet still hasn't been fixed
        in a release. Get your shit together, Socket.io people. */
-    let socket = io(url, { path: "/aria-ws", autoConnect: false });
+    const socket = io(url, { path: "/aria-ws", autoConnect: false });
 
     socket.on("connect", () => {
       this.posts = [];

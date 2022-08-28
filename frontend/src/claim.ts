@@ -29,7 +29,7 @@ export class Claim {
   }
 
   async claim() {
-    let response = await this.http.fetch(`/api/r/${this.state.roomName}/claim`, {
+    const response = await this.http.fetch(`/api/r/${this.state.roomName}/claim`, {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -40,7 +40,7 @@ export class Claim {
       this.claimError = response.statusText;
     }
 
-    let data: ClaimInfo = await response.json();
+    const data: ClaimInfo = await response.json();
 
     this.claimInfo = data;
     this.auth.set(data.token);

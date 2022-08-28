@@ -17,7 +17,7 @@ export class RoomAdminService {
   }
 
   async getLoginStatus(): Promise<boolean> {
-    let response = await this.http.fetch(`/api/r/${this.roomName}/loggedin`, {
+    const response = await this.http.fetch(`/api/r/${this.roomName}/loggedin`, {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -35,7 +35,7 @@ export class RoomAdminService {
   }
 
   async login(password: string): Promise<boolean> {
-    let data = {
+    const data = {
       password: password,
     };
 
@@ -60,7 +60,7 @@ export class RoomAdminService {
       return Promise.resolve(false);
     }
 
-    let res = await response.json();
+    const res = await response.json();
 
     this.token = res.token;
     this.auth.set(this.token);
@@ -70,7 +70,7 @@ export class RoomAdminService {
   }
 
   action(action: any) {
-    let data = {
+    const data = {
       action: action,
     };
 

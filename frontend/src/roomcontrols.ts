@@ -25,15 +25,15 @@ export class RoomControls {
   }
 
   async bind() {
-    let authorized = await this.adminService.getLoginStatus();
+    const authorized = await this.adminService.getLoginStatus();
 
     this.authorized = authorized;
     this.initialized = true;
   }
 
   async login() {
-    let password = this.password;
-    let success = await this.adminService.login(password);
+    const password = this.password;
+    const success = await this.adminService.login(password);
 
     if (success) {
       this.authorized = true;

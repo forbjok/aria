@@ -28,7 +28,7 @@ export class Room {
     this.roomName = params.roomName;
     this.state.roomName = this.roomName;
 
-    let roomExists = await this.checkRoomExists();
+    const roomExists = await this.checkRoomExists();
 
     if (!roomExists) {
       this.router.navigateToRoute("claim", { roomName: this.roomName });
@@ -40,7 +40,7 @@ export class Room {
        because of a bug in socket.io causing the port number to be omitted,
        that's apparently been there for ages and yet still hasn't been fixed
        in a release. Get your shit together, Socket.io people. */
-    let socket = io(window.location.origin + "/room", { path: "/aria-ws", autoConnect: false });
+    const socket = io(window.location.origin + "/room", { path: "/aria-ws", autoConnect: false });
 
     socket.on("connect", () => {
       socket.emit("join", this.roomName);
@@ -54,13 +54,13 @@ export class Room {
   }
 
   attached() {
-    let w = $(window);
-    let chatContainer = $(this.chatContainer);
-    let contentContainer = $(this.contentContainer);
+    const w = $(window);
+    const chatContainer = $(this.chatContainer);
+    const contentContainer = $(this.contentContainer);
 
     function resize() {
-      let width = w.width();
-      let height = w.height();
+      const width = w.width();
+      const height = w.height();
 
       if (height > width) {
         // Portrait mode
@@ -87,7 +87,7 @@ export class Room {
 
   reloadContent() {
     // Store original content URL
-    let contentUrl = this.contentUrl;
+    const contentUrl = this.contentUrl;
 
     // Set blank content URL to clear content
     this._setContent(null);
@@ -113,7 +113,7 @@ export class Room {
   }
 
   private async checkRoomExists(): Promise<boolean> {
-    let response = await this.http.fetch(`/api/r/${this.roomName}`, {
+    const response = await this.http.fetch(`/api/r/${this.roomName}`, {
       method: "GET",
     });
 

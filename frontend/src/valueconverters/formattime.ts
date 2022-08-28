@@ -2,8 +2,8 @@ import moment from "moment";
 
 export class FormatTimeValueConverter {
   toView(value: string): string {
-    let now = moment();
-    let time = moment(value);
+    const now = moment();
+    const time = moment(value);
 
     if (now.isSame(time, "day")) {
       // If time is today, omit the date

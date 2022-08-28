@@ -1,6 +1,8 @@
 import { autoinject } from "aurelia-framework";
 
-function debounce(fn: Function, delay: number): Function {
+type AnyFn = (...args: any[]) => any;
+
+function debounce(fn: AnyFn, delay: number): AnyFn {
   let timer = null;
 
   return function (...args: any[]) {
@@ -17,7 +19,7 @@ export class AutoscrollingCustomAttribute {
   private trackBottom: boolean;
   private observer: MutationObserver;
   private _observerCallback: MutationCallback;
-  private _scrollToBottom: Function;
+  private _scrollToBottom: AnyFn;
   private _onUserScroll: any;
   private _onWindowResize: any;
 
@@ -37,29 +39,28 @@ export class AutoscrollingCustomAttribute {
   }
 
   _createEventCallbacks() {
-    let me = this;
-    let e = this.element;
+    const e = this.element;
 
     this._scrollToBottom = debounce(() => {
-      if (me.trackBottom) {
+      if (this.trackBottom) {
         e.scrollTop = e.scrollHeight;
       }
     }, 100);
 
     this._observerCallback = () => {
-      me._scrollToBottom();
+      this._scrollToBottom();
     };
 
     this._onUserScroll = (event) => {
       if (e.scrollHeight - e.scrollTop === e.clientHeight) {
-        me.trackBottom = true;
+        this.trackBottom = true;
       } else {
-        me.trackBottom = false;
+        this.trackBottom = false;
       }
     };
 
     this._onWindowResize = () => {
-      me._scrollToBottom();
+      this._scrollToBottom();
     };
   }
 
