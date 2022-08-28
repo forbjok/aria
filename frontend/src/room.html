@@ -6,7 +6,7 @@
       <chat room.bind="roomName"></chat>
     </div>
     <div ref="contentContainer" id="contentcontainer" class="contentcontainer">
-      <iframe width="100%" height="100%" src.bind="contentUrl">
+      <iframe if.bind="contentUrl" width="100%" height="100%" src.bind="contentUrl">
         <param name="wmode" value="opaque" />
         <param name="bgcolor" value="#000000" />
         <div class="unsupported-content">
