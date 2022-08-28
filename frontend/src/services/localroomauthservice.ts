@@ -5,14 +5,10 @@ import { LocalStorageService } from "./localstorageservice";
 
 @autoinject
 export class LocalRoomAuthService {
-  private roomName: string;
-  private authKeyName: string;
+  constructor(private localStorageService: LocalStorageService, private state: State) {}
 
-  constructor(private localStorageService: LocalStorageService, state: State) {
-    if (!state.roomName) throw new Error("No room set in state");
-
-    this.roomName = state.roomName;
-    this.authKeyName = `room_${this.roomName}_auth`;
+  private get authKeyName(): string {
+    return `room_${this.state.roomName}_auth`;
   }
 
   get(): string {

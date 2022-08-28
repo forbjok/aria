@@ -46,8 +46,7 @@ export class Claim {
     this.auth.set(data.token);
   }
 
-  reload() {
-    // Reload page
-    window.location.reload();
+  enterRoom() {
+    this.router.navigateToRoute("room", { roomName: this.state.roomName });
   }
 }

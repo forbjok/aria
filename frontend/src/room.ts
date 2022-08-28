@@ -12,27 +12,27 @@ import "styles/room.scss";
 
 @autoinject
 export class Room {
+  public showRoomControls: boolean;
+
   private room: HTMLDivElement;
   private chatContainer: HTMLDivElement;
   private contentContainer: HTMLDivElement;
-
-  private roomName: string;
   private contentUrl: string;
-  private embeddedContent: string[];
-
-  public showRoomControls: boolean;
 
   constructor(private router: Router, private state: State, private http: HttpClient) {}
 
   async activate(params: { roomName: string }) {
-    this.roomName = params.roomName;
-    this.state.roomName = this.roomName;
+    this.state.roomName = params.roomName;
 
     const roomExists = await this.checkRoomExists();
 
     if (!roomExists) {
-      this.router.navigateToRoute("claim", { roomName: this.roomName });
+      this.router.navigateToRoute("claim", { roomName: this.state.roomName });
     }
+  }
+
+  get roomName(): string | undefined {
+    return this.state.roomName;
   }
 
   bind() {
@@ -43,7 +43,7 @@ export class Room {
     const socket = io(window.location.origin + "/room", { path: "/aria-ws", autoConnect: false });
 
     socket.on("connect", () => {
-      socket.emit("join", this.roomName);
+      socket.emit("join", this.state.roomName);
     });
 
     socket.on("content", (content) => {
@@ -82,7 +82,6 @@ export class Room {
 
   _setContent(url: string) {
     this.contentUrl = url;
-    this.embeddedContent = [url];
   }
 
   reloadContent() {
@@ -113,7 +112,7 @@ export class Room {
   }
 
   private async checkRoomExists(): Promise<boolean> {
-    const response = await this.http.fetch(`/api/r/${this.roomName}`, {
+    const response = await this.http.fetch(`/api/r/${this.state.roomName}`, {
       method: "GET",
     });
 

@@ -9,7 +9,7 @@
         <div class="claimed-text">You have claimed /${claimInfo.name}/.</div>
         <div class="password-text">The password is: <span class="password">${claimInfo.password}</span></div>
       </div>
-      <button type="button" name="enter" class="enter-button" click.trigger="reload()">Enter</button>
+      <button type="button" name="enter" class="enter-button" click.trigger="enterRoom()">Enter</button>
     </div>
     <div if.bind="claimError" class="claim-error">
       <p>An error occurred claiming the room: ${claimError}</p>
