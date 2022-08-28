@@ -56,20 +56,8 @@ export class PgAriaStore implements IAriaStore {
     await migrate({ client: this.client }, "../migrations");
   }
 
-  async _execQuery(sql: string, params: any): Promise<number> {
-    const result = await this.client.query(sql, params);
-
-    return result.rowCount;
-  }
-
-  async _queryRows<R extends QueryResultRow>(sql: string, params: any): Promise<R[]> {
-    const result = await this.client.query<R>(sql, params);
-
-    return result.rows;
-  }
-
   async getRoom(roomName: string): Promise<RoomInfo | null> {
-    const rows = await this._queryRows<RoomModel>("SELECT name, password, content_url FROM get_room_by_name($1);", [
+    const rows = await this.queryRows<RoomModel>("SELECT name, password, content_url FROM get_room_by_name($1);", [
       roomName,
     ]);
 
@@ -88,7 +76,7 @@ export class PgAriaStore implements IAriaStore {
 
   async createRoom(roomName: string): Promise<RoomInfo> {
     const password = generatePassword();
-    const rows = await this._queryRows<RoomModel>("SELECT * FROM create_room($1, $2);", [roomName, password]);
+    const rows = await this.queryRows<RoomModel>("SELECT * FROM create_room($1, $2);", [roomName, password]);
 
     if (!rows || rows.length === 0) {
       throw new Error("Could not create room");
@@ -118,7 +106,7 @@ export class PgAriaStore implements IAriaStore {
       limit +
       ") AS p2 ORDER BY p2.id ASC;";
 
-    const rows = await this._queryRows<PostModel>(sql, [roomName]);
+    const rows = await this.queryRows<PostModel>(sql, [roomName]);
 
     // Transform raw DB rows into valid internal post objects
     const posts: Post[] = [];
@@ -169,7 +157,7 @@ export class PgAriaStore implements IAriaStore {
     }
 
     // Create post
-    const rows = await this._queryRows<PostModel>(
+    const rows = await this.queryRows<PostModel>(
       "SELECT * FROM create_post($1, " +
         "jsonb_populate_record(NULL::new_post, $2), " +
         "jsonb_populate_record(NULL::new_image, $3));",
@@ -191,8 +179,20 @@ export class PgAriaStore implements IAriaStore {
   }
 
   async setContentUrl(roomName: string, contentUrl: string): Promise<number> {
-    const rowsAffected = await this._execQuery("SELECT set_room_content_url($1, $2);", [roomName, contentUrl]);
+    const rowsAffected = await this.execQuery("SELECT set_room_content_url($1, $2);", [roomName, contentUrl]);
 
     return rowsAffected;
+  }
+
+  private async execQuery(sql: string, params: any): Promise<number> {
+    const result = await this.client.query(sql, params);
+
+    return result.rowCount;
+  }
+
+  private async queryRows<R extends QueryResultRow>(sql: string, params: any): Promise<R[]> {
+    const result = await this.client.query<R>(sql, params);
+
+    return result.rows;
   }
 }
