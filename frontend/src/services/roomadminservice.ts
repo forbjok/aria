@@ -6,20 +6,15 @@ import { LocalRoomAuthService } from "./localroomauthservice";
 
 @autoinject
 export class RoomAdminService {
-  private roomName: string;
   private token: string;
   private isAdmin: boolean;
 
-  constructor(private http: HttpClient, private auth: LocalRoomAuthService, state: State) {
-    if (!state.roomName) throw new Error("No room set in state");
-
-    this.roomName = state.roomName;
-
+  constructor(private http: HttpClient, private auth: LocalRoomAuthService, private state: State) {
     this.token = auth.get();
   }
 
   async getLoginStatus(): Promise<boolean> {
-    const response = await this.http.fetch(`/api/r/${this.roomName}/loggedin`, {
+    const response = await this.http.fetch(`/api/r/${this.state.roomName}/loggedin`, {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -44,7 +39,7 @@ export class RoomAdminService {
     let response: Response;
 
     try {
-      response = await this.http.fetch(`/api/r/${this.roomName}/login`, {
+      response = await this.http.fetch(`/api/r/${this.state.roomName}/login`, {
         method: "POST",
         body: JSON.stringify(data),
         headers: {
@@ -58,8 +53,7 @@ export class RoomAdminService {
     }
 
     if (!response.ok) {
-      /* TODO: Figure out why Promise.resolve is required here but not in other cases */
-      return Promise.resolve(false);
+      return false;
     }
 
     const res = await response.json();
@@ -76,7 +70,7 @@ export class RoomAdminService {
       action: action,
     };
 
-    return this.http.fetch(`/api/r/${this.roomName}/control`, {
+    return this.http.fetch(`/api/r/${this.state.roomName}/control`, {
       method: "POST",
       body: JSON.stringify(data),
       headers: {

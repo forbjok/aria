@@ -6,19 +6,22 @@ import * as socketio from "socket.io";
 
 import { IAriaStore, RoomInfo } from "../../store";
 
-type AnyFn = (...args: any[]) => any;
+type OnContentChangeFn = (url: string) => void;
+type OnTimeFn = (time: number) => void;
 
 interface RoomOptions {
   password?: string;
   contentUrl?: string;
-  onContentChange?: AnyFn;
+  onContentChange?: OnContentChangeFn;
+  onTime?: OnTimeFn;
 }
 
 class Room {
   public password: string;
 
   private contentUrl: string;
-  private readonly onContentChange: AnyFn;
+  private readonly onContentChange: OnContentChangeFn;
+  private readonly onTime: OnTimeFn;
 
   constructor(public name: string, options: RoomOptions) {
     Object.assign(this, options);
@@ -31,6 +34,10 @@ class Room {
   public setContentUrl(url) {
     this.contentUrl = url;
     if (this.onContentChange) this.onContentChange(this.contentUrl);
+  }
+
+  public broadcastTime(time: number) {
+    if (this.onTime) this.onTime(time);
   }
 }
 
@@ -61,7 +68,7 @@ export class RoomServer {
     const rooms = this.rooms;
 
     if (name in rooms) {
-      return await Promise.resolve(rooms[name]);
+      return rooms[name];
     }
 
     const roomInfo = await this.store.getRoom(name);
@@ -85,6 +92,9 @@ export class RoomServer {
       onContentChange: (contentUrl) => {
         store.setContentUrl(name, contentUrl);
         io.to(name).emit("content", { url: contentUrl });
+      },
+      onTime: (time) => {
+        io.to(name).emit("time", time);
       },
     });
 
@@ -246,6 +256,13 @@ export class RoomServer {
 
       socket.on("disconnect", () => {
         console.log(`${ip}: Room disconnected!`);
+      });
+
+      socket.on("master-time", async (roomName: string, time: number) => {
+        const room = await this.getRoom(roomName);
+        if (!room) return;
+
+        room.broadcastTime(time);
       });
     });
   }

@@ -5,10 +5,17 @@ import { Router } from "aurelia-router";
 import { State } from "./state";
 import fullscreenUtils from "./utils/fullscreen";
 
-import io from "socket.io-client";
+import io, { Socket } from "socket.io-client";
 import * as $ from "jquery";
 
 import "styles/room.scss";
+import { RoomAdminService } from "services/roomadminservice";
+
+interface PlaybackState {
+  timestamp: number;
+  time: number;
+  isPlaying: boolean;
+}
 
 @autoinject
 export class Room {
@@ -17,9 +24,25 @@ export class Room {
   private room: HTMLDivElement;
   private chatContainer: HTMLDivElement;
   private contentContainer: HTMLDivElement;
-  private contentUrl: string;
+  private embeddedVideo: HTMLMediaElement;
 
-  constructor(private router: Router, private state: State, private http: HttpClient) {}
+  private socket: Socket;
+  private contentUrl: string;
+  private isMaster = false;
+  private isMasterPaused = false;
+  private isViewerPaused = false;
+  private masterPlaybackState: PlaybackState = {
+    timestamp: 0,
+    time: 0,
+    isPlaying: false,
+  };
+
+  constructor(
+    private router: Router,
+    private state: State,
+    private http: HttpClient,
+    private adminService: RoomAdminService
+  ) {}
 
   async activate(params: { roomName: string }) {
     this.state.roomName = params.roomName;
@@ -35,7 +58,10 @@ export class Room {
     return this.state.roomName;
   }
 
-  bind() {
+  async bind() {
+    const isAuthorized = await this.adminService.getLoginStatus();
+    this.isMaster = isAuthorized;
+
     /* We have to use this window.location.origin + "/namespace" workaround
        because of a bug in socket.io causing the port number to be omitted,
        that's apparently been there for ages and yet still hasn't been fixed
@@ -47,10 +73,23 @@ export class Room {
     });
 
     socket.on("content", (content) => {
-      this._setContent(content.url);
+      this.setContent(content.url);
     });
 
+    socket.on("time", (ps: PlaybackState) => {
+      if (this.isMaster) return;
+
+      ps.timestamp = new Date().getTime();
+      this.setPlaybackState(ps);
+    });
+
+    setInterval(() => {
+      this.broadcastPlaybackState();
+    }, 30000);
+
     socket.connect();
+
+    this.socket = socket;
   }
 
   attached() {
@@ -80,22 +119,27 @@ export class Room {
     });
   }
 
-  _setContent(url: string) {
+  setContent(url: string) {
     this.contentUrl = url;
   }
 
   reloadContent() {
     // Store original content URL
     const contentUrl = this.contentUrl;
+    const playbackState = this.getPlaybackState();
 
     // Set blank content URL to clear content
-    this._setContent("");
+    this.setContent("");
 
-    /* The restoration needs to go in a 1 second timeout, because otherwise it
-       doesn't work for some types of content. */
+    // The restoration needs to go in a 1 second timeout, because otherwise it
+    // doesn't work for some types of content.
     setTimeout(() => {
       // Restore content URL to reload content
-      this._setContent(contentUrl);
+      this.setContent(contentUrl);
+
+      setTimeout(() => {
+        this.setPlaybackState(playbackState);
+      }, 1);
     }, 1);
   }
 
@@ -111,6 +155,33 @@ export class Room {
     this.showRoomControls = !this.showRoomControls;
   }
 
+  onVideoReady() {
+    this.setPlaybackState(this.masterPlaybackState);
+  }
+
+  onPlay() {
+    this.isViewerPaused = false;
+
+    if (!this.isMaster) {
+      this.setPlaybackState(this.masterPlaybackState);
+    }
+
+    this.broadcastPlaybackState();
+  }
+
+  onPause() {
+    if (this.isMasterPaused && !this.isMaster) {
+      return;
+    }
+
+    this.isViewerPaused = true;
+    this.broadcastPlaybackState();
+  }
+
+  onSeek() {
+    this.broadcastPlaybackState();
+  }
+
   private async checkRoomExists(): Promise<boolean> {
     const response = await this.http.fetch(`/api/r/${this.state.roomName}`, {
       method: "GET",
@@ -121,5 +192,44 @@ export class Room {
     }
 
     return true;
+  }
+
+  private getPlaybackState(): PlaybackState {
+    return {
+      timestamp: new Date().getTime(),
+      time: this.embeddedVideo.currentTime,
+      isPlaying: !this.embeddedVideo.paused,
+    };
+  }
+
+  private setPlaybackState(ps: PlaybackState) {
+    this.masterPlaybackState = ps;
+
+    if (this.isViewerPaused) {
+      return;
+    }
+
+    const elapsedSinceTimestamp = (new Date().getTime() - ps.timestamp) / 1000;
+    const newTime = ps.time + elapsedSinceTimestamp;
+
+    const timeDiff = Math.abs(this.embeddedVideo.currentTime - newTime);
+    if (timeDiff > 2 || this.embeddedVideo.paused) {
+      this.embeddedVideo.currentTime = newTime;
+    }
+
+    if (ps.isPlaying && this.embeddedVideo.paused) {
+      this.isMasterPaused = false;
+      this.embeddedVideo.currentTime = newTime;
+      this.embeddedVideo.play();
+    } else if (!ps.isPlaying && !this.embeddedVideo.paused) {
+      this.isMasterPaused = true;
+      this.embeddedVideo.pause();
+    }
+  }
+
+  private broadcastPlaybackState() {
+    if (!this.isMaster) return;
+
+    this.socket.emit("master-time", this.state.roomName, this.getPlaybackState());
   }
 }

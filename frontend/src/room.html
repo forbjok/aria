@@ -6,14 +6,18 @@
       <chat room.bind="roomName"></chat>
     </div>
     <div ref="contentContainer" id="contentcontainer" class="contentcontainer">
-      <iframe if.bind="contentUrl" width="100%" height="100%" src.bind="contentUrl">
-        <param name="wmode" value="opaque" />
-        <param name="bgcolor" value="#000000" />
-        <div class="unsupported-content">
-          Your browser does not support this type of embedded content. You may need to install Flash Player or a similar
-          plugin for your browser.
-        </div>
-      </iframe>
+      <video
+        controls
+        ref="embeddedVideo"
+        class="embedded-video"
+        if.bind="contentUrl"
+        src.bind="contentUrl"
+        width="100%"
+        height="100%"
+        play.trigger="onPlay()"
+        pause.trigger="onPause()"
+        seeked.trigger="onSeek()"
+      ></video>
       <div class="usercontrols-activationzone">
         <div class="usercontrols">
           <a href="#" class="usercontrol" title="Reload" click.trigger="reloadContent()"
