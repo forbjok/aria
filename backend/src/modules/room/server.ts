@@ -4,14 +4,14 @@ import * as express from "express";
 import { expressjwt } from "express-jwt";
 import * as socketio from "socket.io";
 
-import { IAriaStore, RoomInfo } from "../../store";
+import { Content, IAriaStore, RoomInfo } from "../../store";
 
-type OnContentChangeFn = (url: string) => void;
+type OnContentChangeFn = (content: Content) => void;
 type OnTimeFn = (time: number) => void;
 
 interface RoomOptions {
   password?: string;
-  contentUrl?: string;
+  content?: Content;
   onContentChange?: OnContentChangeFn;
   onTime?: OnTimeFn;
 }
@@ -19,7 +19,7 @@ interface RoomOptions {
 class Room {
   public password: string;
 
-  private contentUrl: string;
+  private content: Content;
   private readonly onContentChange: OnContentChangeFn;
   private readonly onTime: OnTimeFn;
 
@@ -27,13 +27,13 @@ class Room {
     Object.assign(this, options);
   }
 
-  public getContentUrl() {
-    return this.contentUrl;
+  public getContent(): Content {
+    return this.content;
   }
 
-  public setContentUrl(url) {
-    this.contentUrl = url;
-    if (this.onContentChange) this.onContentChange(this.contentUrl);
+  public setContent(content: Content) {
+    this.content = content;
+    if (this.onContentChange) this.onContentChange(this.content);
   }
 
   public broadcastTime(time: number) {
@@ -88,10 +88,10 @@ export class RoomServer {
 
     const room = new Room(name, {
       password: roomInfo.password,
-      contentUrl: roomInfo.contentUrl,
-      onContentChange: (contentUrl) => {
-        store.setContentUrl(name, contentUrl);
-        io.to(name).emit("content", { url: contentUrl });
+      content: roomInfo.content,
+      onContentChange: (content) => {
+        store.setContent(name, content);
+        io.to(name).emit("content", content);
       },
       onTime: (time) => {
         io.to(name).emit("time", time);
@@ -209,14 +209,34 @@ export class RoomServer {
       const action = data.action;
       if (action) {
         switch (action.action) {
-          case "set content url":
-            room.setContentUrl(action.url);
+          case "set content url": {
+            const content = this.processContentUrl(action.url);
+            room.setContent(content);
             break;
+          }
         }
       }
 
       res.send();
     });
+  }
+
+  private processContentUrl(url: string): Content {
+    const youtubeRegex = new RegExp("https?://www.youtube.com/watch\\?v=(.+)");
+    const youtubeId = url.match(youtubeRegex);
+    if (youtubeId) {
+      return {
+        type: "youtube",
+        url,
+        meta: { id: youtubeId[1] },
+      };
+    }
+
+    return {
+      type: "unknown",
+      url,
+      meta: {},
+    };
   }
 
   private setupSocket() {
@@ -246,7 +266,7 @@ export class RoomServer {
           return;
         }
 
-        socket.emit("content", { url: room.getContentUrl() });
+        socket.emit("content", room.getContent());
       });
 
       socket.on("leave", (roomName) => {

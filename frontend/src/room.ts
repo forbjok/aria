@@ -1,6 +1,7 @@
 import { autoinject } from "aurelia-framework";
 import { HttpClient } from "aurelia-fetch-client";
 import { Router } from "aurelia-router";
+import YouTubePlayer from "youtube-player";
 
 import { State } from "./state";
 import fullscreenUtils from "./utils/fullscreen";
@@ -10,11 +11,20 @@ import * as $ from "jquery";
 
 import "styles/room.scss";
 import { RoomAdminService } from "services/roomadminservice";
+import { Content } from "models/content";
+import PlayerStates from "youtube-player/dist/constants/PlayerStates";
 
 interface PlaybackState {
   timestamp: number;
   time: number;
   isPlaying: boolean;
+}
+
+interface PlaybackController {
+  getPlaybackState(): Promise<PlaybackState>;
+  setTime(time: number);
+  play();
+  pause();
 }
 
 @autoinject
@@ -25,10 +35,12 @@ export class Room {
   private chatContainer: HTMLDivElement;
   private contentContainer: HTMLDivElement;
   private embeddedVideo: HTMLMediaElement;
+  private youtubePlayer: HTMLDivElement;
 
   private socket: Socket;
-  private contentUrl: string;
+  private content: Content | null;
   private latency = 0;
+  private playbackController: PlaybackController | null;
   private isMaster = false;
   private isMasterPaused = false;
   private isViewerPaused = false;
@@ -73,8 +85,8 @@ export class Room {
       socket.emit("join", this.state.roomName);
     });
 
-    socket.on("content", (content) => {
-      this.setContent(content.url);
+    socket.on("content", (content: Content) => {
+      this.setContent(content);
     });
 
     socket.on("time", (ps: PlaybackState) => {
@@ -127,23 +139,78 @@ export class Room {
     });
   }
 
-  setContent(url: string) {
-    this.contentUrl = url;
+  setContent(content: Content | null) {
+    this.content = content;
+    console.log("CONTENT", content);
+    if (content == null) return;
+
+    if (content.type === "youtube") {
+      const ytp = YouTubePlayer(this.youtubePlayer, {
+        videoId: this.content?.meta.id,
+      });
+
+      this.playbackController = {
+        async getPlaybackState(): Promise<PlaybackState> {
+          return {
+            timestamp: getTimestamp(),
+            time: await ytp.getCurrentTime(),
+            isPlaying: (await ytp.getPlayerState()) === PlayerStates.PLAYING,
+          };
+        },
+        async setTime(time) {
+          await ytp.seekTo(time, true);
+        },
+        async play() {
+          await ytp.playVideo();
+        },
+        async pause() {
+          await ytp.pauseVideo();
+        },
+      };
+
+      ytp.on("stateChange", (event) => {
+        if (event.data === PlayerStates.PLAYING) {
+          this.onPlay();
+        } else if (event.data === PlayerStates.PAUSED) {
+          this.onPause();
+        }
+      });
+      return;
+    }
+
+    this.playbackController = {
+      async getPlaybackState(): Promise<PlaybackState> {
+        return {
+          timestamp: getTimestamp(),
+          time: this.embeddedVideo.currentTime,
+          isPlaying: !this.embeddedVideo.paused,
+        };
+      },
+      setTime(time) {
+        this.embeddedVideo.currentTime = time;
+      },
+      play() {
+        this.embeddedVideo.play();
+      },
+      pause() {
+        this.embeddedVideo.pause();
+      },
+    };
   }
 
-  reloadContent() {
-    // Store original content URL
-    const contentUrl = this.contentUrl;
-    const playbackState = this.getPlaybackState();
+  async reloadContent() {
+    // Store original content
+    const content = this.content;
+    const playbackState = (await this.playbackController?.getPlaybackState()) || this.masterPlaybackState;
 
-    // Set blank content URL to clear content
-    this.setContent("");
+    // Set blank content to unload content
+    this.setContent(null);
 
     // The restoration needs to go in a 1 second timeout, because otherwise it
     // doesn't work for some types of content.
     setTimeout(() => {
-      // Restore content URL to reload content
-      this.setContent(contentUrl);
+      // Restore content to reload
+      this.setContent(content);
 
       setTimeout(() => {
         this.setPlaybackState(playbackState);
@@ -201,44 +268,41 @@ export class Room {
 
     return true;
   }
-
-  private getPlaybackState(): PlaybackState {
-    return {
-      timestamp: getTimestamp(),
-      time: this.embeddedVideo.currentTime,
-      isPlaying: !this.embeddedVideo.paused,
-    };
-  }
-
-  private setPlaybackState(ps: PlaybackState) {
+  private async setPlaybackState(ps: PlaybackState) {
     this.masterPlaybackState = ps;
+
+    if (!this.playbackController) {
+      return;
+    }
 
     if (this.isViewerPaused) {
       return;
     }
 
+    const currentPlaybackState = await this.playbackController.getPlaybackState();
+
     const elapsedSinceTimestamp = (getTimestamp() - ps.timestamp) / 1000;
     const newTime = ps.time + elapsedSinceTimestamp;
 
-    const timeDiff = Math.abs(this.embeddedVideo.currentTime - newTime);
-    if (timeDiff > 2 || this.embeddedVideo.paused) {
-      this.embeddedVideo.currentTime = newTime;
+    const timeDiff = Math.abs(currentPlaybackState.time - newTime);
+    if (timeDiff > 2) {
+      this.playbackController.setTime(newTime);
     }
 
-    if (ps.isPlaying && this.embeddedVideo.paused) {
+    if (ps.isPlaying && !currentPlaybackState.isPlaying) {
       this.isMasterPaused = false;
-      this.embeddedVideo.currentTime = newTime;
-      this.embeddedVideo.play();
-    } else if (!ps.isPlaying && !this.embeddedVideo.paused) {
+      this.playbackController.setTime(newTime);
+      this.playbackController.play();
+    } else if (!ps.isPlaying && currentPlaybackState.isPlaying) {
       this.isMasterPaused = true;
-      this.embeddedVideo.pause();
+      this.playbackController.pause();
     }
   }
 
-  private broadcastPlaybackState() {
+  private async broadcastPlaybackState() {
     if (!this.isMaster) return;
 
-    const ps = this.getPlaybackState();
+    const ps = (await this.playbackController?.getPlaybackState()) || this.masterPlaybackState;
     ps.time += this.latency;
 
     this.socket.emit("master-time", this.state.roomName, ps);

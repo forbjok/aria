@@ -9,13 +9,13 @@ export interface IAriaStore {
   createRoom: (roomName: string) => Promise<RoomInfo | null>;
   getPosts: (roomName: string, options: QueryOptions) => Promise<Post[]>;
   addPost: (roomName: string, post: Post) => Promise<Post | null>;
-  setContentUrl: (roomName: string, contentUrl: string) => Promise<number>;
+  setContent: (roomName: string, content: Content) => Promise<number>;
 }
 
 export interface RoomInfo {
   name: string;
   password: string;
-  contentUrl: string;
+  content: Content;
 }
 
 export interface Image {
@@ -30,4 +30,10 @@ export interface Post {
   comment?: string;
   image?: Image;
   ip: string;
+}
+
+export interface Content {
+  type: string;
+  url: string;
+  meta: any;
 }
