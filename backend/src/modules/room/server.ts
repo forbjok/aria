@@ -258,6 +258,10 @@ export class RoomServer {
         console.log(`${ip}: Room disconnected!`);
       });
 
+      socket.on("ping", (time: number) => {
+        socket.emit("pong", time);
+      });
+
       socket.on("master-time", async (roomName: string, time: number) => {
         const room = await this.getRoom(roomName);
         if (!room) return;

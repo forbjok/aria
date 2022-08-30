@@ -28,6 +28,7 @@ export class Room {
 
   private socket: Socket;
   private contentUrl: string;
+  private latency = 0;
   private isMaster = false;
   private isMasterPaused = false;
   private isViewerPaused = false;
@@ -79,12 +80,19 @@ export class Room {
     socket.on("time", (ps: PlaybackState) => {
       if (this.isMaster) return;
 
-      ps.timestamp = new Date().getTime();
+      ps.timestamp = getTimestamp();
+      ps.time += this.latency;
+
       this.setPlaybackState(ps);
     });
 
-    setInterval(() => {
+    socket.on("pong", (ts: number) => {
+      this.latency = (getTimestamp() - ts) / 1000;
       this.broadcastPlaybackState();
+    });
+
+    setInterval(() => {
+      socket.emit("ping", getTimestamp());
     }, 30000);
 
     socket.connect();
@@ -196,7 +204,7 @@ export class Room {
 
   private getPlaybackState(): PlaybackState {
     return {
-      timestamp: new Date().getTime(),
+      timestamp: getTimestamp(),
       time: this.embeddedVideo.currentTime,
       isPlaying: !this.embeddedVideo.paused,
     };
@@ -209,7 +217,7 @@ export class Room {
       return;
     }
 
-    const elapsedSinceTimestamp = (new Date().getTime() - ps.timestamp) / 1000;
+    const elapsedSinceTimestamp = (getTimestamp() - ps.timestamp) / 1000;
     const newTime = ps.time + elapsedSinceTimestamp;
 
     const timeDiff = Math.abs(this.embeddedVideo.currentTime - newTime);
@@ -230,6 +238,13 @@ export class Room {
   private broadcastPlaybackState() {
     if (!this.isMaster) return;
 
-    this.socket.emit("master-time", this.state.roomName, this.getPlaybackState());
+    const ps = this.getPlaybackState();
+    ps.time += this.latency;
+
+    this.socket.emit("master-time", this.state.roomName, ps);
   }
+}
+
+function getTimestamp(): number {
+  return new Date().getTime();
 }
