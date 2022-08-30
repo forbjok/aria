@@ -50,6 +50,7 @@
     "json-loader": "^0.5.7",
     "mini-css-extract-plugin": "^2.6.1",
     "minimatch": "^5.1.0",
+    "prettier": "^2.7.1",
     "promise-polyfill": "^8.2.3",
     "sass": "^1.54.5",
     "sass-loader": "^13.0.2",
@@ -70,7 +71,8 @@
     "build:dev": "webpack",
     "analyze": "webpack --env production --analyze",
     "test": "au test",
-    "lint": "eslint src/**/*.{js,ts} --quiet --fix"
+    "lint": "eslint src/**/*.{js,ts} --quiet --fix",
+    "fmt": "prettier --write ."
   },
   "engines": {
     "node": ">=14.15.0"
