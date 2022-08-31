@@ -5,27 +5,33 @@ import { expressjwt } from "express-jwt";
 import * as socketio from "socket.io";
 
 import { Content, IAriaStore, RoomInfo } from "../../store";
-import axios from "axios";
+import { PlaybackState } from "./models";
 
 type OnContentChangeFn = (content: Content) => void;
-type OnTimeFn = (time: number) => void;
+type OnPlaybackStateFn = (ps: PlaybackState) => void;
 
 interface RoomOptions {
   password?: string;
   content?: Content;
   onContentChange?: OnContentChangeFn;
-  onTime?: OnTimeFn;
+  onPlaybackState?: OnPlaybackStateFn;
 }
 
 class Room {
   public password: string;
 
   private content: Content;
+  private playbackStateTimestamp = 0;
+  private playbackState?: PlaybackState;
   private readonly onContentChange: OnContentChangeFn;
-  private readonly onTime: OnTimeFn;
+  private readonly onPlaybackState: OnPlaybackStateFn;
 
   constructor(public name: string, options: RoomOptions) {
     Object.assign(this, options);
+
+    setInterval(() => {
+      this.broadcastPlaybackState();
+    }, 30000);
   }
 
   public getContent(): Content {
@@ -37,8 +43,22 @@ class Room {
     if (this.onContentChange) this.onContentChange(this.content);
   }
 
-  public broadcastTime(time: number) {
-    if (this.onTime) this.onTime(time);
+  public setPlaybackState(ps: PlaybackState) {
+    this.playbackStateTimestamp = getTimestamp();
+    this.playbackState = ps;
+    this.broadcastPlaybackState();
+  }
+
+  private broadcastPlaybackState() {
+    if (!this.playbackState) {
+      return;
+    }
+
+    if (this.onPlaybackState)
+      this.onPlaybackState({
+        ...this.playbackState,
+        time: this.playbackState.time + (getTimestamp() - this.playbackStateTimestamp) / 1000,
+      });
   }
 }
 
@@ -94,8 +114,8 @@ export class RoomServer {
         store.setContent(name, content);
         io.to(name).emit("content", content);
       },
-      onTime: (time) => {
-        io.to(name).emit("time", time);
+      onPlaybackState: (ps) => {
+        io.to(name).emit("playbackstate", ps);
       },
     });
 
@@ -293,12 +313,16 @@ export class RoomServer {
         socket.emit("pong", time);
       });
 
-      socket.on("master-time", async (roomName: string, time: number) => {
+      socket.on("master-playbackstate", async (roomName: string, ps: PlaybackState) => {
         const room = await this.getRoom(roomName);
         if (!room) return;
 
-        room.broadcastTime(time);
+        room.setPlaybackState(ps);
       });
     });
   }
+}
+
+function getTimestamp(): number {
+  return new Date().getTime();
 }

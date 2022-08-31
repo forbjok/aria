@@ -17,7 +17,6 @@ import videojs from "video.js";
 import "!style-loader!css-loader!video.js/dist/video-js.css";
 
 interface PlaybackState {
-  timestamp: number;
   time: number;
   isPlaying: boolean;
 }
@@ -63,13 +62,14 @@ export class Room {
   private latency = 0;
   private playbackController: PlaybackController | null;
   private isMaster = false;
-  private isMasterPaused = false;
+  private isAutoUpdate = false;
   private isViewerPaused = false;
-  private masterPlaybackState: PlaybackState = {
-    timestamp: 0,
+  private serverPlaybackStateTimestamp = 0;
+  private serverPlaybackState: PlaybackState = {
     time: 0,
     isPlaying: false,
   };
+  private isYouTubePlayerLoaded = false;
 
   constructor(
     private router: Router,
@@ -110,18 +110,15 @@ export class Room {
       this.setContent(content);
     });
 
-    socket.on("time", (ps: PlaybackState) => {
-      if (this.isMaster) return;
-
-      ps.timestamp = getTimestamp();
+    socket.on("playbackstate", (ps: PlaybackState) => {
+      this.serverPlaybackStateTimestamp = getTimestamp();
       ps.time += this.latency;
 
       this.setPlaybackState(ps);
     });
 
     socket.on("pong", (ts: number) => {
-      this.latency = (getTimestamp() - ts) / 1000;
-      this.broadcastPlaybackState();
+      this.latency = (getTimestamp() - ts) / 2 / 1000;
     });
 
     setInterval(() => {
@@ -165,26 +162,34 @@ export class Room {
     if (content == null) return;
 
     if (content.type === "youtube") {
+      if (this.isYouTubePlayerLoaded) {
+        // Reload page.
+        // This is a workaround for the YouTube player breaking on use.
+        // Ideally a better solution should be found.
+        location.reload();
+      }
+
       setTimeout(() => {
         const ytp = YouTubePlayer(this.youtubePlayer, {
           videoId: this.content?.meta.id,
         });
 
+        this.isYouTubePlayerLoaded = true;
+
         this.playbackController = {
-          async getPlaybackState(): Promise<PlaybackState> {
+          getPlaybackState: async (): Promise<PlaybackState> => {
             return {
-              timestamp: getTimestamp(),
               time: await ytp.getCurrentTime(),
               isPlaying: (await ytp.getPlayerState()) === PlayerStates.PLAYING,
             };
           },
-          async setTime(time) {
+          setTime: async (time) => {
             await ytp.seekTo(time, true);
           },
-          async play() {
+          play: async () => {
             await ytp.playVideo();
           },
-          async pause() {
+          pause: async () => {
             await ytp.pauseVideo();
           },
         };
@@ -196,7 +201,7 @@ export class Room {
             this.onPause();
           }
         });
-      }, 1);
+      }, 100);
       return;
     }
 
@@ -204,35 +209,32 @@ export class Room {
       setTimeout(() => {
         const embeddedVideo = this.googleDriveVideo;
 
-        const me = this;
         const detail: UserscriptDetails = {
           content: {
             contentType: content.type,
             url: content.url,
             meta: content.meta,
           },
-          onLoaded(sources) {
-            console.log("GOT SOURCES", sources);
-            me.sources = sources;
+          onLoaded: (sources) => {
+            this.sources = sources;
 
             setTimeout(() => {
               const player = videojs(embeddedVideo, { controls: true });
 
               this.playbackController = {
-                async getPlaybackState(): Promise<PlaybackState> {
+                getPlaybackState: async (): Promise<PlaybackState> => {
                   return {
-                    timestamp: getTimestamp(),
                     time: embeddedVideo.currentTime,
                     isPlaying: !embeddedVideo.paused,
                   };
                 },
-                setTime(time) {
+                setTime: (time) => {
                   embeddedVideo.currentTime = time;
                 },
-                play() {
+                play: () => {
                   embeddedVideo.play();
                 },
-                pause() {
+                pause: () => {
                   embeddedVideo.pause();
                 },
               };
@@ -262,20 +264,19 @@ export class Room {
         const player = videojs(embeddedVideo, { controls: true });
 
         this.playbackController = {
-          async getPlaybackState(): Promise<PlaybackState> {
+          getPlaybackState: async (): Promise<PlaybackState> => {
             return {
-              timestamp: getTimestamp(),
               time: embeddedVideo.currentTime,
               isPlaying: !embeddedVideo.paused,
             };
           },
-          setTime(time) {
+          setTime: (time) => {
             embeddedVideo.currentTime = time;
           },
-          play() {
+          play: () => {
             embeddedVideo.play();
           },
-          pause() {
+          pause: () => {
             embeddedVideo.pause();
           },
         };
@@ -286,7 +287,7 @@ export class Room {
   async reloadContent() {
     // Store original content
     const content = this.content;
-    const playbackState = (await this.playbackController?.getPlaybackState()) || this.masterPlaybackState;
+    const playbackState = (await this.playbackController?.getPlaybackState()) || this.serverPlaybackState;
 
     // Set blank content to unload content
     this.setContent(null);
@@ -316,21 +317,27 @@ export class Room {
   }
 
   onVideoReady() {
-    this.setPlaybackState(this.masterPlaybackState);
+    this.setPlaybackState(this.serverPlaybackState);
   }
 
-  onPlay() {
+  async onPlay() {
     this.isViewerPaused = false;
 
     if (!this.isMaster) {
-      this.setPlaybackState(this.masterPlaybackState);
+      this.setPlaybackState(this.serverPlaybackState);
+      return;
     }
 
     this.broadcastPlaybackState();
   }
 
+  onPlaying() {
+    if (this.isMaster) return;
+    this.setPlaybackState(this.serverPlaybackState);
+  }
+
   onPause() {
-    if (this.isMasterPaused && !this.isMaster) {
+    if (this.isAutoUpdate && !this.isMaster) {
       return;
     }
 
@@ -354,7 +361,7 @@ export class Room {
     return true;
   }
   private async setPlaybackState(ps: PlaybackState) {
-    this.masterPlaybackState = ps;
+    this.serverPlaybackState = ps;
 
     if (!this.playbackController) {
       return;
@@ -366,31 +373,36 @@ export class Room {
 
     const currentPlaybackState = await this.playbackController.getPlaybackState();
 
-    const elapsedSinceTimestamp = (getTimestamp() - ps.timestamp) / 1000;
+    const elapsedSinceTimestamp = (getTimestamp() - this.serverPlaybackStateTimestamp) / 1000;
     const newTime = ps.time + elapsedSinceTimestamp;
 
-    const timeDiff = Math.abs(currentPlaybackState.time - newTime);
-    if (timeDiff > 2) {
-      this.playbackController.setTime(newTime);
-    }
+    this.isAutoUpdate = true;
 
-    if (ps.isPlaying && !currentPlaybackState.isPlaying) {
-      this.isMasterPaused = false;
-      this.playbackController.setTime(newTime);
-      this.playbackController.play();
+    if (ps.isPlaying) {
+      const timeDiff = Math.abs(currentPlaybackState.time - newTime);
+      if (timeDiff > 2) {
+        this.playbackController.setTime(newTime);
+      }
+
+      if (!currentPlaybackState.isPlaying) {
+        this.playbackController.setTime(newTime);
+        this.playbackController.play();
+      }
     } else if (!ps.isPlaying && currentPlaybackState.isPlaying) {
-      this.isMasterPaused = true;
       this.playbackController.pause();
     }
+
+    setTimeout(() => (this.isAutoUpdate = false), 100);
   }
 
   private async broadcastPlaybackState() {
     if (!this.isMaster) return;
+    if (this.isAutoUpdate) return;
 
-    const ps = (await this.playbackController?.getPlaybackState()) || this.masterPlaybackState;
+    const ps = (await this.playbackController?.getPlaybackState()) || this.serverPlaybackState;
     ps.time += this.latency;
 
-    this.socket.emit("master-time", this.state.roomName, ps);
+    this.socket.emit("master-playbackstate", this.state.roomName, ps);
   }
 }
 

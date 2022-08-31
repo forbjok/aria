@@ -13,6 +13,7 @@
           class="video-container video-js"
           src.bind="content.url"
           play.trigger="onPlay()"
+          playing.trigger="onPlaying()"
           pause.trigger="onPause()"
           seeked.trigger="onSeek()"
         >
@@ -29,6 +30,7 @@
           ref="googleDriveVideo"
           class="video-container video-js"
           play.trigger="onPlay()"
+          playing.trigger="onPlaying()"
           pause.trigger="onPause()"
           seeked.trigger="onSeek()"
         >
