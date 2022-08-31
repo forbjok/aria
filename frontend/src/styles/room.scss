@@ -17,6 +17,15 @@
     overflow: hidden;
   }
 
+  .embedded-video {
+    background-color: black;
+  }
+
+  .youtube-player {
+    height: 100%;
+    width: 100%;
+  }
+
   .unsupported-content {
     position: absolute;
     top: 50%;

@@ -1,13 +1,13 @@
 import { Client, QueryResultRow } from "pg";
 import { migrate } from "postgres-migrations";
-import { IAriaStore, Post, RoomInfo } from ".";
+import { Content, IAriaStore, Post, RoomInfo } from ".";
 import { generatePassword } from "../util/passwordgen";
 
 interface RoomModel {
   id: number;
   name: string;
   password: string;
-  content_url: string;
+  content: Content;
 }
 
 interface PostModel {
@@ -57,7 +57,7 @@ export class PgAriaStore implements IAriaStore {
   }
 
   async getRoom(roomName: string): Promise<RoomInfo | null> {
-    const rows = await this.queryRows<RoomModel>("SELECT name, password, content_url FROM get_room_by_name($1);", [
+    const rows = await this.queryRows<RoomModel>("SELECT name, password, content FROM get_room_by_name($1);", [
       roomName,
     ]);
 
@@ -70,7 +70,7 @@ export class PgAriaStore implements IAriaStore {
     return {
       name: r.name,
       password: r.password,
-      contentUrl: r.content_url,
+      content: r.content,
     };
   }
 
@@ -87,7 +87,7 @@ export class PgAriaStore implements IAriaStore {
     return {
       name: r.name,
       password: r.password,
-      contentUrl: r.content_url,
+      content: r.content,
     };
   }
 
@@ -178,8 +178,8 @@ export class PgAriaStore implements IAriaStore {
     };
   }
 
-  async setContentUrl(roomName: string, contentUrl: string): Promise<number> {
-    const rowsAffected = await this.execQuery("SELECT set_room_content_url($1, $2);", [roomName, contentUrl]);
+  async setContent(roomName: string, content: Content): Promise<number> {
+    const rowsAffected = await this.execQuery("SELECT set_room_content($1, $2);", [roomName, content]);
 
     return rowsAffected;
   }

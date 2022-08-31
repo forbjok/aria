@@ -4,33 +4,41 @@ import * as express from "express";
 import { expressjwt } from "express-jwt";
 import * as socketio from "socket.io";
 
-import { IAriaStore, RoomInfo } from "../../store";
+import { Content, IAriaStore, RoomInfo } from "../../store";
+import axios from "axios";
 
-type AnyFn = (...args: any[]) => any;
+type OnContentChangeFn = (content: Content) => void;
+type OnTimeFn = (time: number) => void;
 
 interface RoomOptions {
   password?: string;
-  contentUrl?: string;
-  onContentChange?: AnyFn;
+  content?: Content;
+  onContentChange?: OnContentChangeFn;
+  onTime?: OnTimeFn;
 }
 
 class Room {
   public password: string;
 
-  private contentUrl: string;
-  private readonly onContentChange: AnyFn;
+  private content: Content;
+  private readonly onContentChange: OnContentChangeFn;
+  private readonly onTime: OnTimeFn;
 
   constructor(public name: string, options: RoomOptions) {
     Object.assign(this, options);
   }
 
-  public getContentUrl() {
-    return this.contentUrl;
+  public getContent(): Content {
+    return this.content;
   }
 
-  public setContentUrl(url) {
-    this.contentUrl = url;
-    if (this.onContentChange) this.onContentChange(this.contentUrl);
+  public setContent(content: Content) {
+    this.content = content;
+    if (this.onContentChange) this.onContentChange(this.content);
+  }
+
+  public broadcastTime(time: number) {
+    if (this.onTime) this.onTime(time);
   }
 }
 
@@ -61,7 +69,7 @@ export class RoomServer {
     const rooms = this.rooms;
 
     if (name in rooms) {
-      return await Promise.resolve(rooms[name]);
+      return rooms[name];
     }
 
     const roomInfo = await this.store.getRoom(name);
@@ -81,10 +89,13 @@ export class RoomServer {
 
     const room = new Room(name, {
       password: roomInfo.password,
-      contentUrl: roomInfo.contentUrl,
-      onContentChange: (contentUrl) => {
-        store.setContentUrl(name, contentUrl);
-        io.to(name).emit("content", { url: contentUrl });
+      content: roomInfo.content,
+      onContentChange: (content) => {
+        store.setContent(name, content);
+        io.to(name).emit("content", content);
+      },
+      onTime: (time) => {
+        io.to(name).emit("time", time);
       },
     });
 
@@ -199,14 +210,44 @@ export class RoomServer {
       const action = data.action;
       if (action) {
         switch (action.action) {
-          case "set content url":
-            room.setContentUrl(action.url);
+          case "set content url": {
+            const content = await this.processContentUrl(action.url);
+            room.setContent(content);
             break;
+          }
         }
       }
 
       res.send();
     });
+  }
+
+  private async processContentUrl(url: string): Promise<Content> {
+    const youtubeRegex = new RegExp("https?://www.youtube.com/watch\\?v=(.+)");
+    const youtubeId = url.match(youtubeRegex);
+    if (youtubeId) {
+      return {
+        type: "youtube",
+        url,
+        meta: { id: youtubeId[1] },
+      };
+    }
+
+    const gdriveRegex = new RegExp("https?://drive.google.com/file/d/(.+)/view");
+    const gdriveId = url.match(gdriveRegex);
+    if (gdriveId) {
+      return {
+        type: "google_drive",
+        url,
+        meta: { id: gdriveId[1] },
+      };
+    }
+
+    return {
+      type: "unknown",
+      url,
+      meta: {},
+    };
   }
 
   private setupSocket() {
@@ -236,7 +277,7 @@ export class RoomServer {
           return;
         }
 
-        socket.emit("content", { url: room.getContentUrl() });
+        socket.emit("content", room.getContent());
       });
 
       socket.on("leave", (roomName) => {
@@ -246,6 +287,17 @@ export class RoomServer {
 
       socket.on("disconnect", () => {
         console.log(`${ip}: Room disconnected!`);
+      });
+
+      socket.on("ping", (time: number) => {
+        socket.emit("pong", time);
+      });
+
+      socket.on("master-time", async (roomName: string, time: number) => {
+        const room = await this.getRoom(roomName);
+        if (!room) return;
+
+        room.broadcastTime(time);
       });
     });
   }

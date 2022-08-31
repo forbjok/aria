@@ -191,6 +191,7 @@ module.exports = ({ production }, { analyze, hmr, port, host }) => ({
     hot: hmr || project.platform.hmr,
     port: port || project.platform.port,
     host: host,
+    https: true,
     proxy: {
       "/api": {
         target: "http://localhost:5000",
