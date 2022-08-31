@@ -10,6 +10,32 @@
 // @connect      docs.google.com
 // ==/UserScript==
 
+const ITAG_RESOLUTION = {
+  37: 1080,
+  46: 1080,
+  22: 720,
+  45: 720,
+  59: 480,
+  44: 480,
+  35: 480,
+  18: 360,
+  43: 360,
+  34: 360,
+};
+
+const ITAG_TYPE = {
+  43: "video/webm",
+  44: "video/webm",
+  45: "video/webm",
+  46: "video/webm",
+  18: "video/mp4",
+  22: "video/mp4",
+  37: "video/mp4",
+  59: "video/mp4",
+  35: "video/flv",
+  34: "video/flv",
+};
+
 let httpRequest;
 if (typeof GM !== "undefined" && typeof GM.xmlHttpRequest !== "undefined") {
   httpRequest = GM.xmlHttpRequest;
@@ -21,11 +47,13 @@ if (typeof GM !== "undefined" && typeof GM.xmlHttpRequest !== "undefined") {
 
 document.addEventListener("contentLoading", (event) => {
   const detail = event.detail;
-  if (detail.contentType !== "google_drive") {
+  const content = detail.content;
+
+  if (content.contentType !== "google_drive") {
     return;
   }
 
-  const gdriveId = detail.id;
+  const gdriveId = content.meta.id;
 
   httpRequest({
     method: "GET",
@@ -45,26 +73,16 @@ document.addEventListener("contentLoading", (event) => {
         links[parts[0]] = parts[1];
       });
 
-      const links2 = [];
+      const sources = [];
       Object.keys(links).forEach((k) => {
-        links2.push([parseInt(k), links[k]]);
+        sources.push({
+          url: links[k],
+          mediaType: ITAG_TYPE[k],
+          description: `${ITAG_RESOLUTION[k]}p`,
+        });
       });
 
-      links2.sort((a, b) => {
-        return a[0] > b[0] ? -1 : a[0] < b[0] ? 1 : 0;
-      });
-
-      function setSrc() {
-        const googleDriveVideo = document.getElementById("google-drive-video");
-        if (!googleDriveVideo) {
-          setTimeout(setSrc, 10);
-          return;
-        }
-
-        googleDriveVideo.src = links2[0][1];
-      }
-
-      setTimeout(setSrc, 1);
+      detail.onLoaded(sources);
     },
   });
 });

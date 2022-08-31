@@ -13,6 +13,8 @@ import "styles/room.scss";
 import { RoomAdminService } from "services/roomadminservice";
 import { Content } from "models/content";
 import PlayerStates from "youtube-player/dist/constants/PlayerStates";
+import videojs from "video.js";
+import "!style-loader!css-loader!video.js/dist/video-js.css";
 
 interface PlaybackState {
   timestamp: number;
@@ -27,9 +29,27 @@ interface PlaybackController {
   pause();
 }
 
+interface Source {
+  mediaType: string;
+  url: string;
+  description: string;
+}
+
+interface UserscriptDetails {
+  content: {
+    contentType: string;
+    url: string;
+    meta: {
+      [key: string]: any;
+    };
+  };
+  onLoaded: (sources: Source[]) => void;
+}
+
 @autoinject
 export class Room {
   public showRoomControls: boolean;
+  public sources: Source[];
 
   private room: HTMLDivElement;
   private chatContainer: HTMLDivElement;
@@ -145,49 +165,101 @@ export class Room {
     if (content == null) return;
 
     if (content.type === "youtube") {
-      const ytp = YouTubePlayer(this.youtubePlayer, {
-        videoId: this.content?.meta.id,
-      });
+      setTimeout(() => {
+        const ytp = YouTubePlayer(this.youtubePlayer, {
+          videoId: this.content?.meta.id,
+        });
 
-      this.playbackController = {
-        async getPlaybackState(): Promise<PlaybackState> {
-          return {
-            timestamp: getTimestamp(),
-            time: await ytp.getCurrentTime(),
-            isPlaying: (await ytp.getPlayerState()) === PlayerStates.PLAYING,
-          };
-        },
-        async setTime(time) {
-          await ytp.seekTo(time, true);
-        },
-        async play() {
-          await ytp.playVideo();
-        },
-        async pause() {
-          await ytp.pauseVideo();
-        },
-      };
+        this.playbackController = {
+          async getPlaybackState(): Promise<PlaybackState> {
+            return {
+              timestamp: getTimestamp(),
+              time: await ytp.getCurrentTime(),
+              isPlaying: (await ytp.getPlayerState()) === PlayerStates.PLAYING,
+            };
+          },
+          async setTime(time) {
+            await ytp.seekTo(time, true);
+          },
+          async play() {
+            await ytp.playVideo();
+          },
+          async pause() {
+            await ytp.pauseVideo();
+          },
+        };
 
-      ytp.on("stateChange", (event) => {
-        if (event.data === PlayerStates.PLAYING) {
-          this.onPlay();
-        } else if (event.data === PlayerStates.PAUSED) {
-          this.onPause();
-        }
-      });
+        ytp.on("stateChange", (event) => {
+          if (event.data === PlayerStates.PLAYING) {
+            this.onPlay();
+          } else if (event.data === PlayerStates.PAUSED) {
+            this.onPause();
+          }
+        });
+      }, 1);
       return;
     }
 
     if (content.type === "google_drive") {
-      const detail = {
-        contentType: content.type,
-        id: content.meta.id,
-      };
-
-      const contentLoadingEvent = new CustomEvent("contentLoading", { detail });
-
       setTimeout(() => {
         const embeddedVideo = this.googleDriveVideo;
+
+        const me = this;
+        const detail: UserscriptDetails = {
+          content: {
+            contentType: content.type,
+            url: content.url,
+            meta: content.meta,
+          },
+          onLoaded(sources) {
+            console.log("GOT SOURCES", sources);
+            me.sources = sources;
+
+            setTimeout(() => {
+              const player = videojs(embeddedVideo, { controls: true });
+
+              this.playbackController = {
+                async getPlaybackState(): Promise<PlaybackState> {
+                  return {
+                    timestamp: getTimestamp(),
+                    time: embeddedVideo.currentTime,
+                    isPlaying: !embeddedVideo.paused,
+                  };
+                },
+                setTime(time) {
+                  embeddedVideo.currentTime = time;
+                },
+                play() {
+                  embeddedVideo.play();
+                },
+                pause() {
+                  embeddedVideo.pause();
+                },
+              };
+            }, 100);
+          },
+        };
+
+        const contentLoadingEvent = new CustomEvent("contentLoading", { detail });
+
+        document.dispatchEvent(contentLoadingEvent);
+      }, 1);
+      return;
+    }
+
+    setTimeout(() => {
+      const embeddedVideo = this.embeddedVideo;
+
+      this.sources = [
+        {
+          url: content.url,
+          mediaType: "",
+          description: "default",
+        },
+      ];
+
+      setTimeout(() => {
+        const player = videojs(embeddedVideo, { controls: true });
 
         this.playbackController = {
           async getPlaybackState(): Promise<PlaybackState> {
@@ -207,33 +279,7 @@ export class Room {
             embeddedVideo.pause();
           },
         };
-
-        document.dispatchEvent(contentLoadingEvent);
-      }, 1);
-      return;
-    }
-
-    setTimeout(() => {
-      const embeddedVideo = this.embeddedVideo;
-
-      this.playbackController = {
-        async getPlaybackState(): Promise<PlaybackState> {
-          return {
-            timestamp: getTimestamp(),
-            time: embeddedVideo.currentTime,
-            isPlaying: !embeddedVideo.paused,
-          };
-        },
-        setTime(time) {
-          embeddedVideo.currentTime = time;
-        },
-        play() {
-          embeddedVideo.play();
-        },
-        pause() {
-          embeddedVideo.pause();
-        },
-      };
+      }, 100);
     }, 1);
   }
 

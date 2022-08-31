@@ -20,6 +20,7 @@
     "jquery": "^3.6.1",
     "moment": "^2.29.4",
     "socket.io-client": "^4.5.1",
+    "video.js": "^7.20.2",
     "whatwg-fetch": "^3.6.2",
     "xss-filters": "^1.2.7",
     "youtube-player": "^5.5.2"
@@ -27,6 +28,7 @@
   "devDependencies": {
     "@types/jest": "^28.1.8",
     "@types/node": "^18.7.13",
+    "@types/video.js": "^7.3.46",
     "@types/webpack": "^5.28.0",
     "@typescript-eslint/eslint-plugin": "^5.35.1",
     "@typescript-eslint/parser": "^5.35.1",
