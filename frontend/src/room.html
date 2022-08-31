@@ -5,7 +5,7 @@
     <div ref="chatContainer" id="chatcontainer" class="chatcontainer">
       <chat room.bind="roomName"></chat>
     </div>
-    <div ref="contentContainer" id="contentcontainer" class="contentcontainer">
+    <div ref="contentContainer" id="content-container" class="contentcontainer">
       <video
         controls
         ref="embeddedVideo"
@@ -25,7 +25,6 @@
         ref="googleDriveVideo"
         class="embedded-video"
         if.bind="content.type == 'google_drive'"
-        data-id.bind="content.meta.id"
         width="100%"
         height="100%"
         play.trigger="onPlay()"

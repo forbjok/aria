@@ -179,6 +179,13 @@ export class Room {
     }
 
     if (content.type === "google_drive") {
+      const detail = {
+        contentType: content.type,
+        id: content.meta.id,
+      };
+
+      const contentLoadingEvent = new CustomEvent("contentLoading", { detail });
+
       setTimeout(() => {
         const embeddedVideo = this.googleDriveVideo;
         delete embeddedVideo.dataset.loaded;
@@ -201,6 +208,8 @@ export class Room {
             embeddedVideo.pause();
           },
         };
+
+        this.contentContainer.dispatchEvent(contentLoadingEvent);
       }, 1);
       return;
     }
