@@ -5,6 +5,7 @@ import { expressjwt } from "express-jwt";
 import * as socketio from "socket.io";
 
 import { Content, IAriaStore, RoomInfo } from "../../store";
+import axios from "axios";
 
 type OnContentChangeFn = (content: Content) => void;
 type OnTimeFn = (time: number) => void;
@@ -210,7 +211,7 @@ export class RoomServer {
       if (action) {
         switch (action.action) {
           case "set content url": {
-            const content = this.processContentUrl(action.url);
+            const content = await this.processContentUrl(action.url);
             room.setContent(content);
             break;
           }
@@ -221,7 +222,7 @@ export class RoomServer {
     });
   }
 
-  private processContentUrl(url: string): Content {
+  private async processContentUrl(url: string): Promise<Content> {
     const youtubeRegex = new RegExp("https?://www.youtube.com/watch\\?v=(.+)");
     const youtubeId = url.match(youtubeRegex);
     if (youtubeId) {
@@ -229,6 +230,16 @@ export class RoomServer {
         type: "youtube",
         url,
         meta: { id: youtubeId[1] },
+      };
+    }
+
+    const gdriveRegex = new RegExp("https?://drive.google.com/file/d/(.+)/view");
+    const gdriveId = url.match(gdriveRegex);
+    if (gdriveId) {
+      return {
+        type: "google_drive",
+        url,
+        meta: { id: gdriveId[1] },
       };
     }
 

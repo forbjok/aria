@@ -36,6 +36,7 @@ export class Room {
   private contentContainer: HTMLDivElement;
   private embeddedVideo: HTMLMediaElement;
   private youtubePlayer: HTMLDivElement;
+  private googleDriveVideo: HTMLMediaElement;
 
   private socket: Socket;
   private content: Content | null;
@@ -139,9 +140,8 @@ export class Room {
     });
   }
 
-  setContent(content: Content | null) {
+  async setContent(content: Content | null) {
     this.content = content;
-    console.log("CONTENT", content);
     if (content == null) return;
 
     if (content.type === "youtube") {
@@ -178,24 +178,55 @@ export class Room {
       return;
     }
 
-    this.playbackController = {
-      async getPlaybackState(): Promise<PlaybackState> {
-        return {
-          timestamp: getTimestamp(),
-          time: this.embeddedVideo.currentTime,
-          isPlaying: !this.embeddedVideo.paused,
+    if (content.type === "google_drive") {
+      setTimeout(() => {
+        const embeddedVideo = this.googleDriveVideo;
+        delete embeddedVideo.dataset.loaded;
+
+        this.playbackController = {
+          async getPlaybackState(): Promise<PlaybackState> {
+            return {
+              timestamp: getTimestamp(),
+              time: embeddedVideo.currentTime,
+              isPlaying: !embeddedVideo.paused,
+            };
+          },
+          setTime(time) {
+            embeddedVideo.currentTime = time;
+          },
+          play() {
+            embeddedVideo.play();
+          },
+          pause() {
+            embeddedVideo.pause();
+          },
         };
-      },
-      setTime(time) {
-        this.embeddedVideo.currentTime = time;
-      },
-      play() {
-        this.embeddedVideo.play();
-      },
-      pause() {
-        this.embeddedVideo.pause();
-      },
-    };
+      }, 1);
+      return;
+    }
+
+    setTimeout(() => {
+      const embeddedVideo = this.embeddedVideo;
+
+      this.playbackController = {
+        async getPlaybackState(): Promise<PlaybackState> {
+          return {
+            timestamp: getTimestamp(),
+            time: embeddedVideo.currentTime,
+            isPlaying: !embeddedVideo.paused,
+          };
+        },
+        setTime(time) {
+          embeddedVideo.currentTime = time;
+        },
+        play() {
+          embeddedVideo.play();
+        },
+        pause() {
+          embeddedVideo.pause();
+        },
+      };
+    }, 1);
   }
 
   async reloadContent() {

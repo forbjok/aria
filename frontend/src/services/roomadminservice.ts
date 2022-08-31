@@ -9,11 +9,11 @@ export class RoomAdminService {
   private token: string;
   private isAdmin: boolean;
 
-  constructor(private http: HttpClient, private auth: LocalRoomAuthService, private state: State) {
-    this.token = auth.get();
-  }
+  constructor(private http: HttpClient, private auth: LocalRoomAuthService, private state: State) {}
 
   async getLoginStatus(): Promise<boolean> {
+    this.token = this.auth.get();
+
     const response = await this.http.fetch(`/api/r/${this.state.roomName}/loggedin`, {
       method: "POST",
       headers: {
