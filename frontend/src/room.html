@@ -11,7 +11,6 @@
           controls
           ref="embeddedVideo"
           class="video-container video-js"
-          src.bind="content.url"
           play.trigger="onPlay()"
           playing.trigger="onPlaying()"
           pause.trigger="onPause()"
@@ -26,7 +25,6 @@
       <div if.bind="content.type == 'google_drive'" class="video-container">
         <video
           controls
-          id="google-drive-video"
           ref="googleDriveVideo"
           class="video-container video-js"
           play.trigger="onPlay()"

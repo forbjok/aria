@@ -220,6 +220,7 @@ export class Room {
 
             setTimeout(() => {
               const player = videojs(embeddedVideo, { controls: true });
+              embeddedVideo.load();
 
               this.playbackController = {
                 getPlaybackState: async (): Promise<PlaybackState> => {
@@ -262,6 +263,7 @@ export class Room {
 
       setTimeout(() => {
         const player = videojs(embeddedVideo, { controls: true });
+        embeddedVideo.load();
 
         this.playbackController = {
           getPlaybackState: async (): Promise<PlaybackState> => {
