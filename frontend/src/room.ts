@@ -188,7 +188,6 @@ export class Room {
 
       setTimeout(() => {
         const embeddedVideo = this.googleDriveVideo;
-        delete embeddedVideo.dataset.loaded;
 
         this.playbackController = {
           async getPlaybackState(): Promise<PlaybackState> {
@@ -209,7 +208,7 @@ export class Room {
           },
         };
 
-        this.contentContainer.dispatchEvent(contentLoadingEvent);
+        document.dispatchEvent(contentLoadingEvent);
       }, 1);
       return;
     }

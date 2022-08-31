@@ -19,54 +19,52 @@ if (typeof GM !== "undefined" && typeof GM.xmlHttpRequest !== "undefined") {
   console.log("Unsupported userscript manager.");
 }
 
-function setup() {
-  const contentContainer = document.getElementById("content-container");
-  if (!contentContainer) {
-    setTimeout(setup, 10);
+document.addEventListener("contentLoading", (event) => {
+  const detail = event.detail;
+  if (detail.contentType !== "google_drive") {
     return;
   }
 
-  contentContainer.addEventListener("contentLoading", (event) => {
-    const detail = event.detail;
-    if (detail.contentType !== "google_drive") {
-      return;
-    }
+  const gdriveId = detail.id;
 
-    const googleDriveVideo = document.getElementById("google-drive-video");
+  httpRequest({
+    method: "GET",
+    url: `https://docs.google.com/get_video_info?authuser=&docid=${gdriveId}&sle=true&hl=en`,
+    onload: (res) => {
+      const values = {};
 
-    const gdriveId = detail.id;
+      res.responseText.split("&").forEach((pair) => {
+        const parts = pair.split("=");
+        values[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1]);
+      });
 
-    httpRequest({
-      method: "GET",
-      url: `https://docs.google.com/get_video_info?authuser=&docid=${gdriveId}&sle=true&hl=en`,
-      onload: (res) => {
-        const values = {};
+      const links = {};
+      values.fmt_stream_map.split(",").forEach((p) => {
+        const parts = p.split("|");
 
-        res.responseText.split("&").forEach((pair) => {
-          const parts = pair.split("=");
-          values[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1]);
-        });
+        links[parts[0]] = parts[1];
+      });
 
-        const links = {};
-        values.fmt_stream_map.split(",").forEach((p) => {
-          const parts = p.split("|");
+      const links2 = [];
+      Object.keys(links).forEach((k) => {
+        links2.push([parseInt(k), links[k]]);
+      });
 
-          links[parts[0]] = parts[1];
-        });
+      links2.sort((a, b) => {
+        return a[0] > b[0] ? -1 : a[0] < b[0] ? 1 : 0;
+      });
 
-        const links2 = [];
-        Object.keys(links).forEach((k) => {
-          links2.push([parseInt(k), links[k]]);
-        });
-
-        links2.sort((a, b) => {
-          return a[0] > b[0] ? -1 : a[0] < b[0] ? 1 : 0;
-        });
+      function setSrc() {
+        const googleDriveVideo = document.getElementById("google-drive-video");
+        if (!googleDriveVideo) {
+          setTimeout(setSrc, 10);
+          return;
+        }
 
         googleDriveVideo.src = links2[0][1];
-      },
-    });
-  });
-}
+      }
 
-setTimeout(setup, 1);
+      setTimeout(setSrc, 1);
+    },
+  });
+});
