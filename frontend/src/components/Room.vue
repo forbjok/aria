@@ -115,8 +115,18 @@ onMounted(async () => {
     socket.emit("join", name.value);
   });
 
+  socket.on("joined", () => {
+    if (isMaster) {
+      socket.emit("set-master");
+    }
+  });
+
   socket.on("content", (content: Content) => {
     setContent(content);
+  });
+
+  socket.on("not-master", () => {
+    isMaster = false;
   });
 
   socket.on("playbackstate", (ps: PlaybackState) => {
@@ -264,6 +274,10 @@ const setContent = async (_content: Content | null) => {
                 embeddedVideo.pause();
               },
             };
+
+            setTimeout(() => {
+              setPlaybackState(serverPlaybackState);
+            }, 1);
           }, 100);
         },
         onError: (message) => {
@@ -414,6 +428,7 @@ const setPlaybackState = async (ps: PlaybackState) => {
   if (ps.isPlaying) {
     const timeDiff = Math.abs(currentPlaybackState.time - newTime);
     if (timeDiff > 2) {
+      console.log("Synchronizing to server time.");
       playbackController.setTime(newTime);
     }
 
@@ -435,7 +450,7 @@ const broadcastPlaybackState = async () => {
   const ps = (await playbackController?.getPlaybackState()) || serverPlaybackState;
   ps.time += latency;
 
-  socket.emit("master-playbackstate", name.value, ps);
+  socket.emit("master-playbackstate", ps);
 };
 </script>
 

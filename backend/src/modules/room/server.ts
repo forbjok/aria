@@ -7,26 +7,29 @@ import * as socketio from "socket.io";
 import { Content, IAriaStore, RoomInfo } from "../../store";
 import { PlaybackState } from "./models";
 
-type OnContentChangeFn = (content: Content) => void;
-type OnPlaybackStateFn = (ps: PlaybackState) => void;
-
 interface RoomOptions {
   password?: string;
   content?: Content;
-  onContentChange?: OnContentChangeFn;
-  onPlaybackState?: OnPlaybackStateFn;
 }
 
 class Room {
   public password: string;
 
+  private master?: socketio.Socket;
+
   private content: Content;
   private playbackStateTimestamp = 0;
-  private playbackState?: PlaybackState;
-  private readonly onContentChange: OnContentChangeFn;
-  private readonly onPlaybackState: OnPlaybackStateFn;
+  private playbackState: PlaybackState = {
+    time: 0,
+    isPlaying: false,
+  };
 
-  constructor(public name: string, options: RoomOptions) {
+  constructor(
+    public readonly name: string,
+    private readonly io: socketio.Namespace,
+    private readonly store: IAriaStore,
+    options: RoomOptions
+  ) {
     Object.assign(this, options);
 
     setInterval(() => {
@@ -34,19 +37,49 @@ class Room {
     }, 30000);
   }
 
-  public getContent(): Content {
-    return this.content;
+  public async join(socket: socketio.Socket) {
+    await socket.join(this.name);
+    socket.emit("joined");
+    socket.emit("content", this.content);
+    socket.emit("playbackstate", this.getPlaybackState());
   }
 
-  public setContent(content: Content) {
+  public async leave(socket: socketio.Socket) {
+    await socket.leave(this.name);
+  }
+
+  public async setContent(content: Content) {
+    await this.store.setContent(this.name, content);
     this.content = content;
-    if (this.onContentChange) this.onContentChange(this.content);
+    this.playbackState.time = 0;
+    this.io.to(this.name).emit("content", content);
+    this.broadcastPlaybackState();
   }
 
-  public setPlaybackState(ps: PlaybackState) {
+  public setPlaybackState(ps: PlaybackState, socket: socketio.Socket) {
+    // Sender is not master. Ignore.
+    if (socket != this.master) return;
+
     this.playbackStateTimestamp = getTimestamp();
     this.playbackState = ps;
     this.broadcastPlaybackState();
+  }
+
+  public setMaster(socket: socketio.Socket) {
+    const oldMaster = this.master;
+    this.master = socket;
+
+    // Notify the previous master that it is not master anymore.
+    if (oldMaster) {
+      oldMaster.emit("not-master");
+    }
+  }
+
+  private getPlaybackState() {
+    return {
+      ...this.playbackState,
+      time: this.playbackState.time + (getTimestamp() - this.playbackStateTimestamp) / 1000,
+    };
   }
 
   private broadcastPlaybackState() {
@@ -54,11 +87,7 @@ class Room {
       return;
     }
 
-    if (this.onPlaybackState)
-      this.onPlaybackState({
-        ...this.playbackState,
-        time: this.playbackState.time + (getTimestamp() - this.playbackStateTimestamp) / 1000,
-      });
+    this.io.to(this.name).emit("playbackstate", this.getPlaybackState());
   }
 }
 
@@ -104,19 +133,10 @@ export class RoomServer {
 
   private createAndReturnRoom(roomInfo: RoomInfo): Room {
     const name = roomInfo.name;
-    const io = this.io;
-    const store = this.store;
 
-    const room = new Room(name, {
+    const room = new Room(name, this.io, this.store, {
       password: roomInfo.password,
       content: roomInfo.content,
-      onContentChange: (content) => {
-        store.setContent(name, content);
-        io.to(name).emit("content", content);
-      },
-      onPlaybackState: (ps) => {
-        io.to(name).emit("playbackstate", ps);
-      },
     });
 
     this.rooms[name] = room;
@@ -275,49 +295,58 @@ export class RoomServer {
 
     io.on("connection", (socket) => {
       const ip = socket.handshake.address;
-      console.log(`${ip}: Room connected!`);
+      console.log(`${ip}: Connected!`);
 
-      const roomsJoined = {};
+      let room: Room | null = null;
 
       socket.on("join", async (roomName) => {
-        if (roomName in roomsJoined) {
+        // Already in this room, do nothing.
+        if (roomName === room?.name) {
           return;
         }
 
+        // Already in a different room, leave it.
+        if (room != null) {
+          await room.leave(socket);
+        }
+
+        room = await this.getRoom(roomName);
+
+        // Room does not exist, do nothing.
+        if (!room) {
+          return;
+        }
+
+        // Join new room
         console.log(`${ip}: Joining room ${roomName}!`);
-
-        roomsJoined[roomName] = true;
-
-        const room = await this.getRoom(roomName);
-
-        socket.join(roomName);
-
-        if (room == null) {
-          // Room did not exist, return without sending content
-          return;
-        }
-
-        socket.emit("content", room.getContent());
+        await room.join(socket);
       });
 
-      socket.on("leave", (roomName) => {
+      socket.on("leave", async (roomName) => {
         console.log(`${ip}: Leaving room ${roomName}!`);
-        socket.leave(roomName);
+        await socket.leave(roomName);
       });
 
       socket.on("disconnect", () => {
-        console.log(`${ip}: Room disconnected!`);
+        console.log(`${ip}: Disconnected!`);
       });
 
+      // Ping/Pong events used by clients to estimate their latency
+      // to the server, in order to compensate for it in times.
       socket.on("ping", (time: number) => {
         socket.emit("pong", time);
       });
 
-      socket.on("master-playbackstate", async (roomName: string, ps: PlaybackState) => {
-        const room = await this.getRoom(roomName);
+      socket.on("set-master", () => {
         if (!room) return;
 
-        room.setPlaybackState(ps);
+        room.setMaster(socket);
+      });
+
+      socket.on("master-playbackstate", (ps: PlaybackState) => {
+        if (!room) return;
+
+        room.setPlaybackState(ps, socket);
       });
     });
   }
