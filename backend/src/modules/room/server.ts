@@ -21,6 +21,7 @@ class Room {
   private playbackStateTimestamp = 0;
   private playbackState: PlaybackState = {
     time: 0,
+    rate: 1,
     isPlaying: false,
   };
 
@@ -78,7 +79,7 @@ class Room {
   private getPlaybackState() {
     return {
       ...this.playbackState,
-      time: this.playbackState.time + (getTimestamp() - this.playbackStateTimestamp) / 1000,
+      time: this.playbackState.time + ((getTimestamp() - this.playbackStateTimestamp) * this.playbackState.rate) / 1000,
     };
   }
 

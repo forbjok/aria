@@ -21,12 +21,14 @@ import type { RoomInfo } from "@/models";
 
 interface PlaybackState {
   time: number;
+  rate: number;
   isPlaying: boolean;
 }
 
 interface PlaybackController {
   getPlaybackState(): Promise<PlaybackState>;
   setTime(time: number): void;
+  setRate(rate: number): void;
   play(): void;
   pause(): void;
 }
@@ -97,6 +99,7 @@ let isViewerPaused = false;
 let serverPlaybackStateTimestamp = 0;
 let serverPlaybackState: PlaybackState = {
   time: 0,
+  rate: 1,
   isPlaying: false,
 };
 let isYouTubePlayerLoaded = false;
@@ -131,7 +134,7 @@ onMounted(async () => {
 
   socket.on("playbackstate", (ps: PlaybackState) => {
     serverPlaybackStateTimestamp = getTimestamp();
-    ps.time += latency;
+    ps.time += latency * ps.rate;
 
     setPlaybackState(ps);
   });
@@ -206,11 +209,15 @@ const setContent = async (_content: Content | null) => {
         getPlaybackState: async (): Promise<PlaybackState> => {
           return {
             time: await ytp.getCurrentTime(),
+            rate: await ytp.getPlaybackRate(),
             isPlaying: (await ytp.getPlayerState()) === PlayerStates.PLAYING,
           };
         },
         setTime: async (time) => {
           await ytp.seekTo(time, true);
+        },
+        setRate: async (rate) => {
+          await ytp.setPlaybackRate(rate);
         },
         play: async () => {
           await ytp.playVideo();
@@ -226,6 +233,10 @@ const setContent = async (_content: Content | null) => {
         } else if (event.data === PlayerStates.PAUSED) {
           onPause();
         }
+      });
+
+      ytp.on("playbackRateChange", () => {
+        onRateChange();
       });
     }, 100);
     return;
@@ -261,11 +272,15 @@ const setContent = async (_content: Content | null) => {
               getPlaybackState: async (): Promise<PlaybackState> => {
                 return {
                   time: embeddedVideo.currentTime,
+                  rate: embeddedVideo.playbackRate,
                   isPlaying: !embeddedVideo.paused,
                 };
               },
               setTime: (time) => {
                 embeddedVideo.currentTime = time;
+              },
+              setRate: async (rate) => {
+                embeddedVideo.playbackRate = rate;
               },
               play: () => {
                 embeddedVideo.play();
@@ -319,11 +334,15 @@ const setContent = async (_content: Content | null) => {
         getPlaybackState: async (): Promise<PlaybackState> => {
           return {
             time: video.currentTime,
+            rate: video.playbackRate,
             isPlaying: !video.paused,
           };
         },
         setTime: (time) => {
           video.currentTime = time;
+        },
+        setRate: async (rate) => {
+          video.playbackRate = rate;
         },
         play: () => {
           video.play();
@@ -372,29 +391,33 @@ const onPlay = async () => {
   isViewerPaused = false;
 
   if (!isMaster) {
-    setPlaybackState(serverPlaybackState);
+    await setPlaybackState(serverPlaybackState);
     return;
   }
 
-  broadcastPlaybackState();
+  await broadcastPlaybackState();
 };
 
-const onPlaying = () => {
+const onPlaying = async () => {
   if (isMaster) return;
-  setPlaybackState(serverPlaybackState);
+  await setPlaybackState(serverPlaybackState);
 };
 
-const onPause = () => {
+const onPause = async () => {
   if (isAutoUpdate && !isMaster) {
     return;
   }
 
   isViewerPaused = true;
-  broadcastPlaybackState();
+  await broadcastPlaybackState();
 };
 
-const onSeek = () => {
-  broadcastPlaybackState();
+const onSeek = async () => {
+  await broadcastPlaybackState();
+};
+
+const onRateChange = async () => {
+  await broadcastPlaybackState();
 };
 
 const checkRoomExists = async (): Promise<boolean> => {
@@ -420,12 +443,16 @@ const setPlaybackState = async (ps: PlaybackState) => {
 
   const currentPlaybackState = await playbackController.getPlaybackState();
 
-  const elapsedSinceTimestamp = (getTimestamp() - serverPlaybackStateTimestamp) / 1000;
-  const newTime = ps.time + elapsedSinceTimestamp;
-
   isAutoUpdate = true;
 
   if (ps.isPlaying) {
+    const elapsedSinceTimestamp = ((getTimestamp() - serverPlaybackStateTimestamp) * ps.rate) / 1000;
+    const newTime = ps.time + elapsedSinceTimestamp;
+
+    if (ps.rate !== currentPlaybackState.rate) {
+      playbackController.setRate(ps.rate);
+    }
+
     const timeDiff = Math.abs(currentPlaybackState.time - newTime);
     if (timeDiff > 2) {
       console.log("Synchronizing to server time.");
@@ -448,7 +475,7 @@ const broadcastPlaybackState = async () => {
   if (isAutoUpdate) return;
 
   const ps = (await playbackController?.getPlaybackState()) || serverPlaybackState;
-  ps.time += latency;
+  ps.time += latency * ps.rate;
 
   socket.emit("master-playbackstate", ps);
 };
@@ -470,6 +497,7 @@ const broadcastPlaybackState = async () => {
             @playing="onPlaying()"
             @pause="onPause()"
             @seeked="onSeek()"
+            @ratechange="onRateChange()"
           >
             <source v-for="source of sources" :key="source.description" :src="source.url" :type="source.mediaType" />
           </video>
@@ -486,6 +514,7 @@ const broadcastPlaybackState = async () => {
             @playing="onPlaying()"
             @pause="onPause()"
             @seeked="onSeek()"
+            @ratechange="onRateChange()"
           >
             <source v-for="source of sources" :key="source.description" :src="source.url" :type="source.mediaType" />
           </video>
