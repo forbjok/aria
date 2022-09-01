@@ -1,0 +1,36 @@
+@import url(https://fonts.googleapis.com/css?family=Roboto);
+
+.chat {
+  &.theme-dark {
+    font-family: "Roboto", sans-serif;
+    font-size: 0.8rem;
+
+    background: black;
+    color: white;
+
+    .post-image {
+      .filename {
+        color: #c4c4c4;
+      }
+    }
+
+    .chat-postcontainer {
+      .post:nth-child(odd) {
+        background: #121212;
+      }
+    }
+
+    .post {
+      .comment {
+        a {
+          color: #898ed6;
+          text-decoration: none;
+        }
+      }
+    }
+
+    .chatcontrols {
+      background: #282828;
+    }
+  }
+}

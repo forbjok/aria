@@ -112,6 +112,7 @@ export class PgAriaStore implements IAriaStore {
     const posts: Post[] = [];
     for (const row of rows) {
       const post: Post = {
+        id: row.id,
         postedAt: row.created_at,
         name: row.name,
         comment: row.comment,
@@ -171,6 +172,7 @@ export class PgAriaStore implements IAriaStore {
     const r = rows[0];
 
     return {
+      id: r.id,
       name: r.name,
       comment: r.comment,
       postedAt: r.created_at,

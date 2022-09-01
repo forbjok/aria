@@ -12,8 +12,8 @@
   "scripts": {
     "start": "npm run build:live",
     "build:live": "nodemon --exec ts-node -- src/main.ts",
-    "lint": "eslint src/**/*.{js,ts} --quiet --fix",
-    "fmt": "prettier --write ."
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+    "fmt": "prettier --write --ignore-path .gitignore ."
   },
   "dependencies": {
     "body-parser": "^1.20.0",
