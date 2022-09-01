@@ -13,7 +13,7 @@ const exitFullscreen =
   mozDocument.mozCancelFullScreen ||
   msDocument.msExitFullscreen;
 
-function requestFullscreen(e) {
+function requestFullscreen(e: any) {
   if (e.requestFullscreen) {
     e.requestFullscreen();
   } else if (e.webkitRequestFullscreen) {

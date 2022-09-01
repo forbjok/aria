@@ -1,24 +1,16 @@
 {
-  "compileOnSave": false,
+  "extends": "@vue/tsconfig/tsconfig.web.json",
+  "include": ["env.d.ts", "src/**/*", "src/**/*.vue"],
   "compilerOptions": {
-    "esModuleInterop": true,
-    "module": "esnext",
-    "typeRoots": ["./node_modules/@types"],
-    "removeComments": true,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "sourceMap": true,
-    "target": "es5",
-    "lib": ["es2015", "dom"],
-    "moduleResolution": "node",
-    "baseUrl": "src",
-    "resolveJsonModule": true,
-    "importHelpers": true,
-    "alwaysStrict": true,
-    "strictNullChecks": true
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
-  "include": ["src", "test"],
-  "atom": {
-    "rewriteTsconfig": false
-  }
+
+  "references": [
+    {
+      "path": "./tsconfig.config.json"
+    }
+  ]
 }

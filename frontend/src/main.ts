@@ -1,18 +1,16 @@
-import { Aurelia } from "aurelia-framework";
-import environment from "../config/environment.json";
-import { PLATFORM } from "aurelia-framework";
-import { State } from "state";
+import { createApp } from "vue";
+import App from "@/App.vue";
+import router from "@/router";
 
-export function configure(aurelia: Aurelia): void {
-  aurelia.use.standardConfiguration().feature(PLATFORM.moduleName("resources/index"));
+import { LocalStorageService } from "@/services/localstorageservice";
 
-  aurelia.use.developmentLogging(environment.debug ? "debug" : "warn");
+// Import video.js stylesheet
+import "video.js/src/css/video-js.scss";
 
-  if (environment.testing) {
-    aurelia.use.plugin(PLATFORM.moduleName("aurelia-testing"));
-  }
+const app = createApp(App);
 
-  aurelia.use.singleton(State, () => new State());
+app.use(router);
 
-  aurelia.start().then(() => aurelia.setRoot(PLATFORM.moduleName("app")));
-}
+app.provide("storage", new LocalStorageService());
+
+app.mount("#app");

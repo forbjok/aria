@@ -1,29 +1,24 @@
-import { autoinject } from "aurelia-framework";
-import { HttpClient } from "aurelia-fetch-client";
+import axios, { type AxiosResponse } from "axios";
 
-import { State } from "../state";
-import { LocalRoomAuthService } from "./localroomauthservice";
+import type { LocalRoomAuthService } from "@/services/localroomauthservice";
+import type { RoomInfo } from "@/models";
 
-@autoinject
 export class RoomAdminService {
-  private token: string;
-  private isAdmin: boolean;
+  private token: string | undefined;
+  private isAdmin = false;
 
-  constructor(private http: HttpClient, private auth: LocalRoomAuthService, private state: State) {}
+  constructor(private room: RoomInfo, private auth: LocalRoomAuthService) {}
 
   async getLoginStatus(): Promise<boolean> {
     this.token = this.auth.get();
 
-    const response = await this.http.fetch(`/api/r/${this.state.roomName}/loggedin`, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${this.token}`,
-      },
-    });
-
-    if (!response.ok) {
+    try {
+      await axios.post(`/api/r/${this.room.name}/loggedin`, null, {
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+        },
+      });
+    } catch {
       return false;
     }
 
@@ -36,30 +31,18 @@ export class RoomAdminService {
       password: password,
     };
 
-    let response: Response;
+    let response: AxiosResponse;
 
     try {
-      response = await this.http.fetch(`/api/r/${this.state.roomName}/login`, {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.token}`,
-        },
-      });
+      response = await axios.post(`/api/r/${this.room.name}/login`, data);
     } catch {
       return false;
     }
 
-    if (!response.ok) {
-      return false;
-    }
-
-    const res = await response.json();
+    const res = await response.data;
 
     this.token = res.token;
-    this.auth.set(this.token);
+    this.auth.set(this.token || "");
 
     this.isAdmin = true;
     return this.isAdmin;
@@ -70,18 +53,14 @@ export class RoomAdminService {
       action: action,
     };
 
-    return this.http.fetch(`/api/r/${this.state.roomName}/control`, {
-      method: "POST",
-      body: JSON.stringify(data),
+    return axios.post(`/api/r/${this.room.name}/control`, data, {
       headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
         Authorization: `Bearer ${this.token}`,
       },
     });
   }
 
-  setContentUrl(url) {
+  setContentUrl(url: string) {
     return this.action({
       action: "set content url",
       url: url,

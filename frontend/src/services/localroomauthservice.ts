@@ -1,21 +1,22 @@
-import { autoinject } from "aurelia-framework";
+import type { RoomInfo } from "@/models";
+import { inject } from "vue";
 
-import { State } from "../state";
-import { LocalStorageService } from "./localstorageservice";
+import type { LocalStorageService } from "@/services/localstorageservice";
 
-@autoinject
 export class LocalRoomAuthService {
-  constructor(private localStorageService: LocalStorageService, private state: State) {}
+  private localStorageService: LocalStorageService | undefined = inject("storage");
+
+  constructor(private room: RoomInfo) {}
 
   private get authKeyName(): string {
-    return `room_${this.state.roomName}_auth`;
+    return `room_${this.room.name}_auth`;
   }
 
   get(): string {
-    return this.localStorageService.get(this.authKeyName) || {};
+    return this.localStorageService?.get(this.authKeyName) || {};
   }
 
   set(value: string) {
-    this.localStorageService.set(this.authKeyName, value);
+    this.localStorageService?.set(this.authKeyName, value);
   }
 }

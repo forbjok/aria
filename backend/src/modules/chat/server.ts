@@ -177,6 +177,7 @@ export class ChatServer {
       console.log(`Got post to room ${roomName}.`);
 
       const post: Post = {
+        id: 0,
         postedAt: moment().utc().toISOString(),
         name: req.body.name ? req.body.name : "Anonymous",
         comment: req.body.comment,

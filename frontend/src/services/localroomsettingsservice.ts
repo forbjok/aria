@@ -1,32 +1,28 @@
-import { autoinject } from "aurelia-framework";
+import type { RoomInfo } from "@/models";
+import { inject } from "vue";
 
-import { State } from "../state";
-import { LocalStorageService } from "./localstorageservice";
+import type { LocalStorageService } from "@/services/localstorageservice";
 
-@autoinject
 export class LocalRoomSettingsService {
-  private roomName: string;
-  private settingsKeyName: string;
-  private settings: any[];
+  private localStorageService: LocalStorageService | undefined = inject("storage");
 
-  constructor(private localStorageService: LocalStorageService, state: State) {
-    if (!state.roomName) throw new Error("No room set in state");
+  private settings: { [key: string]: any[] } = {};
 
-    this.roomName = state.roomName;
-    this.settingsKeyName = `room_${this.roomName}`;
+  constructor(private room: RoomInfo) {}
 
-    this.load();
+  private getSettingsKeyName(): string {
+    return `room_${this.room.name}`;
   }
 
   load() {
-    this.settings = this.localStorageService.get(this.settingsKeyName) || {};
+    this.settings = this.localStorageService?.get(this.getSettingsKeyName()) || {};
   }
 
   save() {
-    this.localStorageService.set(this.settingsKeyName, this.settings);
+    this.localStorageService?.set(this.getSettingsKeyName(), this.settings);
   }
 
-  get(name: string, defaultValue: any) {
+  get(name: string, defaultValue: any): any {
     if (name in this.settings) {
       return this.settings[name];
     }
@@ -34,7 +30,7 @@ export class LocalRoomSettingsService {
     return defaultValue;
   }
 
-  set(name: string, value: any) {
+  set(name: string, value: any): void {
     this.settings[name] = value;
     this.save();
   }

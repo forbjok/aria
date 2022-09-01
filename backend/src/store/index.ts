@@ -25,6 +25,7 @@ export interface Image {
 }
 
 export interface Post {
+  id: number;
   postedAt: string;
   name?: string;
   comment?: string;

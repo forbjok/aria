@@ -36,6 +36,17 @@
     width: 100%;
   }
 
+  .progress {
+    margin-left: 3px;
+  }
+
+  .post-header {
+    padding-bottom: 1px;
+    span {
+      margin-right: 3px;
+    }
+  }
+
   .time {
     vertical-align: top;
     text-align: right;
@@ -105,13 +116,17 @@
 
   textarea.comment-field {
     resize: none;
-    width: calc(100% - 2px);
+    width: calc(100% - 4px);
   }
 
   .options {
     position: absolute;
     right: 2px;
     bottom: 2px;
+  }
+
+  .toggle-compact-button {
+    margin-left: 3px;
   }
 
   #postbutton {
