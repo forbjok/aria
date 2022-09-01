@@ -36,35 +36,47 @@ const ITAG_TYPE = {
   34: "video/flv",
 };
 
+function log(msg) {
+  console.log(`Aria Google Drive Userscript: ${msg}`);
+}
+
 let httpRequest;
 if (typeof GM !== "undefined" && typeof GM.xmlHttpRequest !== "undefined") {
   httpRequest = GM.xmlHttpRequest;
 } else if (typeof GM_xmlhttpRequest !== "undefined") {
   httpRequest = GM_xmlhttpRequest;
 } else {
-  console.log("Unsupported userscript manager.");
+  log("Unsupported userscript manager.");
 }
 
 document.addEventListener("contentLoading", (event) => {
+  log("ContentLoading event received.");
+
   const detail = event.detail;
   const content = detail.content;
 
   if (content.contentType !== "google_drive") {
+    log("Not Google Drive content. Returning.");
     return;
   }
 
   const gdriveId = content.meta.id;
 
+  log("Requesting video info...");
   httpRequest({
     method: "GET",
     url: `https://docs.google.com/get_video_info?authuser=&docid=${gdriveId}&sle=true&hl=en`,
     onload: (res) => {
+      log("Got response.", res);
+
       const values = {};
 
       res.responseText.split("&").forEach((pair) => {
         const parts = pair.split("=");
         values[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1]);
       });
+
+      log("Extracted values.", values);
 
       const links = {};
       values.fmt_stream_map.split(",").forEach((p) => {
@@ -82,6 +94,7 @@ document.addEventListener("contentLoading", (event) => {
         });
       });
 
+      log("Constructed sources.", sources);
       detail.onLoaded(sources);
     },
   });

@@ -46,6 +46,7 @@ interface UserscriptDetails {
     };
   };
   onLoaded: (sources: Source[]) => void;
+  onError: (message: string) => void;
 }
 
 interface Content {
@@ -235,6 +236,7 @@ const setContent = async (_content: Content | null) => {
           meta: content.value.meta,
         },
         onLoaded: (_sources) => {
+          console.log("Google Drive Userscript successfully retrieved sources.", _sources);
           sources.value = _sources;
 
           setTimeout(() => {
@@ -263,6 +265,9 @@ const setContent = async (_content: Content | null) => {
               },
             };
           }, 100);
+        },
+        onError: (message) => {
+          alert(`Google Drive Userscript failed: ${message}`);
         },
       };
 
