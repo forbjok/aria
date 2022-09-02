@@ -36,8 +36,8 @@ const ITAG_TYPE = {
   34: "video/flv",
 };
 
-function log(msg) {
-  console.log(`Aria Google Drive Userscript: ${msg}`);
+function log(...args) {
+  console.log("Aria Google Drive Userscript:", ...args);
 }
 
 let httpRequest;
