@@ -8,17 +8,18 @@ import * as socketio from "socket.io";
 import { PgAriaStore } from "./store/postgres";
 import { ChatServer } from "./modules/chat/server";
 import { RoomServer } from "./modules/room/server";
+import { ImageService } from "./services/image";
 
 async function main(): Promise<void> {
   // Default configuration
   const config = {
     port: process.env.PORT || 5000,
+    tempPath: process.env.UPLOADS_PATH || path.join(getCacheFolder(), "aria", "temp"),
     uploadsPath: process.env.UPLOADS_PATH || path.join(getCacheFolder(), "aria", "uploads"),
     connectionString: process.env.DATABASE_URL || "postgres://aria:aria@localhost/aria",
   };
 
-  // Paths
-  const imagesPath = path.join(config.uploadsPath, "images");
+  const filesUrl = "/f";
 
   // Create Express app and HTTP server
   const app = express();
@@ -29,9 +30,14 @@ async function main(): Promise<void> {
   app.set("port", config.port);
   app.enable("trust proxy"); // Required for req.ip to work correctly behind a proxy
 
+  // Serve files
+  app.use(filesUrl, express.static(config.uploadsPath, { maxAge: "1 hour" }));
+
   const store = new PgAriaStore(config.connectionString);
   await store.connect();
   await store.migrate();
+
+  const imageService = new ImageService(config.uploadsPath);
 
   // Set up room server
   new RoomServer(app, io, store, {
@@ -39,9 +45,10 @@ async function main(): Promise<void> {
   });
 
   // Set up chat server
-  new ChatServer(app, io, store, {
+  new ChatServer(app, io, store, imageService, {
     baseUrl: "/api/chat",
-    imagesPath,
+    tempPath: config.tempPath,
+    imagesUrl: filesUrl,
   });
 
   // error handling middleware should be loaded after the loading the routes

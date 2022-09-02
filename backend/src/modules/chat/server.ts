@@ -1,12 +1,11 @@
-import * as path from "path";
 import * as express from "express";
 import * as multer from "multer";
-import * as easyimg from "easyimage";
 import * as moment from "moment";
 import * as socketio from "socket.io";
 
 import { PostViewModel } from "./viewmodels";
 import { IAriaStore, Post, RoomInfo } from "../../store";
+import { ImageService } from "../../services/image";
 
 type OnPostFn = (post: Post) => void;
 
@@ -21,10 +20,6 @@ const extensionsByMimetype = {
 // Get file extension based on mimetype
 function getExtensionByMimetype(mimetype) {
   return extensionsByMimetype[mimetype] || "";
-}
-
-function stripExtension(filename) {
-  return path.basename(filename, path.extname(filename));
 }
 
 export interface ChatRoomOptions {
@@ -53,18 +48,16 @@ class ChatRoom {
 export interface ChatServerOptions {
   baseUrl?: string;
   ioNamespace?: string;
-  imagesPath: string;
-  thumbSize?: number;
+  tempPath: string;
+  imagesUrl?: string;
   thumbBackground?: string;
 }
 
 export class ChatServer {
   private readonly baseUrl: string = "/chat";
   private readonly ioNamespace: string = "/chat";
-  private readonly imagesPath: string;
-  private readonly thumbSize: number = 100;
-  private readonly thumbBackground: string = "#D6DAF0";
-  private readonly imagesUrl: string;
+  private readonly tempPath: string;
+  private readonly imagesUrl: string = "/f";
   private rooms: ChatRoom[];
   private readonly io: socketio.Namespace;
 
@@ -72,11 +65,11 @@ export class ChatServer {
     private readonly app: express.Express,
     io: socketio.Server,
     private readonly store: IAriaStore,
+    private readonly imageService: ImageService,
     options: ChatServerOptions
   ) {
     Object.assign(this, options);
 
-    this.imagesUrl = this.baseUrl + "/images";
     this.rooms = [];
 
     this.io = io.of(this.ioNamespace);
@@ -130,17 +123,11 @@ export class ChatServer {
 
   private async setupExpress() {
     const app = this.app;
-    const imagesPath = this.imagesPath;
     const baseUrl = this.baseUrl;
-    const thumbSize = this.thumbSize;
-    const thumbBackground = this.thumbBackground;
-
-    // Serve images
-    app.use(this.imagesUrl, express.static(this.imagesPath, { maxAge: "1 hour" }));
 
     // Set up multer storage for uploaded images
     const multerStorage = multer.diskStorage({
-      destination: imagesPath,
+      destination: this.tempPath,
       filename: (_req, file, cb) => {
         const extension = getExtensionByMimetype(file.mimetype);
         const filename = moment().utc().valueOf().toString() + extension;
@@ -192,22 +179,11 @@ export class ChatServer {
           return;
         }
 
-        const filename = imageFile.filename;
-        const thumbFilename = "thumb-" + stripExtension(filename) + ".jpg";
-
-        // Generate thumbnail
-        await easyimg.resize({
-          src: imageFile.path,
-          dst: path.join(imagesPath, thumbFilename),
-          width: thumbSize,
-          height: thumbSize,
-          quality: 80,
-          background: thumbBackground,
-        });
+        const { imageFilename, thumbFilename } = await this.imageService.processImage(imageFile.path);
 
         post.image = {
-          path: filename,
-          thumbnailPath: thumbFilename,
+          path: `i/${imageFilename}`,
+          thumbnailPath: `t/${thumbFilename}`,
           filename: imageFile.originalname,
         };
 
@@ -277,11 +253,10 @@ export class ChatServer {
 
     if (post.image != null) {
       const image = post.image;
-      const imagesUrl = this.imagesUrl;
 
       vm.image = {
-        url: imagesUrl + "/" + image.path,
-        thumbUrl: imagesUrl + "/" + image.thumbnailPath,
+        url: `${this.imagesUrl}/${image.path}`,
+        thumbUrl: `${this.imagesUrl}/${image.thumbnailPath}`,
         originalFilename: image.filename,
       };
     }
