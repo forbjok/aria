@@ -19,9 +19,10 @@ export interface RoomInfo {
 }
 
 export interface Image {
-  path: string;
-  thumbnailPath: string;
   filename: string;
+  hash: string;
+  ext: string;
+  tnExt: string;
 }
 
 export interface Post {

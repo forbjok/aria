@@ -5,8 +5,9 @@ import * as blake3 from "blake3";
 import * as easyimg from "easyimage";
 
 export interface ProcessImageResult {
-  imageFilename: string;
-  thumbFilename: string;
+  hash: string;
+  imageExt: string;
+  thumbExt: string;
 }
 
 export class ImageService {
@@ -27,8 +28,15 @@ export class ImageService {
     // Calculate hash of the original file
     const hash = await hashFile(src);
 
-    const imageFilename = `${hash}.webp`;
-    const thumbFilename = `${hash}.webp`;
+    const src_ext = path.extname(src).substring(1);
+
+    let ext = "webp";
+    if (src_ext === "gif") {
+      ext = "gif";
+    }
+
+    const imageFilename = `${hash}.${ext}`;
+    const thumbFilename = `${hash}.${ext}`;
 
     const imagePath = path.join(this.imagePath, imageFilename);
 
@@ -41,22 +49,30 @@ export class ImageService {
         height: this.imageSize,
         quality: 80,
         background: this.thumbBackground,
+        onlyDownscale: true,
       });
     }
 
-    const thumbPath = path.join(this.thumbPath, `${hash}.webp`);
+    const thumbPath = path.join(this.thumbPath, thumbFilename);
 
     // Generate thumbnail if it does not exist
-    await easyimg.resize({
-      src,
-      dst: thumbPath,
-      width: this.thumbSize,
-      height: this.thumbSize,
-      quality: 80,
-      background: this.thumbBackground,
-    });
+    if (!fs.existsSync(thumbPath)) {
+      await easyimg.resize({
+        src,
+        dst: thumbPath,
+        width: this.thumbSize,
+        height: this.thumbSize,
+        quality: 80,
+        background: this.thumbBackground,
+        onlyDownscale: true,
+      });
+    }
 
-    return { imageFilename, thumbFilename };
+    return {
+      hash,
+      imageExt: ext,
+      thumbExt: ext,
+    };
   }
 }
 

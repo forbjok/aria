@@ -18,8 +18,18 @@ interface PostModel {
   ip: string;
 
   filename?: string;
-  path?: string;
-  tn_path?: string;
+  hash?: string;
+  ext?: string;
+  tn_ext?: string;
+}
+
+export interface ImageModel {
+  id: number;
+  path: string;
+  tn_path: string;
+  hash: string;
+  ext: string;
+  tn_ext: string;
 }
 
 interface NewPost {
@@ -33,10 +43,9 @@ interface NewImage {
   size: number;
   width: number;
   height: number;
-  content_type: string;
-  tn_content_type: string;
-  path: string;
-  tn_path: string;
+  hash: string;
+  ext: string;
+  tn_ext: string;
 }
 
 export class PgAriaStore implements IAriaStore {
@@ -100,7 +109,7 @@ export class PgAriaStore implements IAriaStore {
     const sql =
       "SELECT p2.* FROM (" +
       " SELECT (p.p).id, (p.p).created_at, (p.p).name, (p.p).comment," +
-      "  (p.i).path, (p.i).tn_path, (p.i).filename" +
+      "  (p.i).filename, (p.i).hash, (p.i).ext, (p.i).tn_ext" +
       " FROM get_posts($1) AS p" +
       " ORDER BY (p.p).id DESC" +
       limit +
@@ -121,9 +130,10 @@ export class PgAriaStore implements IAriaStore {
 
       if (row.filename) {
         post.image = {
-          path: row.path || "",
-          thumbnailPath: row.tn_path || "",
           filename: row.filename,
+          hash: row.hash || "",
+          ext: row.ext || "",
+          tnExt: row.tn_ext || "",
         };
       }
 
@@ -150,10 +160,9 @@ export class PgAriaStore implements IAriaStore {
         size: -1,
         width: -1,
         height: -1,
-        content_type: "",
-        tn_content_type: "",
-        path: i.path,
-        tn_path: i.thumbnailPath,
+        hash: i.hash,
+        ext: i.ext,
+        tn_ext: i.tnExt,
       };
     }
 
@@ -184,6 +193,22 @@ export class PgAriaStore implements IAriaStore {
     const rowsAffected = await this.execQuery("SELECT set_room_content($1, $2);", [roomName, content]);
 
     return rowsAffected;
+  }
+
+  async getAllImages(): Promise<ImageModel[]> {
+    const sql = "SELECT * FROM image;";
+
+    const images = await this.queryRows<ImageModel>(sql, []);
+
+    return images;
+  }
+
+  async updateImage(image: ImageModel): Promise<boolean> {
+    const sql = "UPDATE image SET hash = $2, ext = $3, tn_ext = $4 WHERE id = $1;";
+
+    const rowsAffected = await this.execQuery(sql, [image.id, image.hash, image.ext, image.tn_ext]);
+
+    return rowsAffected > 0;
   }
 
   private async execQuery(sql: string, params: any): Promise<number> {

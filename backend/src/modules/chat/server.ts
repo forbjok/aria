@@ -179,12 +179,13 @@ export class ChatServer {
           return;
         }
 
-        const { imageFilename, thumbFilename } = await this.imageService.processImage(imageFile.path);
+        const { hash, imageExt, thumbExt } = await this.imageService.processImage(imageFile.path);
 
         post.image = {
-          path: `i/${imageFilename}`,
-          thumbnailPath: `t/${thumbFilename}`,
           filename: imageFile.originalname,
+          hash,
+          ext: imageExt,
+          tnExt: thumbExt,
         };
 
         await emitPost(roomName, post);
@@ -255,8 +256,8 @@ export class ChatServer {
       const image = post.image;
 
       vm.image = {
-        url: `${this.imagesUrl}/${image.path}`,
-        thumbUrl: `${this.imagesUrl}/${image.thumbnailPath}`,
+        url: `${this.imagesUrl}/i/${image.hash}.${image.ext}`,
+        thumbUrl: `${this.imagesUrl}/t/${image.hash}.${image.tnExt}`,
         originalFilename: image.filename,
       };
     }
