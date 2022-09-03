@@ -12,7 +12,7 @@ const router = createRouter({
       props: true,
     },
     {
-      path: "/r/:name/claim",
+      path: "/r/:room/claim",
       name: "claim",
       component: ClaimView,
       props: true,

@@ -4,15 +4,15 @@ import { toRefs } from "vue";
 import Claim from "@/components/Claim.vue";
 
 const props = defineProps<{
-  name: string;
+  room: string;
 }>();
 
-const { name } = toRefs(props);
+const { room } = toRefs(props);
 </script>
 
 <template>
   <main>
-    <Claim :room="name" class="claim" />
+    <Claim :room="room" class="claim" />
   </main>
 </template>
 
