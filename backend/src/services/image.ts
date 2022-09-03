@@ -31,8 +31,10 @@ export class ImageService {
     const src_ext = path.extname(src).substring(1);
 
     let ext = "webp";
+    let preserveOriginal = false;
     if (src_ext === "gif") {
       ext = "gif";
+      preserveOriginal = true;
     }
 
     const imageFilename = `${hash}.${ext}`;
@@ -42,30 +44,38 @@ export class ImageService {
 
     // Generate image if it does not exist
     if (!fs.existsSync(imagePath)) {
-      await easyimg.resize({
-        src,
-        dst: imagePath,
-        width: this.imageSize,
-        height: this.imageSize,
-        quality: 80,
-        background: this.thumbBackground,
-        onlyDownscale: true,
-      });
+      if (preserveOriginal) {
+        await copyFile(src, imagePath);
+      } else {
+        await easyimg.resize({
+          src,
+          dst: imagePath,
+          width: this.imageSize,
+          height: this.imageSize,
+          quality: 80,
+          background: this.thumbBackground,
+          onlyDownscale: true,
+        });
+      }
     }
 
     const thumbPath = path.join(this.thumbPath, thumbFilename);
 
     // Generate thumbnail if it does not exist
     if (!fs.existsSync(thumbPath)) {
-      await easyimg.resize({
-        src,
-        dst: thumbPath,
-        width: this.thumbSize,
-        height: this.thumbSize,
-        quality: 80,
-        background: this.thumbBackground,
-        onlyDownscale: true,
-      });
+      if (preserveOriginal) {
+        await linkFile(imagePath, thumbPath);
+      } else {
+        await easyimg.resize({
+          src,
+          dst: thumbPath,
+          width: this.thumbSize,
+          height: this.thumbSize,
+          quality: 80,
+          background: this.thumbBackground,
+          onlyDownscale: true,
+        });
+      }
     }
 
     return {
@@ -84,5 +94,31 @@ function hashFile(path: string): Promise<string> {
         resolve(hash.toString("hex"));
       })
       .on("error", (err) => reject(err));
+  });
+}
+
+function copyFile(src: string, dest: string): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    fs.copyFile(src, dest, (err) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      resolve();
+    });
+  });
+}
+
+function linkFile(src: string, dest: string): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    fs.link(src, dest, (err) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      resolve();
+    });
   });
 }

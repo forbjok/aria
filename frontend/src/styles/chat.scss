@@ -71,6 +71,8 @@
       display: block;
       border: none;
       padding-right: 2px;
+      max-width: 100px;
+      max-height: 100px;
 
       @media screen and (orientation: portrait) {
         max-width: 50px;
