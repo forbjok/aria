@@ -161,47 +161,51 @@ export class ChatServer {
     };
 
     app.post(`${baseUrl}/:room/post`, upload.single("image"), async (req, res) => {
-      const roomName = req.params.room;
+      try {
+        const roomName = req.params.room;
 
-      console.log(`Got post to room ${roomName}.`);
+        console.log(`Got post to room ${roomName}.`);
 
-      const post: Post = {
-        id: 0,
-        postedAt: moment().utc().toISOString(),
-        name: req.body.name ? req.body.name : "Anonymous",
-        comment: req.body.comment,
-        ip: req.ip,
-      };
-
-      const imageFile = (req as multer.File).file;
-
-      if (imageFile) {
-        if (imageFile === noImageFile) {
-          res.status(415).send("Unsupported image format");
-          return;
-        }
-
-        let result: ProcessImageResult;
-        try {
-          result = await this.imageService.processImage(imageFile.path);
-        } finally {
-          fs.unlink(imageFile.path, () => {});
-        }
-
-        const { hash, imageExt, thumbExt } = result;
-
-        post.image = {
-          filename: imageFile.originalname,
-          hash,
-          ext: imageExt,
-          tnExt: thumbExt,
+        const post: Post = {
+          id: 0,
+          postedAt: moment().utc().toISOString(),
+          name: req.body.name ? req.body.name : "Anonymous",
+          comment: req.body.comment,
+          ip: req.ip,
         };
 
-        await emitPost(roomName, post);
-        res.send();
-      } else {
-        await emitPost(roomName, post);
-        res.send();
+        const imageFile = (req as multer.File).file;
+
+        if (imageFile) {
+          if (imageFile === noImageFile) {
+            res.status(415).send("Unsupported image format");
+            return;
+          }
+
+          let result: ProcessImageResult;
+          try {
+            result = await this.imageService.processImage(imageFile.path);
+          } finally {
+            fs.unlink(imageFile.path, () => {});
+          }
+
+          const { hash, imageExt, thumbExt } = result;
+
+          post.image = {
+            filename: imageFile.originalname,
+            hash,
+            ext: imageExt,
+            tnExt: thumbExt,
+          };
+
+          await emitPost(roomName, post);
+          res.send();
+        } else {
+          await emitPost(roomName, post);
+          res.send();
+        }
+      } catch (err) {
+        res.status(500).send(err.message);
       }
     });
   }

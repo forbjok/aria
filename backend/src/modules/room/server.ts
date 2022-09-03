@@ -167,20 +167,25 @@ export class RoomServer {
     const jsonBodyParser = bodyParser.json();
 
     app.get(`${baseUrl}/:room`, async (req, res) => {
-      const roomName = req.params.room;
+      try {
+        const roomName = req.params.room;
 
-      const room = await this.getRoom(roomName);
+        const room = await this.getRoom(roomName);
 
-      if (room == null) {
-        // Room was not found
-        res.sendStatus(404);
-        return;
+        if (room == null) {
+          // Room was not found
+          res.sendStatus(404);
+          return;
+        }
+
+        // Room was found
+        res.send({
+          name: roomName,
+        });
+      } catch (err) {
+        console.log(err);
+        res.sendStatus(500);
       }
-
-      // Room was found
-      res.send({
-        name: roomName,
-      });
     });
 
     const createToken = (roomName) => {
@@ -196,24 +201,29 @@ export class RoomServer {
     };
 
     app.post(`${baseUrl}/:room/login`, jsonBodyParser, async (req, res) => {
-      const roomName = req.params.room;
+      try {
+        const roomName = req.params.room;
 
-      const room = await this.getRoom(roomName);
-      if (room == null) {
-        res.sendStatus(404);
-        return;
+        const room = await this.getRoom(roomName);
+        if (room == null) {
+          res.sendStatus(404);
+          return;
+        }
+
+        const data = req.body;
+
+        if (data.password !== room.password) {
+          res.status(403).send("You are not authorized.");
+          return;
+        }
+
+        res.send({
+          token: createToken(roomName),
+        });
+      } catch (err) {
+        console.log(err);
+        res.sendStatus(500);
       }
-
-      const data = req.body;
-
-      if (data.password !== room.password) {
-        res.status(403).send("You are not authorized.");
-        return;
-      }
-
-      res.send({
-        token: createToken(roomName),
-      });
     });
 
     app.post(`${baseUrl}/:room/loggedin`, jwtmw, (req, res) => {
@@ -221,45 +231,55 @@ export class RoomServer {
     });
 
     app.post(`${baseUrl}/:room/claim`, async (req, res) => {
-      const roomName = req.params.room;
+      try {
+        const roomName = req.params.room;
 
-      const claimInfo = await this.claimRoom(roomName);
-      if (!claimInfo) {
-        console.log(`Room ${roomName} could not be claimed.`);
+        const claimInfo = await this.claimRoom(roomName);
+        if (!claimInfo) {
+          console.log(`Room ${roomName} could not be claimed.`);
 
-        res.status(403).send("Room has already been claimed.");
-        return;
+          res.status(403).send("Room has already been claimed.");
+          return;
+        }
+
+        res.send({
+          token: createToken(roomName),
+          ...claimInfo,
+        });
+      } catch (err) {
+        console.log(err);
+        res.sendStatus(500);
       }
-
-      res.send({
-        token: createToken(roomName),
-        ...claimInfo,
-      });
     });
 
     app.post(`${baseUrl}/:room/control`, jwtmw, jsonBodyParser, async (req, res) => {
-      const roomName = req.params.room;
+      try {
+        const roomName = req.params.room;
 
-      const room = await this.getRoom(roomName);
-      if (room == null) {
-        res.sendStatus(404);
-        return;
-      }
+        const room = await this.getRoom(roomName);
+        if (room == null) {
+          res.sendStatus(404);
+          return;
+        }
 
-      const data = req.body;
+        const data = req.body;
 
-      const action = data.action;
-      if (action) {
-        switch (action.action) {
-          case "set content url": {
-            const content = await this.processContentUrl(action.url);
-            room.setContent(content);
-            break;
+        const action = data.action;
+        if (action) {
+          switch (action.action) {
+            case "set content url": {
+              const content = await this.processContentUrl(action.url);
+              room.setContent(content);
+              break;
+            }
           }
         }
-      }
 
-      res.send();
+        res.send();
+      } catch (err) {
+        console.log(err);
+        res.sendStatus(500);
+      }
     });
   }
 
