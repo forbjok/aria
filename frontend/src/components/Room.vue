@@ -3,12 +3,10 @@ import { onBeforeMount, onMounted, provide, ref, toRefs } from "vue";
 import router from "@/router";
 
 import io, { Socket } from "socket.io-client";
-import YouTubePlayer from "youtube-player";
-import PlayerStates from "youtube-player/dist/constants/PlayerStates";
-import videojs from "video.js";
 import $ from "jquery";
 
 import Chat from "./Chat.vue";
+import Player from "./Player.vue";
 import RoomControls from "./RoomControls.vue";
 import { LocalRoomSettingsService } from "@/services/localroomsettingsservice";
 import { RoomAdminService } from "@/services/roomadminservice";
@@ -17,46 +15,12 @@ import axios from "axios";
 import { LocalRoomAuthService } from "@/services/localroomauthservice";
 
 import "@/styles/room.scss";
-import type { RoomInfo } from "@/models";
+import type { Content, RoomInfo } from "@/models";
 
 interface PlaybackState {
   time: number;
   rate: number;
   isPlaying: boolean;
-}
-
-interface PlaybackController {
-  getPlaybackState(): Promise<PlaybackState>;
-  setTime(time: number): void;
-  setRate(rate: number): void;
-  play(): void;
-  pause(): void;
-}
-
-interface Source {
-  mediaType: string;
-  url: string;
-  description: string;
-}
-
-interface UserscriptDetails {
-  content: {
-    contentType: string;
-    url: string;
-    meta: {
-      [key: string]: any;
-    };
-  };
-  onLoaded: (sources: Source[]) => void;
-  onError: (message: string) => void;
-}
-
-interface Content {
-  type: string;
-  url: string;
-  meta: {
-    [key: string]: any;
-  };
 }
 
 function getTimestamp(): number {
@@ -80,21 +44,16 @@ provide("settings", localRoomSettingsService);
 provide("admin", roomAdminService);
 
 const showRoomControls = ref(false);
-const sources = ref<Source[]>([]);
 
 const room = ref<HTMLDivElement | null>(null);
 const chatContainer = ref<HTMLDivElement | null>(null);
 const contentContainer = ref<HTMLDivElement | null>(null);
-const embeddedVideo = ref<HTMLMediaElement | null>(null);
-const youtubePlayer = ref<HTMLDivElement | null>(null);
-const googleDriveVideo = ref<HTMLMediaElement | null>(null);
+const player = ref<typeof Player | null>(null);
 
 let socket: Socket;
 const content = ref<Content | null>(null);
 let latency = 0;
-let playbackController: PlaybackController | null;
 let isMaster = false;
-let isAutoUpdate = false;
 let isViewerPaused = false;
 let serverPlaybackStateTimestamp = 0;
 let serverPlaybackState: PlaybackState = {
@@ -102,7 +61,6 @@ let serverPlaybackState: PlaybackState = {
   rate: 1,
   isPlaying: false,
 };
-let isYouTubePlayerLoaded = false;
 
 onMounted(async () => {
   const isAuthorized = await roomAdminService.getLoginStatus();
@@ -188,177 +146,16 @@ onBeforeMount(async () => {
 
 const setContent = async (_content: Content | null) => {
   content.value = _content;
-  if (content.value == null) return;
+  if (!content.value) return;
+  if (!player.value) return;
 
-  if (content.value.type === "youtube") {
-    if (isYouTubePlayerLoaded) {
-      // Reload page.
-      // This is a workaround for the YouTube player breaking on use.
-      // Ideally a better solution should be found.
-      location.reload();
-    }
-
-    setTimeout(() => {
-      const ytp = YouTubePlayer(youtubePlayer.value as HTMLElement, {
-        videoId: content.value?.meta.id,
-      });
-
-      isYouTubePlayerLoaded = true;
-
-      playbackController = {
-        getPlaybackState: async (): Promise<PlaybackState> => {
-          return {
-            time: await ytp.getCurrentTime(),
-            rate: await ytp.getPlaybackRate(),
-            isPlaying: (await ytp.getPlayerState()) === PlayerStates.PLAYING,
-          };
-        },
-        setTime: async (time) => {
-          await ytp.seekTo(time, true);
-        },
-        setRate: async (rate) => {
-          await ytp.setPlaybackRate(rate);
-        },
-        play: async () => {
-          await ytp.playVideo();
-        },
-        pause: async () => {
-          await ytp.pauseVideo();
-        },
-      };
-
-      ytp.on("stateChange", (event) => {
-        if (event.data === PlayerStates.PLAYING) {
-          onPlay();
-        } else if (event.data === PlayerStates.PAUSED) {
-          onPause();
-        }
-      });
-
-      ytp.on("playbackRateChange", () => {
-        onRateChange();
-      });
-    }, 100);
-    return;
-  }
-
-  if (content.value.type === "google_drive") {
-    setTimeout(() => {
-      if (!content.value) {
-        return;
-      }
-
-      const embeddedVideo = googleDriveVideo.value;
-
-      const detail: UserscriptDetails = {
-        content: {
-          contentType: content.value.type,
-          url: content.value.url,
-          meta: content.value.meta,
-        },
-        onLoaded: (_sources) => {
-          console.log("Google Drive Userscript successfully retrieved sources.", _sources);
-          sources.value = _sources;
-
-          setTimeout(() => {
-            if (!embeddedVideo) {
-              return;
-            }
-
-            videojs(embeddedVideo, { controls: true });
-            embeddedVideo.load();
-
-            playbackController = {
-              getPlaybackState: async (): Promise<PlaybackState> => {
-                return {
-                  time: embeddedVideo.currentTime,
-                  rate: embeddedVideo.playbackRate,
-                  isPlaying: !embeddedVideo.paused,
-                };
-              },
-              setTime: (time) => {
-                embeddedVideo.currentTime = time;
-              },
-              setRate: async (rate) => {
-                embeddedVideo.playbackRate = rate;
-              },
-              play: () => {
-                embeddedVideo.play();
-              },
-              pause: () => {
-                embeddedVideo.pause();
-              },
-            };
-
-            setTimeout(() => {
-              setPlaybackState(serverPlaybackState);
-            }, 1);
-          }, 100);
-        },
-        onError: (message) => {
-          alert(`Google Drive Userscript failed: ${message}`);
-        },
-      };
-
-      const contentLoadingEvent = new CustomEvent("contentLoading", { detail });
-
-      document.dispatchEvent(contentLoadingEvent);
-    }, 1);
-    return;
-  }
-
-  setTimeout(() => {
-    if (!content.value) {
-      return;
-    }
-
-    sources.value = [
-      {
-        url: content.value.url,
-        mediaType: "",
-        description: "default",
-      },
-    ];
-
-    const video = embeddedVideo.value;
-
-    setTimeout(() => {
-      if (!video) {
-        return;
-      }
-
-      videojs(video, { controls: true });
-      video.load();
-
-      playbackController = {
-        getPlaybackState: async (): Promise<PlaybackState> => {
-          return {
-            time: video.currentTime,
-            rate: video.playbackRate,
-            isPlaying: !video.paused,
-          };
-        },
-        setTime: (time) => {
-          video.currentTime = time;
-        },
-        setRate: async (rate) => {
-          video.playbackRate = rate;
-        },
-        play: () => {
-          video.play();
-        },
-        pause: () => {
-          video.pause();
-        },
-      };
-    }, 100);
-  }, 1);
+  player.value.setContent(_content);
 };
 
 const reloadContent = async () => {
   // Store original content
   const original_content = content.value;
-  const playbackState = (await playbackController?.getPlaybackState()) || serverPlaybackState;
+  const playbackState = (await getPlaybackState()) || serverPlaybackState;
 
   // Set blank content to unload content
   setContent(null);
@@ -387,8 +184,10 @@ const toggleRoomControls = () => {
   showRoomControls.value = !showRoomControls.value;
 };
 
-const onPlay = async () => {
-  isViewerPaused = false;
+const onPlay = async (auto: boolean) => {
+  if (!auto) {
+    isViewerPaused = false;
+  }
 
   if (!isMaster) {
     await setPlaybackState(serverPlaybackState);
@@ -400,15 +199,15 @@ const onPlay = async () => {
 
 const onPlaying = async () => {
   if (isMaster) return;
+
   await setPlaybackState(serverPlaybackState);
 };
 
-const onPause = async () => {
-  if (isAutoUpdate && !isMaster) {
-    return;
+const onPause = async (auto: boolean) => {
+  if (!auto) {
+    isViewerPaused = true;
   }
 
-  isViewerPaused = true;
   await broadcastPlaybackState();
 };
 
@@ -430,10 +229,26 @@ const checkRoomExists = async (): Promise<boolean> => {
 
   return true;
 };
+
+const getPlaybackState = async (): Promise<PlaybackState> => {
+  const _player = player.value;
+
+  if (!_player || !_player.getIsContentLoaded()) {
+    return serverPlaybackState;
+  }
+
+  return {
+    time: await _player.getTime(),
+    rate: await _player.getRate(),
+    isPlaying: _player.getIsPlaying(),
+  };
+};
+
 const setPlaybackState = async (ps: PlaybackState) => {
   serverPlaybackState = ps;
 
-  if (!playbackController) {
+  const _player = player.value;
+  if (!_player || !_player.getIsContentLoaded()) {
     return;
   }
 
@@ -441,40 +256,35 @@ const setPlaybackState = async (ps: PlaybackState) => {
     return;
   }
 
-  const currentPlaybackState = await playbackController.getPlaybackState();
-
-  isAutoUpdate = true;
+  const currentPlaybackState = await getPlaybackState();
 
   if (ps.isPlaying) {
     const elapsedSinceTimestamp = ((getTimestamp() - serverPlaybackStateTimestamp) * ps.rate) / 1000;
     const newTime = ps.time + elapsedSinceTimestamp;
 
     if (ps.rate !== currentPlaybackState.rate) {
-      playbackController.setRate(ps.rate);
+      _player.setRate(ps.rate);
     }
 
     const timeDiff = Math.abs(currentPlaybackState.time - newTime);
     if (timeDiff > 2) {
       console.log("Synchronizing to server time.");
-      playbackController.setTime(newTime);
+      _player.setTime(newTime);
     }
 
     if (!currentPlaybackState.isPlaying) {
-      playbackController.setTime(newTime);
-      playbackController.play();
+      _player.setTime(newTime);
+      _player.play();
     }
   } else if (!ps.isPlaying && currentPlaybackState.isPlaying) {
-    playbackController.pause();
+    _player.pause();
   }
-
-  setTimeout(() => (isAutoUpdate = false), 100);
 };
 
 const broadcastPlaybackState = async () => {
   if (!isMaster) return;
-  if (isAutoUpdate) return;
 
-  const ps = (await playbackController?.getPlaybackState()) || serverPlaybackState;
+  const ps = (await getPlaybackState()) || serverPlaybackState;
   ps.time += latency * ps.rate;
 
   socket.emit("master-playbackstate", ps);
@@ -487,47 +297,23 @@ const broadcastPlaybackState = async () => {
       <Chat :room="name"></Chat>
     </div>
     <div ref="contentContainer" id="content-container" class="contentcontainer">
-      <div v-if="!!content" class="video-container">
-        <div v-if="content.type == 'unknown'" class="video-container">
-          <video
-            controls
-            ref="embeddedVideo"
-            class="video-container video-js"
-            @play="onPlay()"
-            @playing="onPlaying()"
-            @pause="onPause()"
-            @seeked="onSeek()"
-            @ratechange="onRateChange()"
-          >
-            <source v-for="source of sources" :key="source.description" :src="source.url" :type="source.mediaType" />
-          </video>
-        </div>
-        <div v-if="content.type == 'youtube'" class="video-container youtube-player">
-          <div ref="youtubePlayer" class="video-container"></div>
-        </div>
-        <div v-if="content.type == 'google_drive'" class="video-container">
-          <video
-            controls
-            ref="googleDriveVideo"
-            class="video-container video-js"
-            @play="onPlay()"
-            @playing="onPlaying()"
-            @pause="onPause()"
-            @seeked="onSeek()"
-            @ratechange="onRateChange()"
-          >
-            <source v-for="source of sources" :key="source.description" :src="source.url" :type="source.mediaType" />
-          </video>
-        </div>
-        <div class="usercontrols-activationzone">
-          <div class="usercontrols">
-            <a href="#" class="usercontrol" title="Reload" @click="reloadContent()"
-              ><span class="fa fa-refresh"></span
-            ></a>
-            <a href="#" class="usercontrol" title="Fullscreen" @click="toggleFullscreen()"
-              ><span class="fa fa-television"></span
-            ></a>
-          </div>
+      <Player
+        ref="player"
+        class="video-container"
+        @play="onPlay"
+        @playing="onPlaying"
+        @pause="onPause"
+        @seek="onSeek"
+        @ratechange="onRateChange"
+      ></Player>
+      <div class="usercontrols-activationzone">
+        <div class="usercontrols">
+          <a href="#" class="usercontrol" title="Reload" @click="reloadContent()"
+            ><span class="fa fa-refresh"></span
+          ></a>
+          <a href="#" class="usercontrol" title="Fullscreen" @click="toggleFullscreen()"
+            ><span class="fa fa-television"></span
+          ></a>
         </div>
       </div>
       <div class="admincontrols">
