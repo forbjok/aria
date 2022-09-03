@@ -14,8 +14,8 @@ async function main(): Promise<void> {
   // Default configuration
   const config = {
     port: process.env.PORT || 5000,
-    tempPath: process.env.UPLOADS_PATH || path.join(getCacheFolder(), "aria", "temp"),
-    uploadsPath: process.env.UPLOADS_PATH || path.join(getCacheFolder(), "aria", "uploads"),
+    tempPath: process.env.TEMP_PATH || path.join(getCacheFolder(), "aria", "temp"),
+    filesPath: process.env.FILES_PATH || path.join(getCacheFolder(), "aria", "files"),
     connectionString: process.env.DATABASE_URL || "postgres://aria:aria@localhost/aria",
   };
 
@@ -31,13 +31,13 @@ async function main(): Promise<void> {
   app.enable("trust proxy"); // Required for req.ip to work correctly behind a proxy
 
   // Serve files
-  app.use(filesUrl, express.static(config.uploadsPath, { maxAge: "1 hour" }));
+  app.use(filesUrl, express.static(config.filesPath, { maxAge: "1 hour" }));
 
   const store = new PgAriaStore(config.connectionString);
   await store.connect();
   await store.migrate();
 
-  const imageService = new ImageService(config.uploadsPath);
+  const imageService = new ImageService(config.filesPath);
 
   // Set up room server
   new RoomServer(app, io, store, {
