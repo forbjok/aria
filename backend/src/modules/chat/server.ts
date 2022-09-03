@@ -1,3 +1,5 @@
+import * as fs from "fs";
+
 import * as express from "express";
 import * as multer from "multer";
 import * as moment from "moment";
@@ -5,7 +7,7 @@ import * as socketio from "socket.io";
 
 import { PostViewModel } from "./viewmodels";
 import { IAriaStore, Post, RoomInfo } from "../../store";
-import { ImageService } from "../../services/image";
+import { ImageService, ProcessImageResult } from "../../services/image";
 
 type OnPostFn = (post: Post) => void;
 
@@ -179,7 +181,14 @@ export class ChatServer {
           return;
         }
 
-        const { hash, imageExt, thumbExt } = await this.imageService.processImage(imageFile.path);
+        let result: ProcessImageResult;
+        try {
+          result = await this.imageService.processImage(imageFile.path);
+        } finally {
+          fs.unlink(imageFile.path, () => {});
+        }
+
+        const { hash, imageExt, thumbExt } = result;
 
         post.image = {
           filename: imageFile.originalname,
