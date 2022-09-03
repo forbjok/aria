@@ -1,14 +1,20 @@
 @import url(https://fonts.googleapis.com/css?family=Roboto);
 
 .claim {
-  background: #eef2ff;
-
   font-family: "Roboto", sans-serif;
   font-size: 1.5rem;
 
   color: black;
 
   text-align: center;
+
+  button {
+    border-radius: 3px;
+  }
+
+  .unclaimed-text {
+    margin: 10px;
+  }
 
   .claim-button {
     font-size: 2rem;
@@ -28,7 +34,7 @@
     }
 
     .claim-result-text {
-      margin: 20px;
+      padding: 20px;
     }
   }
 

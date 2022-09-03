@@ -7,6 +7,9 @@ import { LocalStorageService } from "@/services/localstorageservice";
 // Import video.js stylesheet
 import "video.js/src/css/video-js.scss";
 
+import "ress";
+import "@/styles/main.scss";
+
 const app = createApp(App);
 
 app.use(router);

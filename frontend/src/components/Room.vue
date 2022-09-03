@@ -11,11 +11,12 @@ import RoomControls from "./RoomControls.vue";
 import { LocalRoomSettingsService } from "@/services/localroomsettingsservice";
 import { RoomAdminService } from "@/services/roomadminservice";
 import fullscreenUtils from "../utils/fullscreen";
-import axios from "axios";
 import { LocalRoomAuthService } from "@/services/localroomauthservice";
 
-import "@/styles/room.scss";
 import type { Content, RoomInfo } from "@/models";
+import { RoomService } from "@/services/room";
+
+import "@/styles/room.scss";
 
 interface PlaybackState {
   time: number;
@@ -34,6 +35,7 @@ const props = defineProps<{
 const { name } = toRefs(props);
 
 const roomInfo: RoomInfo = { name: name.value };
+const roomService = new RoomService(roomInfo);
 const localRoomAuthService = new LocalRoomAuthService(roomInfo);
 const localRoomSettingsService = new LocalRoomSettingsService(roomInfo);
 const roomAdminService = new RoomAdminService(roomInfo, localRoomAuthService);
@@ -137,7 +139,7 @@ onMounted(async () => {
 });
 
 onBeforeMount(async () => {
-  const roomExists = await checkRoomExists();
+  const roomExists = await roomService.exists();
 
   if (!roomExists) {
     router.push({ name: "claim", params: { room: name.value } });
@@ -217,17 +219,6 @@ const onSeek = async () => {
 
 const onRateChange = async () => {
   await broadcastPlaybackState();
-};
-
-const checkRoomExists = async (): Promise<boolean> => {
-  try {
-    await axios.get(`/api/r/${name.value}`);
-  } catch {
-    // TODO: Verify if this works or if we need to check response
-    return false;
-  }
-
-  return true;
 };
 
 const getPlaybackState = async (): Promise<PlaybackState> => {
@@ -329,4 +320,4 @@ const broadcastPlaybackState = async () => {
   </div>
 </template>
 
-<style scoped></style>
+<style scoped lang="scss"></style>

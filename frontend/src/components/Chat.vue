@@ -93,7 +93,7 @@ const resizeChatControls = () => {
   if (!chatControls.value) return;
   if (!postContainer.value) return;
 
-  const height = ($(chatControls.value).height() || 0) + 4; // TODO: Verify if correct
+  const height = $(chatControls.value).height() || 0;
 
   $(postContainer.value).css("bottom", height);
   _triggerPostLayout();
@@ -426,4 +426,4 @@ onMounted(() => {
   </div>
 </template>
 
-<style scoped></style>
+<style scoped lang="scss"></style>

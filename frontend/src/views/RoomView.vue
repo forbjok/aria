@@ -17,7 +17,10 @@ const { name } = toRefs(props);
 </template>
 
 <style scoped lang="scss">
-:global(body) {
+main {
   background: black;
+
+  width: 100%;
+  height: 100%;
 }
 </style>

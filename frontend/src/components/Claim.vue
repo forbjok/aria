@@ -1,18 +1,12 @@
 <script setup lang="ts">
-import { ref, toRefs } from "vue";
-
-import "@/styles/claim.scss";
-import axios from "axios";
-import { LocalRoomAuthService } from "@/services/localroomauthservice";
+import { onBeforeMount, ref, toRefs } from "vue";
 
 import router from "@/router";
 import type { RoomInfo } from "@/models";
+import { LocalRoomAuthService } from "@/services/localroomauthservice";
+import { RoomService, type ClaimInfo } from "@/services/room";
 
-interface ClaimInfo {
-  name: string;
-  password: string;
-  token: string;
-}
+import "@/styles/claim.scss";
 
 const props = defineProps<{
   room: string;
@@ -21,36 +15,41 @@ const props = defineProps<{
 const { room } = toRefs(props);
 
 const roomInfo: RoomInfo = { name: room.value };
+
 const auth = new LocalRoomAuthService(roomInfo);
+const roomService = new RoomService(roomInfo);
 
 const claimInfo = ref<ClaimInfo | null>(null);
 const claimError = ref<string | null>(null);
 
 const claim = async () => {
   try {
-    const response = await axios.post(`/api/r/${room.value}/claim`, null, {
-      headers: {
-        Accept: "application/json",
-      },
-    });
-    const data: ClaimInfo = await response.data;
+    const data = await roomService.claim();
 
     claimInfo.value = data;
     auth.set(data.token);
   } catch (err: any) {
-    claimError.value = err || ""; //response.data.statusText;
+    claimError.value = err || "";
   }
 };
 
 const enterRoom = () => {
-  router.push({ name: "room", params: { name: room.value } });
+  router.push({ name: "room", params: { name: roomInfo.name } });
 };
+
+onBeforeMount(async () => {
+  const roomExists = await roomService.exists();
+
+  if (roomExists) {
+    enterRoom();
+  }
+});
 </script>
 
 <template>
   <div class="claim">
-    <div v-if="!claimInfo" class="unclaimed-text">
-      <p>This room has not yet been claimed.</p>
+    <div v-if="!claimInfo" class="unclaimed">
+      <p class="unclaimed-text">This room has not yet been claimed.</p>
       <button type="button" name="claim" class="claim-button" @click="claim()">Claim</button>
     </div>
     <div v-if="claimInfo" class="claim-result">
@@ -68,4 +67,4 @@ const enterRoom = () => {
   </div>
 </template>
 
-<style scoped></style>
+<style scoped lang="scss"></style>

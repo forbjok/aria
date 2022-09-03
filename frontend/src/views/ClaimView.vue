@@ -17,7 +17,12 @@ const { room } = toRefs(props);
 </template>
 
 <style scoped lang="scss">
-:global(body) {
+main {
   background: #eef2ff;
+
+  padding-top: 20px;
+
+  width: 100%;
+  height: 100%;
 }
 </style>

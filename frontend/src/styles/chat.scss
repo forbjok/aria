@@ -29,7 +29,6 @@
     left: 0;
     right: 0;
     bottom: 0;
-    padding: 2px;
   }
 
   .chatcontrols-table {
@@ -118,7 +117,7 @@
 
   textarea.comment-field {
     resize: none;
-    width: calc(100% - 4px);
+    width: calc(100%);
   }
 
   .options {
@@ -128,7 +127,7 @@
   }
 
   .toggle-compact-button {
-    margin-left: 3px;
+    margin-left: 2px;
   }
 
   #postbutton {
