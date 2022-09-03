@@ -94,6 +94,9 @@ document.addEventListener("contentLoading", (event) => {
         });
       });
 
+      // Reverse sources so that highest quality is first
+      sources.reverse();
+
       log("Constructed sources.", sources);
       detail.onLoaded(sources);
     },
