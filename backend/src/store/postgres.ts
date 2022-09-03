@@ -195,22 +195,6 @@ export class PgAriaStore implements IAriaStore {
     return rowsAffected;
   }
 
-  async getAllImages(): Promise<ImageModel[]> {
-    const sql = "SELECT * FROM image;";
-
-    const images = await this.queryRows<ImageModel>(sql, []);
-
-    return images;
-  }
-
-  async updateImage(image: ImageModel): Promise<boolean> {
-    const sql = "UPDATE image SET hash = $2, ext = $3, tn_ext = $4 WHERE id = $1;";
-
-    const rowsAffected = await this.execQuery(sql, [image.id, image.hash, image.ext, image.tn_ext]);
-
-    return rowsAffected > 0;
-  }
-
   private async execQuery(sql: string, params: any): Promise<number> {
     const result = await this.client.query(sql, params);
 

@@ -1,4 +1,3 @@
-import * as fs from "fs";
 import * as path from "path";
 import * as http from "http";
 import * as errorhandler from "errorhandler";
@@ -10,30 +9,6 @@ import { PgAriaStore } from "./store/postgres";
 import { ChatServer } from "./modules/chat/server";
 import { RoomServer } from "./modules/room/server";
 import { ImageService } from "./services/image";
-
-async function migrate_old_images(filesPath: string, store: PgAriaStore, imageService: ImageService) {
-  const images = await store.getAllImages();
-
-  for (const i of images) {
-    if (i.hash) {
-      continue;
-    }
-
-    const srcPath = path.join(filesPath, "images", i.path);
-    if (!fs.existsSync(srcPath)) {
-      console.log("Image does not exist", srcPath, i.id);
-      continue;
-    }
-
-    const { hash, imageExt, thumbExt } = await imageService.processImage(srcPath);
-
-    i.hash = hash;
-    i.ext = imageExt;
-    i.tn_ext = thumbExt;
-
-    await store.updateImage(i);
-  }
-}
 
 async function main(): Promise<void> {
   // Default configuration
@@ -63,9 +38,6 @@ async function main(): Promise<void> {
   await store.migrate();
 
   const imageService = new ImageService(config.uploadsPath);
-
-  // Run migration of old images
-  await migrate_old_images(config.uploadsPath, store, imageService);
 
   // Set up room server
   new RoomServer(app, io, store, {
