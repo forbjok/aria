@@ -35,7 +35,6 @@ interface NewPost {
 
 const settings: LocalRoomSettingsService | undefined = inject("settings");
 
-const triggerPostLayout = ref(false);
 const postForm = ref<HTMLFormElement | null>(null);
 const postContainer = ref<HTMLFormElement | null>(null);
 const chatControls = ref<HTMLFormElement | null>(null);
@@ -65,20 +64,6 @@ const createEmptyPost = (): NewPost => {
 const post = ref(createEmptyPost());
 const useCompactPostForm = ref(false);
 
-// The purpose of this function is to work around a bug in Chrome that
-// causes it to not recalculate the layout of posts when the posting
-// form is resized. In order to force this, we set "triggerPostLayout"
-// to true briefly before resetting it to false. Because it is bound to
-// an empty div at the end of the post-container with if.bind, it will
-// trigger a layout update.
-const _triggerPostLayout = () => {
-  triggerPostLayout.value = true;
-
-  setInterval(() => {
-    triggerPostLayout.value = false;
-  }, 100);
-};
-
 const resizeChatControls = () => {
   if (!chatControls.value) return;
   if (!postContainer.value) return;
@@ -86,7 +71,6 @@ const resizeChatControls = () => {
   const height = $(chatControls.value).height() || 0;
 
   $(postContainer.value).css("bottom", height);
-  _triggerPostLayout();
 };
 
 const imageSelected = (event: Event) => {
@@ -287,8 +271,6 @@ onMounted(() => {
       <ul>
         <ChatPost :post="post" v-for="post of posts" :key="post.id"></ChatPost>
       </ul>
-      <!-- This is part of a workaround for a bug in Chrome causing it to not correctly recalculate the post container layout when the posting form is resized -->
-      <div v-if="triggerPostLayout" class="after-posts"></div>
     </div>
 
     <div ref="chatControls" class="chatcontrols">
