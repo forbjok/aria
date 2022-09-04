@@ -22,6 +22,8 @@ const extensionsByMimetype = {
 
 interface PreparedEmote {
   name: string;
+  title: string;
+  regExp: RegExp;
   url: string;
 }
 
@@ -75,8 +77,7 @@ class ChatRoom {
 
   public replaceEmotes(s: string): string {
     for (const e of this.emotes) {
-      const emoteText = `!${e.name}`;
-      s = s.replace(emoteText, `<img class="emote" src="${e.url}" title="${emoteText}">`);
+      s = s.replace(e.regExp, `<img class="emote" src="${e.url}" title="${e.title}">`);
     }
 
     return s;
@@ -382,7 +383,10 @@ export class ChatServer {
   }
 
   public prepareEmote(emote: Emote): PreparedEmote {
-    return { name: emote.name, url: `${this.imagesUrl}/e/${emote.hash}.${emote.ext}` };
+    const title = `!${emote.name}`;
+    const regExp = new RegExp(title, "g");
+
+    return { name: emote.name, title, regExp, url: `${this.imagesUrl}/e/${emote.hash}.${emote.ext}` };
   }
 
   public prepareEmotes(emotes: Emote[]): PreparedEmote[] {
