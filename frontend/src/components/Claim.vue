@@ -6,8 +6,6 @@ import type { RoomInfo } from "@/models";
 import { LocalRoomAuthService } from "@/services/localroomauthservice";
 import { RoomService, type ClaimInfo } from "@/services/room";
 
-import "@/styles/claim.scss";
-
 const props = defineProps<{
   room: string;
 }>();
@@ -67,4 +65,6 @@ onBeforeMount(async () => {
   </div>
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+@import "@/styles/claim.scss";
+</style>

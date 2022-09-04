@@ -3,20 +3,17 @@ import { onBeforeMount, onMounted, provide, ref, toRefs } from "vue";
 import router from "@/router";
 
 import io, { Socket } from "socket.io-client";
-import $ from "jquery";
 
 import Chat from "./Chat.vue";
+import ToastChat from "./ToastChat.vue";
 import Player from "./Player.vue";
 import RoomControls from "./RoomControls.vue";
 import { LocalRoomSettingsService } from "@/services/localroomsettingsservice";
 import { RoomAdminService } from "@/services/roomadminservice";
-import fullscreenUtils from "../utils/fullscreen";
 import { LocalRoomAuthService } from "@/services/localroomauthservice";
 
 import type { Content, RoomInfo } from "@/models";
 import { RoomService } from "@/services/room";
-
-import "@/styles/room.scss";
 
 interface PlaybackState {
   time: number;
@@ -48,9 +45,11 @@ provide("admin", roomAdminService);
 const showRoomControls = ref(false);
 
 const room = ref<HTMLDivElement | null>(null);
-const chatContainer = ref<HTMLDivElement | null>(null);
-const contentArea = ref<HTMLDivElement | null>(null);
+const toastChat = ref<typeof ToastChat | null>(null);
 const player = ref<typeof Player | null>(null);
+
+const chatTheme = ref<string>("dark");
+const theaterMode = ref(false);
 
 let socket: Socket;
 const content = ref<Content | null>(null);
@@ -108,34 +107,6 @@ onMounted(async () => {
   }, 30000);
 
   socket.connect();
-
-  const w = $(window);
-
-  if (!chatContainer.value || !contentArea.value) return;
-
-  const _chatContainer = $(chatContainer.value);
-  const _contentArea = $(contentArea.value);
-
-  function resize() {
-    const width = w.width() || 0;
-    const height = w.height() || 0;
-
-    if (height > width) {
-      // Portrait mode
-      _contentArea.css("left", "");
-      _contentArea.css("bottom", (_chatContainer.height() || 0) + 4);
-    } else {
-      // Landscape mode
-      _contentArea.css("bottom", "");
-      _contentArea.css("left", (_chatContainer.width() || 0) + 3);
-    }
-  }
-
-  resize();
-
-  w.on("resize", () => {
-    resize();
-  });
 });
 
 onBeforeMount(async () => {
@@ -174,12 +145,8 @@ const reloadContent = async () => {
   }, 1);
 };
 
-const toggleFullscreen = () => {
-  if (!fullscreenUtils.isInFullscreen()) {
-    fullscreenUtils.requestFullscreen(room.value);
-  } else {
-    fullscreenUtils.exitFullscreen();
-  }
+const toggleTheaterMode = () => {
+  theaterMode.value = !theaterMode.value;
 };
 
 const toggleRoomControls = () => {
@@ -280,27 +247,36 @@ const broadcastPlaybackState = async () => {
 
   socket.emit("master-playbackstate", ps);
 };
+
+const onKeydown = (event: KeyboardEvent) => {
+  if (event.key === "Tab" && !event.shiftKey) {
+    toggleTheaterMode();
+    event.preventDefault();
+    return;
+  }
+};
 </script>
 
 <template>
-  <div ref="room" class="room">
-    <div ref="chatContainer" class="chat-container">
-      <Chat :room="name"></Chat>
+  <div ref="room" class="room" @keydown="onKeydown($event)">
+    <div class="usercontrols-activationzone">
+      <div class="usercontrols">
+        <a href="#" class="usercontrol" title="Reload" @click="reloadContent()"><span class="fa fa-refresh"></span></a>
+        <a href="#" class="usercontrol" title="Theater mode" @click="toggleTheaterMode()"
+          ><span class="fa fa-television"></span
+        ></a>
+        <div class="spacer"></div>
+        <a href="#" class="usercontrol" title="Room Admin" @click="toggleRoomControls()"
+          ><span class="fa fa-wrench"></span
+        ></a>
+      </div>
+    </div>
+    <div v-show="!theaterMode" ref="chatContainer" class="chat-container">
+      <Chat :room="name" @post="toastChat?.post($event)" @themechange="chatTheme = $event"></Chat>
     </div>
     <div ref="contentArea" class="content-area">
-      <div class="usercontrols-activationzone">
-        <div class="usercontrols">
-          <a href="#" class="usercontrol" title="Reload" @click="reloadContent()"
-            ><span class="fa fa-refresh"></span
-          ></a>
-          <a href="#" class="usercontrol" title="Fullscreen" @click="toggleFullscreen()"
-            ><span class="fa fa-television"></span
-          ></a>
-          <div class="spacer"></div>
-          <a href="#" class="usercontrol" title="Room Admin" @click="toggleRoomControls()"
-            ><span class="fa fa-wrench"></span
-          ></a>
-        </div>
+      <div v-show="theaterMode" class="toast-chat-container">
+        <ToastChat ref="toastChat" :theme="chatTheme"> </ToastChat>
       </div>
       <Player
         ref="player"
@@ -319,4 +295,6 @@ const broadcastPlaybackState = async () => {
   </div>
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+@import "@/styles/room.scss";
+</style>

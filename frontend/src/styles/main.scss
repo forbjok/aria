@@ -1,6 +1,6 @@
 body {
   overflow: auto;
-  background-color: red;
+  background-color: black;
 }
 
 button {
@@ -28,6 +28,12 @@ input[type="file"] {
 }
 
 input[type="text"] {
+  background-color: white;
+  border: 1px solid black;
+  padding: 2px;
+}
+
+input[type="password"] {
   background-color: white;
   border: 1px solid black;
   padding: 2px;

@@ -9,3 +9,18 @@ export interface Content {
     [key: string]: any;
   };
 }
+
+export interface Image {
+  url: string;
+  thumbUrl: string;
+  originalFilename: string;
+}
+
+export interface Post {
+  id: number;
+  name: string;
+  comment: string;
+  image?: Image;
+  posted: string;
+  showFullImage: boolean;
+}

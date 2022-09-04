@@ -2,20 +2,22 @@
 import { inject, onMounted, reactive, ref, toRefs } from "vue";
 import io from "socket.io-client";
 import axios from "axios";
-import $ from "jquery";
 import filesize from "filesize";
-import moment from "moment";
-import * as xssFilters from "xss-filters";
+
+import ChatPost from "./ChatPost.vue";
 
 import { VERSION } from "@/version";
 import type { LocalRoomSettingsService } from "@/services/localroomsettingsservice";
 
-import "@/styles/chat.scss";
-import "@/styles/chat-dark.scss";
-import "@/styles/chat-yotsubab.scss";
+import type { Post } from "@/models";
 
 const props = defineProps<{
   room: string;
+}>();
+
+const emit = defineEmits<{
+  (e: "post", post: Post): void;
+  (e: "themechange", theme: string): void;
 }>();
 
 const { room } = toRefs(props);
@@ -23,21 +25,6 @@ const { room } = toRefs(props);
 const maxImageSize = 2097152;
 
 const versionText = `v${VERSION}`;
-
-interface Image {
-  url: string;
-  thumbUrl: string;
-  originalFilename: string;
-}
-
-interface Post {
-  id: number;
-  name: string;
-  comment: string;
-  image?: Image;
-  posted: string;
-  showFullImage: boolean;
-}
 
 interface NewPost {
   name: string;
@@ -47,10 +34,8 @@ interface NewPost {
 
 const settings: LocalRoomSettingsService | undefined = inject("settings");
 
-const triggerPostLayout = ref(false);
+const postContainer = ref<HTMLUListElement | null>(null);
 const postForm = ref<HTMLFormElement | null>(null);
-const postContainer = ref<HTMLFormElement | null>(null);
-const chatControls = ref<HTMLFormElement | null>(null);
 
 const posts = reactive<Post[]>([]);
 
@@ -59,7 +44,9 @@ const themes = [
   { name: "yotsubab", description: "Yotsuba B" },
 ];
 
-const theme = ref(settings?.get("chat_theme", null) || "dark");
+const theme = ref<string>(settings?.get("chat_theme", null) || "dark");
+emit("themechange", theme.value);
+
 let posting = false;
 const postingProgress = ref("");
 const postingCooldown = ref(0);
@@ -75,30 +62,6 @@ const createEmptyPost = (): NewPost => {
 const post = ref(createEmptyPost());
 const useCompactPostForm = ref(false);
 
-// The purpose of this function is to work around a bug in Chrome that
-// causes it to not recalculate the layout of posts when the posting
-// form is resized. In order to force this, we set "triggerPostLayout"
-// to true briefly before resetting it to false. Because it is bound to
-// an empty div at the end of the post-container with if.bind, it will
-// trigger a layout update.
-const _triggerPostLayout = () => {
-  triggerPostLayout.value = true;
-
-  setInterval(() => {
-    triggerPostLayout.value = false;
-  }, 100);
-};
-
-const resizeChatControls = () => {
-  if (!chatControls.value) return;
-  if (!postContainer.value) return;
-
-  const height = $(chatControls.value).height() || 0;
-
-  $(postContainer.value).css("bottom", height);
-  _triggerPostLayout();
-};
-
 const imageSelected = (event: Event) => {
   const p = post.value;
 
@@ -113,19 +76,12 @@ const imageSelected = (event: Event) => {
 };
 
 const themeSelected = () => {
-  settings?.set("chat_theme", theme);
+  settings?.set("chat_theme", theme.value);
+  emit("themechange", theme.value);
 };
 
 const toggleCompactPostForm = () => {
   useCompactPostForm.value = !useCompactPostForm.value;
-
-  setTimeout(() => {
-    resizeChatControls();
-  }, 1);
-};
-
-const toggleImage = (post: Post): void => {
-  post.showFullImage = !post.showFullImage;
 };
 
 const clearPost = () => {
@@ -239,7 +195,7 @@ const submitOnEnterKeydown = (event: KeyboardEvent) => {
 
 const clearFileOnShiftClick = (event: MouseEvent) => {
   if (event.shiftKey) {
-    $(event.target as HTMLInputElement).val("");
+    (event.target as HTMLInputElement).value = "";
     delete post.value.image;
 
     event.preventDefault();
@@ -257,37 +213,7 @@ const postingCooldownText = () => {
   }
 };
 
-const formatTime = (value: string): string => {
-  const now = moment();
-  const time = moment(value);
-
-  if (now.isSame(time, "day")) {
-    // If time is today, omit the date
-    return time.format("HH:mm:ss");
-  } else if (now.isSame(time, "year")) {
-    // If time is not today, but this year, include date without year
-    return time.format("MMM Do, HH:mm:ss");
-  }
-
-  // If time is not this year, include full date with year
-  return time.format("MMM Do YYYY, HH:mm:ss");
-};
-
-const formatPost = (value: string): string => {
-  if (!value) {
-    return value;
-  }
-
-  return xssFilters
-    .inHTMLData(value)
-    .replace(/((^|\n)>.*)/g, '<span class="quote">$1</span>') // Color quotes
-    .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1">$1</a>') // Clickable links
-    .replace(/\n/g, "<br>"); // Convert newlines to HTML line breaks
-};
-
 onMounted(() => {
-  resizeChatControls();
-
   const url = window.location.origin + "/chat";
 
   // We have to use this window.location.origin + "/namespace" workaround
@@ -300,8 +226,32 @@ onMounted(() => {
     socket.emit("join", room.value);
   });
 
-  socket.on("post", (post) => {
+  socket.on("post", (post: Post) => {
     posts.push(post);
+    emit("post", post);
+  });
+
+  socket.on("oldposts", (_posts: Post[]) => {
+    let newPosts: Post[];
+
+    if (posts.length > 0) {
+      const lastPost = posts[posts.length - 1];
+      newPosts = _posts.filter((p) => p.id > lastPost.id);
+    } else {
+      newPosts = _posts;
+    }
+
+    posts.push(...newPosts);
+
+    setTimeout(() => {
+      const _postContainer = postContainer.value;
+      if (!_postContainer) {
+        return;
+      }
+
+      // Scroll to bottom of post container
+      _postContainer.scrollTo(0, _postContainer.scrollHeight);
+    }, 1);
   });
 
   socket.connect();
@@ -310,28 +260,10 @@ onMounted(() => {
 
 <template>
   <div class="chat" :class="[`theme-${theme}`]">
-    <div ref="postContainer" class="chat-postcontainer">
-      <ul>
-        <li class="post" v-for="p of posts" :key="p.id">
-          <div class="post-header">
-            <span class="time">{{ formatTime(p.posted) }}</span>
-            <span class="name">{{ p.name }}</span>
-          </div>
-          <div class="post-body">
-            <div v-if="p.image" class="post-image" :class="p.showFullImage ? 'expanded' : ''">
-              <a :href="p.image.url" @click.prevent="toggleImage(p)" target="_blank">
-                <img class="thumbnail" :src="p.image.thumbUrl" :title="p.image.originalFilename" />
-                <img v-if="p.showFullImage" class="expanded-image" :src="p.image.url" />
-              </a>
-              <div class="filename">{{ p.image.originalFilename }}</div>
-            </div>
-            <div class="comment" v-html="formatPost(p.comment)"></div>
-          </div>
-        </li>
-      </ul>
-      <!-- This is part of a workaround for a bug in Chrome causing it to not correctly recalculate the post container layout when the posting form is resized -->
-      <div v-if="triggerPostLayout" class="after-posts"></div>
-    </div>
+    <ul ref="postContainer" class="post-container">
+      <ChatPost :post="post" v-for="post of posts" :key="post.id"></ChatPost>
+      <li class="bottom-spacer"></li>
+    </ul>
 
     <div ref="chatControls" class="chatcontrols">
       <form ref="postForm" @submit.prevent="submitPost()">
@@ -426,4 +358,8 @@ onMounted(() => {
   </div>
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+@import "@/styles/chat.scss";
+@import "@/styles/chat-dark.scss";
+@import "@/styles/chat-yotsubab.scss";
+</style>

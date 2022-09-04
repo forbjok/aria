@@ -3,8 +3,6 @@ import { inject, onMounted, ref } from "vue";
 
 import type { RoomAdminService } from "@/services/roomadminservice";
 
-import "@/styles/roomcontrols.scss";
-
 const roomAdminService: RoomAdminService | undefined = inject("admin");
 
 const initialized = ref(false);
@@ -87,4 +85,6 @@ const setContent = async () => {
   </div>
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+@import "@/styles/roomcontrols.scss";
+</style>

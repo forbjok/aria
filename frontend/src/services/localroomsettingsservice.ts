@@ -8,7 +8,9 @@ export class LocalRoomSettingsService {
 
   private settings: { [key: string]: any[] } = {};
 
-  constructor(private room: RoomInfo) {}
+  constructor(private room: RoomInfo) {
+    this.load();
+  }
 
   private getSettingsKeyName(): string {
     return `room_${this.room.name}`;
