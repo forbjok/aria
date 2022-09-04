@@ -34,6 +34,7 @@ interface NewPost {
 
 const settings: LocalRoomSettingsService | undefined = inject("settings");
 
+const postContainer = ref<HTMLUListElement | null>(null);
 const postForm = ref<HTMLFormElement | null>(null);
 
 const posts = reactive<Post[]>([]);
@@ -241,6 +242,16 @@ onMounted(() => {
     }
 
     posts.push(...newPosts);
+
+    setTimeout(() => {
+      const _postContainer = postContainer.value;
+      if (!_postContainer) {
+        return;
+      }
+
+      // Scroll to bottom of post container
+      _postContainer.scrollTo(0, _postContainer.scrollHeight);
+    }, 1);
   });
 
   socket.connect();
@@ -249,7 +260,7 @@ onMounted(() => {
 
 <template>
   <div class="chat" :class="[`theme-${theme}`]">
-    <ul class="post-container">
+    <ul ref="postContainer" class="post-container">
       <ChatPost :post="post" v-for="post of posts" :key="post.id"></ChatPost>
     </ul>
 
