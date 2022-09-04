@@ -259,9 +259,22 @@ onMounted(() => {
     socket.emit("join", room.value);
   });
 
-  socket.on("post", (post) => {
+  socket.on("post", (post: Post) => {
     posts.push(post);
     emit("post", post);
+  });
+
+  socket.on("oldposts", (_posts: Post[]) => {
+    let newPosts: Post[];
+
+    if (posts.length > 0) {
+      const lastPost = posts[posts.length - 1];
+      newPosts = _posts.filter((p) => p.id > lastPost.id);
+    } else {
+      newPosts = _posts;
+    }
+
+    posts.push(...newPosts);
   });
 
   socket.connect();

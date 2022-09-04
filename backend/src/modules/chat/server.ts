@@ -239,9 +239,10 @@ export class ChatServer {
         console.log(`${ip}: Sending recent posts.`);
         const recentPosts = room.getRecentPosts();
 
-        for (const post of recentPosts) {
-          socket.emit("post", this.postToViewModel(post));
-        }
+        socket.emit(
+          "oldposts",
+          recentPosts.map((p) => this.postToViewModel(p))
+        );
       });
 
       socket.on("leave", (roomName) => {
