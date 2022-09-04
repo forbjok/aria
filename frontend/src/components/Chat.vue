@@ -262,6 +262,7 @@ onMounted(() => {
   <div class="chat" :class="[`theme-${theme}`]">
     <ul ref="postContainer" class="post-container">
       <ChatPost :post="post" v-for="post of posts" :key="post.id"></ChatPost>
+      <li class="bottom-spacer"></li>
     </ul>
 
     <div ref="chatControls" class="chatcontrols">
