@@ -4,10 +4,13 @@ import router from "@/router";
 
 import { LocalStorageService } from "@/services/localstorageservice";
 
-// Import video.js stylesheet
+// CSS reset
+import "ress";
+
+// Import third-party stylesheets
 import "video.js/src/css/video-js.scss";
 
-import "ress";
+// Import main stylesheet
 import "@/styles/main.scss";
 
 const app = createApp(App);

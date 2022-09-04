@@ -6,13 +6,13 @@
   background: black;
   color: white;
 
-  #chatcontainer {
+  .chat-container {
     position: fixed;
     padding: 1px;
     overflow: hidden;
   }
 
-  #content-container {
+  .content-area {
     position: fixed;
     overflow: hidden;
   }
@@ -41,14 +41,16 @@
   }
 
   @media screen and (orientation: landscape) {
-    #chatcontainer {
+    .chat-container {
+      border-right: 1px solid black;
+
       left: 0;
       top: 0;
       bottom: 0;
       width: 350px;
     }
 
-    #content-container {
+    .content-area {
       top: 0;
       right: 0;
       bottom: 0;
@@ -56,14 +58,16 @@
   }
 
   @media screen and (orientation: portrait) {
-    #chatcontainer {
+    .chat-container {
+      border-top: 1px solid black;
+
       left: 0;
       right: 0;
       bottom: 0;
       height: 50%;
     }
 
-    #content-container {
+    .content-area {
       left: 0;
       top: 0;
       right: 0;
@@ -71,23 +75,24 @@
     }
   }
 
-  .contentcontainer {
+  .content-area {
     .usercontrols-activationzone {
       position: absolute;
-      left: 50%;
+      left: 30%;
       top: 0;
       transform: translateX(-50%);
-      min-width: 250px;
-      min-height: 100px;
+      padding: 0 100px 100px 100px;
+
+      z-index: 999;
 
       .usercontrols {
         display: flex;
-        background: linear-gradient(#121212, #383838);
+        background: linear-gradient(#1d1d1d, #050505);
         position: absolute;
         left: 50%;
         top: 0;
         transform: translateX(-50%) translateY(-95%);
-        padding: 4px 10px 4px 10px;
+        padding: 10px 10px 4px 10px;
         gap: 5px;
 
         opacity: 0.1;
@@ -96,20 +101,28 @@
         transition: opacity 0.2s ease-out, transform 0.2s ease-in;
 
         .usercontrol {
-          color: #006aff !important;
-          text-decoration: none !important;
+          color: #7a38e4;
+          text-decoration: none;
           font-size: 1.5rem;
 
           &:hover {
-            color: #3d8eff !important;
+            color: #a862f8;
           }
+        }
+
+        .spacer {
+          background-color: #4e10b1;
+
+          margin-left: 2px;
+          margin-right: 2px;
+          width: 4px;
         }
       }
 
       &:hover {
         .usercontrols {
           opacity: 1;
-          transform: translateX(-50%) translateY(-5%);
+          transform: translateX(-50%) translateY(-15%);
           transition: transform 0.2s ease-out;
         }
       }

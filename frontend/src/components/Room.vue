@@ -49,7 +49,7 @@ const showRoomControls = ref(false);
 
 const room = ref<HTMLDivElement | null>(null);
 const chatContainer = ref<HTMLDivElement | null>(null);
-const contentContainer = ref<HTMLDivElement | null>(null);
+const contentArea = ref<HTMLDivElement | null>(null);
 const player = ref<typeof Player | null>(null);
 
 let socket: Socket;
@@ -111,10 +111,10 @@ onMounted(async () => {
 
   const w = $(window);
 
-  if (!chatContainer.value || !contentContainer.value) return;
+  if (!chatContainer.value || !contentArea.value) return;
 
-  const chatContainer1 = $(chatContainer.value);
-  const contentContainer1 = $(contentContainer.value);
+  const _chatContainer = $(chatContainer.value);
+  const _contentArea = $(contentArea.value);
 
   function resize() {
     const width = w.width() || 0;
@@ -122,12 +122,12 @@ onMounted(async () => {
 
     if (height > width) {
       // Portrait mode
-      contentContainer1.css("left", "");
-      contentContainer1.css("bottom", (chatContainer1.height() || 0) + 4);
+      _contentArea.css("left", "");
+      _contentArea.css("bottom", (_chatContainer.height() || 0) + 4);
     } else {
       // Landscape mode
-      contentContainer1.css("bottom", "");
-      contentContainer1.css("left", (chatContainer1.width() || 0) + 2);
+      _contentArea.css("bottom", "");
+      _contentArea.css("left", (_chatContainer.width() || 0) + 3);
     }
   }
 
@@ -284,10 +284,24 @@ const broadcastPlaybackState = async () => {
 
 <template>
   <div ref="room" class="room">
-    <div ref="chatContainer" id="chatcontainer" class="chatcontainer">
+    <div ref="chatContainer" class="chat-container">
       <Chat :room="name"></Chat>
     </div>
-    <div ref="contentContainer" id="content-container" class="contentcontainer">
+    <div ref="contentArea" class="content-area">
+      <div class="usercontrols-activationzone">
+        <div class="usercontrols">
+          <a href="#" class="usercontrol" title="Reload" @click="reloadContent()"
+            ><span class="fa fa-refresh"></span
+          ></a>
+          <a href="#" class="usercontrol" title="Fullscreen" @click="toggleFullscreen()"
+            ><span class="fa fa-television"></span
+          ></a>
+          <div class="spacer"></div>
+          <a href="#" class="usercontrol" title="Room Admin" @click="toggleRoomControls()"
+            ><span class="fa fa-wrench"></span
+          ></a>
+        </div>
+      </div>
       <Player
         ref="player"
         class="video-container"
@@ -297,21 +311,6 @@ const broadcastPlaybackState = async () => {
         @seek="onSeek"
         @ratechange="onRateChange"
       ></Player>
-      <div class="usercontrols-activationzone">
-        <div class="usercontrols">
-          <a href="#" class="usercontrol" title="Reload" @click="reloadContent()"
-            ><span class="fa fa-refresh"></span
-          ></a>
-          <a href="#" class="usercontrol" title="Fullscreen" @click="toggleFullscreen()"
-            ><span class="fa fa-television"></span
-          ></a>
-        </div>
-      </div>
-      <div class="admincontrols">
-        <button type="button" name="controlpanel" @click="toggleRoomControls()">
-          <span class="fa fa-wrench"></span>
-        </button>
-      </div>
     </div>
     <div v-if="showRoomControls" class="roomcontrols-container">
       <div class="overlay" @click="toggleRoomControls()"></div>
