@@ -6,48 +6,45 @@
   background: black;
   color: white;
 
+  display: flex;
+  flex-direction: row;
+
+  width: 100%;
+  height: 100%;
+
   .chat-container {
-    position: fixed;
+    flex-shrink: 1;
     padding: 1px;
     overflow: hidden;
   }
 
   .content-area {
-    position: fixed;
+    flex-grow: 1;
     overflow: hidden;
+
+    // Needed to prevent children with absolute positioning from
+    // ending up outside the parent.
+    position: relative;
   }
 
   @media screen and (orientation: landscape) {
     .chat-container {
       border-right: 1px solid black;
 
-      left: 0;
-      top: 0;
-      bottom: 0;
       width: 350px;
-    }
-
-    .content-area {
-      top: 0;
-      right: 0;
-      bottom: 0;
     }
   }
 
   @media screen and (orientation: portrait) {
+    flex-direction: column-reverse;
+
     .chat-container {
       border-top: 1px solid black;
 
-      left: 0;
-      right: 0;
-      bottom: 0;
       height: 50%;
     }
 
     .content-area {
-      left: 0;
-      top: 0;
-      right: 0;
       height: 50%;
     }
   }
@@ -144,7 +141,6 @@
 
   .toast-chat-container {
     position: absolute;
-    top: 0;
     left: 10px;
     bottom: 50px;
 

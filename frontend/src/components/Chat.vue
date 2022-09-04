@@ -2,7 +2,6 @@
 import { inject, onMounted, reactive, ref, toRefs } from "vue";
 import io from "socket.io-client";
 import axios from "axios";
-import $ from "jquery";
 import filesize from "filesize";
 
 import ChatPost from "./ChatPost.vue";
@@ -36,8 +35,6 @@ interface NewPost {
 const settings: LocalRoomSettingsService | undefined = inject("settings");
 
 const postForm = ref<HTMLFormElement | null>(null);
-const postContainer = ref<HTMLFormElement | null>(null);
-const chatControls = ref<HTMLFormElement | null>(null);
 
 const posts = reactive<Post[]>([]);
 
@@ -64,15 +61,6 @@ const createEmptyPost = (): NewPost => {
 const post = ref(createEmptyPost());
 const useCompactPostForm = ref(false);
 
-const resizeChatControls = () => {
-  if (!chatControls.value) return;
-  if (!postContainer.value) return;
-
-  const height = $(chatControls.value).height() || 0;
-
-  $(postContainer.value).css("bottom", height);
-};
-
 const imageSelected = (event: Event) => {
   const p = post.value;
 
@@ -93,10 +81,6 @@ const themeSelected = () => {
 
 const toggleCompactPostForm = () => {
   useCompactPostForm.value = !useCompactPostForm.value;
-
-  setTimeout(() => {
-    resizeChatControls();
-  }, 1);
 };
 
 const clearPost = () => {
@@ -210,7 +194,7 @@ const submitOnEnterKeydown = (event: KeyboardEvent) => {
 
 const clearFileOnShiftClick = (event: MouseEvent) => {
   if (event.shiftKey) {
-    $(event.target as HTMLInputElement).val("");
+    (event.target as HTMLInputElement).value = "";
     delete post.value.image;
 
     event.preventDefault();
@@ -229,8 +213,6 @@ const postingCooldownText = () => {
 };
 
 onMounted(() => {
-  resizeChatControls();
-
   const url = window.location.origin + "/chat";
 
   // We have to use this window.location.origin + "/namespace" workaround
@@ -267,11 +249,9 @@ onMounted(() => {
 
 <template>
   <div class="chat" :class="[`theme-${theme}`]">
-    <div ref="postContainer" class="post-container">
-      <ul>
-        <ChatPost :post="post" v-for="post of posts" :key="post.id"></ChatPost>
-      </ul>
-    </div>
+    <ul class="post-container">
+      <ChatPost :post="post" v-for="post of posts" :key="post.id"></ChatPost>
+    </ul>
 
     <div ref="chatControls" class="chatcontrols">
       <form ref="postForm" @submit.prevent="submitPost()">

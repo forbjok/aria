@@ -28,11 +28,9 @@ defineExpose({
 
 <template>
   <div class="toast-chat chat" :class="[`theme-${theme}`]">
-    <div class="post-container">
-      <ul>
-        <ChatPost :post="post" v-for="post of posts" :key="post.id"></ChatPost>
-      </ul>
-    </div>
+    <ul class="post-container">
+      <ChatPost :post="post" v-for="post of posts" :key="post.id"></ChatPost>
+    </ul>
   </div>
 </template>
 

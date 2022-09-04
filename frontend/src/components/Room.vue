@@ -3,7 +3,6 @@ import { onBeforeMount, onMounted, provide, ref, toRefs } from "vue";
 import router from "@/router";
 
 import io, { Socket } from "socket.io-client";
-import $ from "jquery";
 
 import Chat from "./Chat.vue";
 import ToastChat from "./ToastChat.vue";
@@ -47,8 +46,6 @@ provide("admin", roomAdminService);
 const showRoomControls = ref(false);
 
 const room = ref<HTMLDivElement | null>(null);
-const chatContainer = ref<HTMLDivElement | null>(null);
-const contentArea = ref<HTMLDivElement | null>(null);
 const toastChat = ref<typeof ToastChat | null>(null);
 const player = ref<typeof Player | null>(null);
 
@@ -110,34 +107,6 @@ onMounted(async () => {
   }, 30000);
 
   socket.connect();
-
-  const w = $(window);
-
-  if (!chatContainer.value || !contentArea.value) return;
-
-  const _chatContainer = $(chatContainer.value);
-  const _contentArea = $(contentArea.value);
-
-  function resize() {
-    const width = w.width() || 0;
-    const height = w.height() || 0;
-
-    if (height > width) {
-      // Portrait mode
-      _contentArea.css("left", "");
-      _contentArea.css("bottom", (_chatContainer.height() || 0) + 4);
-    } else {
-      // Landscape mode
-      _contentArea.css("bottom", "");
-      _contentArea.css("left", (_chatContainer.width() || 0) + 3);
-    }
-  }
-
-  resize();
-
-  w.on("resize", () => {
-    resize();
-  });
 });
 
 onBeforeMount(async () => {
