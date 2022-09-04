@@ -10,7 +10,6 @@ import Player from "./Player.vue";
 import RoomControls from "./RoomControls.vue";
 import { LocalRoomSettingsService } from "@/services/localroomsettingsservice";
 import { RoomAdminService } from "@/services/roomadminservice";
-import fullscreenUtils from "../utils/fullscreen";
 import { LocalRoomAuthService } from "@/services/localroomauthservice";
 
 import type { Content, RoomInfo } from "@/models";
@@ -50,6 +49,7 @@ const toastChat = ref<typeof ToastChat | null>(null);
 const player = ref<typeof Player | null>(null);
 
 const chatTheme = ref<string>("dark");
+const theaterMode = ref(false);
 
 let socket: Socket;
 const content = ref<Content | null>(null);
@@ -145,12 +145,8 @@ const reloadContent = async () => {
   }, 1);
 };
 
-const toggleFullscreen = () => {
-  if (!fullscreenUtils.isInFullscreen()) {
-    fullscreenUtils.requestFullscreen(room.value);
-  } else {
-    fullscreenUtils.exitFullscreen();
-  }
+const toggleTheaterMode = () => {
+  theaterMode.value = !theaterMode.value;
 };
 
 const toggleRoomControls = () => {
@@ -251,29 +247,35 @@ const broadcastPlaybackState = async () => {
 
   socket.emit("master-playbackstate", ps);
 };
+
+const onKeydown = (event: KeyboardEvent) => {
+  if (event.key === "Tab" && !event.shiftKey) {
+    toggleTheaterMode();
+    event.preventDefault();
+    return;
+  }
+};
 </script>
 
 <template>
-  <div ref="room" class="room">
-    <div ref="chatContainer" class="chat-container">
+  <div ref="room" class="room" @keydown="onKeydown($event)">
+    <div class="usercontrols-activationzone">
+      <div class="usercontrols">
+        <a href="#" class="usercontrol" title="Reload" @click="reloadContent()"><span class="fa fa-refresh"></span></a>
+        <a href="#" class="usercontrol" title="Theater mode" @click="toggleTheaterMode()"
+          ><span class="fa fa-television"></span
+        ></a>
+        <div class="spacer"></div>
+        <a href="#" class="usercontrol" title="Room Admin" @click="toggleRoomControls()"
+          ><span class="fa fa-wrench"></span
+        ></a>
+      </div>
+    </div>
+    <div v-show="!theaterMode" ref="chatContainer" class="chat-container">
       <Chat :room="name" @post="toastChat?.post($event)" @themechange="chatTheme = $event"></Chat>
     </div>
     <div ref="contentArea" class="content-area">
-      <div class="usercontrols-activationzone">
-        <div class="usercontrols">
-          <a href="#" class="usercontrol" title="Reload" @click="reloadContent()"
-            ><span class="fa fa-refresh"></span
-          ></a>
-          <a href="#" class="usercontrol" title="Fullscreen" @click="toggleFullscreen()"
-            ><span class="fa fa-television"></span
-          ></a>
-          <div class="spacer"></div>
-          <a href="#" class="usercontrol" title="Room Admin" @click="toggleRoomControls()"
-            ><span class="fa fa-wrench"></span
-          ></a>
-        </div>
-      </div>
-      <div class="toast-chat-container">
+      <div v-show="theaterMode" class="toast-chat-container">
         <ToastChat ref="toastChat" :theme="chatTheme"> </ToastChat>
       </div>
       <Player
