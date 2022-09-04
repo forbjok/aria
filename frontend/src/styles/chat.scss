@@ -6,7 +6,7 @@
   bottom: 0;
   padding: 1px;
 
-  .chat-postcontainer {
+  .post-container {
     position: absolute;
     left: 0;
     top: 0;
@@ -37,82 +37,6 @@
 
   .progress {
     margin-left: 3px;
-  }
-
-  .post-header {
-    padding-bottom: 1px;
-    span {
-      margin-right: 3px;
-    }
-  }
-
-  .time {
-    vertical-align: top;
-    text-align: right;
-    color: gray;
-  }
-
-  .name {
-    vertical-align: top;
-    text-align: right;
-    padding-right: 2px;
-    color: #117743;
-    font-weight: bold;
-  }
-
-  .post-image {
-    display: block;
-    float: left;
-    overflow: hidden;
-    max-width: 100%;
-
-    .thumbnail {
-      display: block;
-      border: none;
-      padding-right: 2px;
-      max-width: 100px;
-      max-height: 100px;
-
-      @media screen and (orientation: portrait) {
-        max-width: 50px;
-        max-height: 50px;
-      }
-    }
-
-    .expanded-image {
-      display: block;
-      max-width: 100%;
-    }
-
-    .filename {
-      display: none;
-      text-align: center;
-      clear: left;
-      font-weight: bold;
-    }
-
-    &.expanded {
-      .thumbnail {
-        display: none;
-      }
-
-      .filename {
-        display: block;
-      }
-    }
-  }
-
-  .post {
-    overflow: hidden;
-    padding: 5px;
-  }
-
-  .comment {
-    word-wrap: break-word;
-  }
-
-  .quote {
-    color: #789922;
   }
 
   textarea.comment-field {

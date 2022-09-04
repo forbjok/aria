@@ -4,18 +4,21 @@ import io from "socket.io-client";
 import axios from "axios";
 import $ from "jquery";
 import filesize from "filesize";
-import moment from "moment";
-import * as xssFilters from "xss-filters";
+
+import ChatPost from "./ChatPost.vue";
 
 import { VERSION } from "@/version";
 import type { LocalRoomSettingsService } from "@/services/localroomsettingsservice";
 
-import "@/styles/chat.scss";
-import "@/styles/chat-dark.scss";
-import "@/styles/chat-yotsubab.scss";
+import type { Post } from "@/models";
 
 const props = defineProps<{
   room: string;
+}>();
+
+const emit = defineEmits<{
+  (e: "post", post: Post): void;
+  (e: "themechange", theme: string): void;
 }>();
 
 const { room } = toRefs(props);
@@ -23,21 +26,6 @@ const { room } = toRefs(props);
 const maxImageSize = 2097152;
 
 const versionText = `v${VERSION}`;
-
-interface Image {
-  url: string;
-  thumbUrl: string;
-  originalFilename: string;
-}
-
-interface Post {
-  id: number;
-  name: string;
-  comment: string;
-  image?: Image;
-  posted: string;
-  showFullImage: boolean;
-}
 
 interface NewPost {
   name: string;
@@ -59,7 +47,9 @@ const themes = [
   { name: "yotsubab", description: "Yotsuba B" },
 ];
 
-const theme = ref(settings?.get("chat_theme", null) || "dark");
+const theme = ref<string>(settings?.get("chat_theme", null) || "dark");
+emit("themechange", theme.value);
+
 let posting = false;
 const postingProgress = ref("");
 const postingCooldown = ref(0);
@@ -113,7 +103,8 @@ const imageSelected = (event: Event) => {
 };
 
 const themeSelected = () => {
-  settings?.set("chat_theme", theme);
+  settings?.set("chat_theme", theme.value);
+  emit("themechange", theme.value);
 };
 
 const toggleCompactPostForm = () => {
@@ -122,10 +113,6 @@ const toggleCompactPostForm = () => {
   setTimeout(() => {
     resizeChatControls();
   }, 1);
-};
-
-const toggleImage = (post: Post): void => {
-  post.showFullImage = !post.showFullImage;
 };
 
 const clearPost = () => {
@@ -257,34 +244,6 @@ const postingCooldownText = () => {
   }
 };
 
-const formatTime = (value: string): string => {
-  const now = moment();
-  const time = moment(value);
-
-  if (now.isSame(time, "day")) {
-    // If time is today, omit the date
-    return time.format("HH:mm:ss");
-  } else if (now.isSame(time, "year")) {
-    // If time is not today, but this year, include date without year
-    return time.format("MMM Do, HH:mm:ss");
-  }
-
-  // If time is not this year, include full date with year
-  return time.format("MMM Do YYYY, HH:mm:ss");
-};
-
-const formatPost = (value: string): string => {
-  if (!value) {
-    return value;
-  }
-
-  return xssFilters
-    .inHTMLData(value)
-    .replace(/((^|\n)>.*)/g, '<span class="quote">$1</span>') // Color quotes
-    .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1">$1</a>') // Clickable links
-    .replace(/\n/g, "<br>"); // Convert newlines to HTML line breaks
-};
-
 onMounted(() => {
   resizeChatControls();
 
@@ -302,6 +261,7 @@ onMounted(() => {
 
   socket.on("post", (post) => {
     posts.push(post);
+    emit("post", post);
   });
 
   socket.connect();
@@ -310,24 +270,9 @@ onMounted(() => {
 
 <template>
   <div class="chat" :class="[`theme-${theme}`]">
-    <div ref="postContainer" class="chat-postcontainer">
+    <div ref="postContainer" class="post-container">
       <ul>
-        <li class="post" v-for="p of posts" :key="p.id">
-          <div class="post-header">
-            <span class="time">{{ formatTime(p.posted) }}</span>
-            <span class="name">{{ p.name }}</span>
-          </div>
-          <div class="post-body">
-            <div v-if="p.image" class="post-image" :class="p.showFullImage ? 'expanded' : ''">
-              <a :href="p.image.url" @click.prevent="toggleImage(p)" target="_blank">
-                <img class="thumbnail" :src="p.image.thumbUrl" :title="p.image.originalFilename" />
-                <img v-if="p.showFullImage" class="expanded-image" :src="p.image.url" />
-              </a>
-              <div class="filename">{{ p.image.originalFilename }}</div>
-            </div>
-            <div class="comment" v-html="formatPost(p.comment)"></div>
-          </div>
-        </li>
+        <ChatPost :post="post" v-for="post of posts" :key="post.id"></ChatPost>
       </ul>
       <!-- This is part of a workaround for a bug in Chrome causing it to not correctly recalculate the post container layout when the posting form is resized -->
       <div v-if="triggerPostLayout" class="after-posts"></div>
@@ -426,4 +371,8 @@ onMounted(() => {
   </div>
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+@import "@/styles/chat.scss";
+@import "@/styles/chat-dark.scss";
+@import "@/styles/chat-yotsubab.scss";
+</style>

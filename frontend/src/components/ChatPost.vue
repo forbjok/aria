@@ -1,0 +1,71 @@
+<script setup lang="ts">
+import { toRefs } from "vue";
+
+import moment from "moment";
+import * as xssFilters from "xss-filters";
+
+import type { Post } from "@/models";
+
+const props = defineProps<{
+  post: Post;
+}>();
+
+const { post } = toRefs(props);
+
+const toggleImage = (_post: Post): void => {
+  _post.showFullImage = !_post.showFullImage;
+};
+
+const formatTime = (value: string): string => {
+  const now = moment();
+  const time = moment(value);
+
+  if (now.isSame(time, "day")) {
+    // If time is today, omit the date
+    return time.format("HH:mm:ss");
+  } else if (now.isSame(time, "year")) {
+    // If time is not today, but this year, include date without year
+    return time.format("MMM Do, HH:mm:ss");
+  }
+
+  // If time is not this year, include full date with year
+  return time.format("MMM Do YYYY, HH:mm:ss");
+};
+
+const formatPost = (value: string): string => {
+  if (!value) {
+    return value;
+  }
+
+  return xssFilters
+    .inHTMLData(value)
+    .replace(/((^|\n)>.*)/g, '<span class="quote">$1</span>') // Color quotes
+    .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1">$1</a>') // Clickable links
+    .replace(/\n/g, "<br>"); // Convert newlines to HTML line breaks
+};
+</script>
+
+<template>
+  <li class="post">
+    <div class="post-header">
+      <span class="time">{{ formatTime(post.posted) }}</span>
+      <span class="name">{{ post.name }}</span>
+    </div>
+    <div class="post-body">
+      <div v-if="post.image" class="post-image" :class="post.showFullImage ? 'expanded' : ''">
+        <a :href="post.image.url" @click.prevent="toggleImage(post)" target="_blank">
+          <img class="thumbnail" :src="post.image.thumbUrl" :title="post.image.originalFilename" />
+          <img v-if="post.showFullImage" class="expanded-image" :src="post.image.url" />
+        </a>
+        <div class="filename">{{ post.image.originalFilename }}</div>
+      </div>
+      <div class="comment" v-html="formatPost(post.comment)"></div>
+    </div>
+  </li>
+</template>
+
+<style scoped lang="scss">
+@import "@/styles/chat-post.scss";
+@import "@/styles/chat-dark.scss";
+@import "@/styles/chat-yotsubab.scss";
+</style>

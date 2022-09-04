@@ -6,6 +6,7 @@ import io, { Socket } from "socket.io-client";
 import $ from "jquery";
 
 import Chat from "./Chat.vue";
+import ToastChat from "./ToastChat.vue";
 import Player from "./Player.vue";
 import RoomControls from "./RoomControls.vue";
 import { LocalRoomSettingsService } from "@/services/localroomsettingsservice";
@@ -15,8 +16,6 @@ import { LocalRoomAuthService } from "@/services/localroomauthservice";
 
 import type { Content, RoomInfo } from "@/models";
 import { RoomService } from "@/services/room";
-
-import "@/styles/room.scss";
 
 interface PlaybackState {
   time: number;
@@ -50,7 +49,10 @@ const showRoomControls = ref(false);
 const room = ref<HTMLDivElement | null>(null);
 const chatContainer = ref<HTMLDivElement | null>(null);
 const contentArea = ref<HTMLDivElement | null>(null);
+const toastChat = ref<typeof ToastChat | null>(null);
 const player = ref<typeof Player | null>(null);
+
+const chatTheme = ref<string>("dark");
 
 let socket: Socket;
 const content = ref<Content | null>(null);
@@ -285,7 +287,7 @@ const broadcastPlaybackState = async () => {
 <template>
   <div ref="room" class="room">
     <div ref="chatContainer" class="chat-container">
-      <Chat :room="name"></Chat>
+      <Chat :room="name" @post="toastChat?.post($event)" @themechange="chatTheme = $event"></Chat>
     </div>
     <div ref="contentArea" class="content-area">
       <div class="usercontrols-activationzone">
@@ -301,6 +303,9 @@ const broadcastPlaybackState = async () => {
             ><span class="fa fa-wrench"></span
           ></a>
         </div>
+      </div>
+      <div class="toast-chat-container">
+        <ToastChat ref="toastChat" :theme="chatTheme"> </ToastChat>
       </div>
       <Player
         ref="player"
@@ -319,4 +324,6 @@ const broadcastPlaybackState = async () => {
   </div>
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+@import "@/styles/room.scss";
+</style>
