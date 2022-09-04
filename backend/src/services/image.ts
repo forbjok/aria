@@ -30,7 +30,7 @@ export class ImageService {
     private readonly outputPath,
     private readonly imageSize: number = 500,
     private readonly thumbSize: number = 100,
-    private readonly thumbBackground: string = "#D6DAF0"
+    private readonly thumbBackground?: string
   ) {
     this.imagePath = path.join(this.outputPath, "i");
     this.thumbPath = path.join(this.outputPath, "t");
@@ -57,7 +57,6 @@ export class ImageService {
           width: this.imageSize,
           height: this.imageSize,
           quality: 80,
-          background: this.thumbBackground,
           onlyDownscale: true,
         });
       }
@@ -105,10 +104,9 @@ export class ImageService {
         await easyimg.resize({
           src,
           dst: emotePath,
-          width: this.imageSize,
-          height: this.imageSize,
-          quality: 80,
-          background: this.thumbBackground,
+          width: 350,
+          height: 200,
+          quality: 90,
           onlyDownscale: true,
         });
       }
