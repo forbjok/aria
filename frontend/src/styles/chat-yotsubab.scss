@@ -24,7 +24,7 @@
     min-width: 250px;
 
     .comment {
-      a {
+      :deep(a) {
         color: #34345c;
         text-decoration: none;
       }
