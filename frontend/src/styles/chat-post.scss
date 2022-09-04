@@ -69,11 +69,11 @@
 .comment {
   word-wrap: break-word;
 
+  :deep(.quote) {
+    color: #789922;
+  }
+
   :deep(.emote) {
     max-height: 100px;
   }
-}
-
-.quote {
-  color: #789922;
 }
