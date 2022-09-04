@@ -14,6 +14,10 @@
     overflow-y: scroll;
     overflow-x: hidden;
 
+    // Make scrollbar scroll to new posts automatically
+    // when scrolled to the bottom.
+    scroll-snap-type: y proximity;
+
     ul {
       list-style-type: none;
       padding: 0px;
@@ -25,7 +29,6 @@
 
       // Make scrollbar scroll to new posts automatically
       // when scrolled to the bottom.
-      scroll-snap-type: y proximity;
       li:last-child {
         scroll-snap-align: end;
       }
