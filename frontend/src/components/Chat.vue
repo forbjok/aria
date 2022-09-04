@@ -34,7 +34,7 @@ interface NewPost {
 
 const settings: LocalRoomSettingsService | undefined = inject("settings");
 
-const postContainer = ref<HTMLUListElement | null>(null);
+const postContainer = ref<HTMLDivElement | null>(null);
 const postForm = ref<HTMLFormElement | null>(null);
 
 const posts = reactive<Post[]>([]);
@@ -260,10 +260,12 @@ onMounted(() => {
 
 <template>
   <div class="chat" :class="[`theme-${theme}`]">
-    <ul ref="postContainer" class="post-container">
-      <ChatPost :post="post" v-for="post of posts" :key="post.id"></ChatPost>
-      <li class="bottom-spacer"></li>
-    </ul>
+    <div ref="postContainer" class="post-container">
+      <ul>
+        <ChatPost :post="post" v-for="post of posts" :key="post.id"></ChatPost>
+        <li class="bottom-spacer"></li>
+      </ul>
+    </div>
 
     <div ref="chatControls" class="chatcontrols">
       <form ref="postForm" @submit.prevent="submitPost()">
