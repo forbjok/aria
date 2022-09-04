@@ -1,6 +1,6 @@
 import { Client, QueryResultRow } from "pg";
 import { migrate } from "postgres-migrations";
-import { Content, IAriaStore, Post, RoomInfo } from ".";
+import { Content, Emote, IAriaStore, Post, RoomInfo } from ".";
 import { generatePassword } from "../util/passwordgen";
 
 interface RoomModel {
@@ -187,6 +187,28 @@ export class PgAriaStore implements IAriaStore {
       postedAt: r.created_at,
       ip: r.ip,
     };
+  }
+
+  async getEmotes(roomName: string): Promise<Emote[]> {
+    const sql = "SELECT e.name, e.hash, e.ext FROM emote AS e JOIN room AS r ON r.id = e.room_id WHERE r.name = $1;";
+
+    const emotes = await this.queryRows<Emote>(sql, [roomName]);
+
+    return emotes;
+  }
+
+  async createEmote(roomName: string, emote: Emote): Promise<Emote | null> {
+    // Create emote
+    const rows = await this.queryRows<Emote>(
+      "SELECT * FROM create_emote($1, jsonb_populate_record(NULL::new_emote, $2));",
+      [roomName, emote]
+    );
+
+    if (!rows || rows.length === 0) {
+      return null;
+    }
+
+    return rows[0];
   }
 
   async setContent(roomName: string, content: Content): Promise<number> {

@@ -9,6 +9,7 @@ import { PgAriaStore } from "./store/postgres";
 import { ChatServer } from "./modules/chat/server";
 import { RoomServer } from "./modules/room/server";
 import { ImageService } from "./services/image";
+import { expressjwt } from "express-jwt";
 
 async function main(): Promise<void> {
   // Default configuration
@@ -26,6 +27,11 @@ async function main(): Promise<void> {
   const server = http.createServer(app);
   const io = new socketio.Server(server, { path: "/aria-ws" });
 
+  const auth = expressjwt({
+    secret: "sekrit",
+    algorithms: ["HS256"],
+  });
+
   // Set up Express app
   app.set("port", config.port);
   app.enable("trust proxy"); // Required for req.ip to work correctly behind a proxy
@@ -40,12 +46,12 @@ async function main(): Promise<void> {
   const imageService = new ImageService(config.filesPath);
 
   // Set up room server
-  new RoomServer(app, io, store, {
+  new RoomServer(app, auth, io, store, {
     baseUrl: "/api/r",
   });
 
   // Set up chat server
-  new ChatServer(app, io, store, imageService, {
+  new ChatServer(app, auth, io, store, imageService, {
     baseUrl: "/api/chat",
     tempPath: config.tempPath,
     imagesUrl: filesUrl,

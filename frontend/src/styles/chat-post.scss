@@ -68,6 +68,10 @@
 
 .comment {
   word-wrap: break-word;
+
+  :deep(.emote) {
+    max-height: 100px;
+  }
 }
 
 .quote {

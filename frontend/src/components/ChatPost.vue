@@ -2,7 +2,6 @@
 import { toRefs } from "vue";
 
 import moment from "moment";
-import * as xssFilters from "xss-filters";
 
 import type { Post } from "@/models";
 
@@ -31,18 +30,6 @@ const formatTime = (value: string): string => {
   // If time is not this year, include full date with year
   return time.format("MMM Do YYYY, HH:mm:ss");
 };
-
-const formatPost = (value: string): string => {
-  if (!value) {
-    return value;
-  }
-
-  return xssFilters
-    .inHTMLData(value)
-    .replace(/((^|\n)>.*)/g, '<span class="quote">$1</span>') // Color quotes
-    .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1">$1</a>') // Clickable links
-    .replace(/\n/g, "<br>"); // Convert newlines to HTML line breaks
-};
 </script>
 
 <template>
@@ -59,7 +46,7 @@ const formatPost = (value: string): string => {
         </a>
         <div class="filename">{{ post.image.originalFilename }}</div>
       </div>
-      <div class="comment" v-html="formatPost(post.comment)"></div>
+      <div class="comment" v-html="post.comment"></div>
     </div>
   </li>
 </template>

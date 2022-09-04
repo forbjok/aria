@@ -4,15 +4,27 @@ import * as path from "path";
 import * as blake3 from "blake3";
 import * as easyimg from "easyimage";
 
-export interface ProcessImageResult {
+export interface ProcessPostImageResult {
   hash: string;
   imageExt: string;
   thumbExt: string;
 }
 
+export interface ProcessEmoteImageResult {
+  hash: string;
+  ext: string;
+}
+
+interface ProcessImageResult {
+  hash: string;
+  ext: string;
+  preserveOriginal: boolean;
+}
+
 export class ImageService {
   private readonly imagePath: string;
   private readonly thumbPath: string;
+  private readonly emotePath: string;
 
   constructor(
     private readonly outputPath,
@@ -22,20 +34,12 @@ export class ImageService {
   ) {
     this.imagePath = path.join(this.outputPath, "i");
     this.thumbPath = path.join(this.outputPath, "t");
+    this.emotePath = path.join(this.outputPath, "e");
   }
 
-  public async processImage(src: string): Promise<ProcessImageResult> {
+  public async processPostImage(src: string): Promise<ProcessPostImageResult> {
     // Calculate hash of the original file
-    const hash = await hashFile(src);
-
-    const src_ext = path.extname(src).substring(1);
-
-    let ext = "webp";
-    let preserveOriginal = false;
-    if (src_ext === "gif") {
-      ext = "gif";
-      preserveOriginal = true;
-    }
+    const { hash, ext, preserveOriginal } = await this.processImage(src);
 
     const imageFilename = `${hash}.${ext}`;
     const thumbFilename = `${hash}.${ext}`;
@@ -82,6 +86,57 @@ export class ImageService {
       hash,
       imageExt: ext,
       thumbExt: ext,
+    };
+  }
+
+  public async processEmoteImage(src: string): Promise<ProcessEmoteImageResult> {
+    // Calculate hash of the original file
+    const { hash, ext, preserveOriginal } = await this.processImage(src);
+
+    const emoteFilename = `${hash}.${ext}`;
+
+    const emotePath = path.join(this.emotePath, emoteFilename);
+
+    // Generate image if it does not exist
+    if (!fs.existsSync(emotePath)) {
+      if (preserveOriginal) {
+        await copyFile(src, emotePath);
+      } else {
+        await easyimg.resize({
+          src,
+          dst: emotePath,
+          width: this.imageSize,
+          height: this.imageSize,
+          quality: 80,
+          background: this.thumbBackground,
+          onlyDownscale: true,
+        });
+      }
+    }
+
+    return {
+      hash,
+      ext,
+    };
+  }
+
+  private async processImage(src: string): Promise<ProcessImageResult> {
+    // Calculate hash of the original file
+    const hash = await hashFile(src);
+
+    const src_ext = path.extname(src).substring(1);
+
+    let ext = "webp";
+    let preserveOriginal = false;
+    if (src_ext === "gif") {
+      ext = "gif";
+      preserveOriginal = true;
+    }
+
+    return {
+      hash,
+      ext,
+      preserveOriginal,
     };
   }
 }

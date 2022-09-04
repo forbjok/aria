@@ -9,6 +9,8 @@ export interface IAriaStore {
   createRoom: (roomName: string) => Promise<RoomInfo | null>;
   getPosts: (roomName: string, options: QueryOptions) => Promise<Post[]>;
   addPost: (roomName: string, post: Post) => Promise<Post | null>;
+  getEmotes: (roomName: string) => Promise<Emote[]>;
+  createEmote: (roomName: string, emote: Emote) => Promise<Emote | null>;
   setContent: (roomName: string, content: Content) => Promise<number>;
 }
 
@@ -38,4 +40,10 @@ export interface Content {
   type: string;
   url: string;
   meta: any;
+}
+
+export interface Emote {
+  name: string;
+  hash: string;
+  ext: string;
 }

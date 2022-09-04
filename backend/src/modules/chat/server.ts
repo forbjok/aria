@@ -4,12 +4,12 @@ import * as express from "express";
 import * as multer from "multer";
 import * as moment from "moment";
 import * as socketio from "socket.io";
+import * as xssFilters from "xss-filters";
 
 import { PostViewModel } from "./viewmodels";
-import { IAriaStore, Post, RoomInfo } from "../../store";
-import { ImageService, ProcessImageResult } from "../../services/image";
-
-type OnPostFn = (post: Post) => void;
+import { Emote, IAriaStore, Post } from "../../store";
+import { ImageService, ProcessEmoteImageResult, ProcessPostImageResult } from "../../services/image";
+import { RequestHandler } from "express";
 
 const noImageFile = <multer.File>{};
 
@@ -19,31 +19,76 @@ const extensionsByMimetype = {
   "image/gif": ".gif",
 };
 
+interface PreparedEmote {
+  name: string;
+  url: string;
+}
+
 // Get file extension based on mimetype
 function getExtensionByMimetype(mimetype) {
   return extensionsByMimetype[mimetype] || "";
 }
 
-export interface ChatRoomOptions {
-  posts: Post[];
-  onPost?: OnPostFn;
-}
-
 class ChatRoom {
-  private readonly posts: Post[] = [];
-  private readonly onPost?: OnPostFn;
+  private posts: Post[];
+  private emotes: PreparedEmote[];
 
-  constructor(public name: string, options: ChatRoomOptions) {
-    Object.assign(this, options);
+  constructor(
+    public readonly name: string,
+    private readonly chatServer: ChatServer,
+    private readonly io: socketio.Namespace,
+    private readonly store: IAriaStore
+  ) {}
+
+  public async initialize() {
+    // Retrieve recent posts from database
+    this.posts = await this.store.getPosts(this.name, { limit: 50 });
+
+    // Retrieve emotes for this room
+    const emotes = await this.store.getEmotes(this.name);
+    this.emotes = this.chatServer.prepareEmotes(emotes);
   }
 
-  public getRecentPosts(): Post[] {
-    return this.posts.slice(-50);
+  public async join(socket: socketio.Socket) {
+    await socket.join(this.name);
+
+    // Send recent posts
+    const recentPosts = this.posts.slice(-50);
+    socket.emit(
+      "oldposts",
+      recentPosts.map((p) => this.chatServer.postToViewModel(p))
+    );
   }
 
-  public post(post: Post) {
+  public async leave(socket: socketio.Socket) {
+    await socket.leave(this.name);
+  }
+
+  public async post(post: Post) {
+    const addedPost = await this.store.addPost(this.name, post);
+    if (!addedPost) return;
+
     this.posts.push(post);
-    if (this.onPost) this.onPost(post);
+    this.io.to(this.name).emit("post", this.chatServer.postToViewModel(post));
+  }
+
+  public replaceEmotes(s: string): string {
+    for (const e of this.emotes) {
+      const emoteText = `!${e.name}`;
+      s = s.replace(emoteText, `<img class="emote" src="${e.url}" title="${emoteText}">`);
+    }
+
+    return s;
+  }
+
+  public updateEmote(emote: Emote) {
+    const newEmote = this.chatServer.prepareEmote(emote);
+    const existingEmote = this.emotes.find((e) => e.name === emote.name);
+    if (existingEmote) {
+      existingEmote.url = newEmote.url;
+    } else {
+      this.emotes.push(newEmote);
+    }
   }
 }
 
@@ -65,6 +110,7 @@ export class ChatServer {
 
   constructor(
     private readonly app: express.Express,
+    private readonly auth: RequestHandler,
     io: socketio.Server,
     private readonly store: IAriaStore,
     private readonly imageService: ImageService,
@@ -92,27 +138,11 @@ export class ChatServer {
       return null;
     }
 
-    return await this.createAndReturnRoom(roomInfo);
-  }
-
-  private async createAndReturnRoom(roomInfo: RoomInfo): Promise<ChatRoom> {
-    const name = roomInfo.name;
-    const io = this.io;
-    const store = this.store;
-
-    // Retrieve recent posts from database
-    const posts = await store.getPosts(name, { limit: 50 });
-    const room = new ChatRoom(name, {
-      posts: posts,
-      onPost: async (post) => {
-        const addedPost = await store.addPost(name, post);
-        if (!addedPost) return;
-
-        io.to(name).emit("post", this.postToViewModel(post));
-      },
-    });
+    const room = new ChatRoom(name, this, this.io, this.store);
+    await room.initialize();
 
     this.rooms[name] = room;
+
     return room;
   }
 
@@ -166,6 +196,13 @@ export class ChatServer {
 
         console.log(`Got post to room ${roomName}.`);
 
+        const room = await this.getRoom(roomName);
+        if (!room) {
+          console.log(`Room ${roomName} not found.`);
+          res.sendStatus(404);
+          return;
+        }
+
         const post: Post = {
           id: 0,
           postedAt: moment().utc().toISOString(),
@@ -173,6 +210,16 @@ export class ChatServer {
           comment: req.body.comment,
           ip: req.ip,
         };
+
+        if (post.comment) {
+          post.comment = xssFilters
+            .inHTMLData(post.comment)
+            .replace(/((^|\n)>.*)/g, '<span class="quote">$1</span>') // Color quotes
+            .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1">$1</a>') // Clickable links
+            .replace(/\n/g, "<br>"); // Convert newlines to HTML line breaks
+
+          post.comment = room.replaceEmotes(post.comment);
+        }
 
         const imageFile = (req as multer.File).file;
 
@@ -182,9 +229,9 @@ export class ChatServer {
             return;
           }
 
-          let result: ProcessImageResult;
+          let result: ProcessPostImageResult;
           try {
-            result = await this.imageService.processImage(imageFile.path);
+            result = await this.imageService.processPostImage(imageFile.path);
           } finally {
             fs.unlink(imageFile.path, () => {});
           }
@@ -208,6 +255,57 @@ export class ChatServer {
         res.status(500).send(err.message);
       }
     });
+
+    app.post(`${baseUrl}/:room/emote`, this.auth, upload.single("image"), async (req, res) => {
+      try {
+        const roomName = req.params.room;
+
+        console.log(`Creating emote for room ${roomName}.`);
+
+        const room = await this.getRoom(roomName);
+        if (!room) {
+          console.log(`Room ${roomName} not found.`);
+          res.sendStatus(404);
+          return;
+        }
+
+        const imageFile = (req as multer.File).file;
+
+        if (imageFile) {
+          if (imageFile === noImageFile) {
+            res.status(415).send("Unsupported image format");
+            return;
+          }
+
+          let result: ProcessEmoteImageResult;
+          try {
+            result = await this.imageService.processEmoteImage(imageFile.path);
+          } finally {
+            fs.unlink(imageFile.path, () => {});
+          }
+
+          const { hash, ext } = result;
+
+          const emote: Emote = {
+            name: req.body.name,
+            hash,
+            ext,
+          };
+
+          // Create emote in database
+          this.store.createEmote(roomName, emote);
+
+          // Add or update emote in existing room instance
+          room.updateEmote(emote);
+
+          res.send();
+        } else {
+          res.status(400).send("No image uploaded");
+        }
+      } catch (err) {
+        res.status(500).send(err.message);
+      }
+    });
   }
 
   private setupSocket() {
@@ -217,37 +315,34 @@ export class ChatServer {
       const ip = socket.handshake.address;
       console.log(`${ip}: Chat connected!`);
 
-      const roomsJoined = {};
+      let room: ChatRoom | null = null;
 
       socket.on("join", async (roomName) => {
-        if (roomName in roomsJoined) {
+        // Already in this room, do nothing.
+        if (roomName === room?.name) {
           return;
         }
 
-        console.log(`${ip}: Joining chatroom ${roomName}!`);
+        // Already in a different room, leave it.
+        if (room != null) {
+          await room.leave(socket);
+        }
 
-        roomsJoined[roomName] = true;
-        const room = await this.getRoom(roomName);
+        room = await this.getRoom(roomName);
 
-        socket.join(roomName);
-
-        if (room == null) {
-          // Room did not exist, return without sending content
+        // Room does not exist, do nothing.
+        if (!room) {
           return;
         }
 
-        console.log(`${ip}: Sending recent posts.`);
-        const recentPosts = room.getRecentPosts();
-
-        socket.emit(
-          "oldposts",
-          recentPosts.map((p) => this.postToViewModel(p))
-        );
+        // Join new room
+        console.log(`${ip}: Joining room ${roomName}!`);
+        await room.join(socket);
       });
 
       socket.on("leave", (roomName) => {
         console.log(`${ip}: Leaving chatroom ${roomName}!`);
-        socket.leave(roomName);
+        room?.leave(socket);
       });
 
       socket.on("disconnect", () => {
@@ -257,7 +352,7 @@ export class ChatServer {
   }
 
   // Create a post view-model (for websocket use) from an internal post object
-  private postToViewModel(post: Post): PostViewModel {
+  public postToViewModel(post: Post): PostViewModel {
     const vm: PostViewModel = {
       posted: post.postedAt,
       name: post.name || "Anonymous",
@@ -277,5 +372,13 @@ export class ChatServer {
     }
 
     return vm;
+  }
+
+  public prepareEmote(emote: Emote): PreparedEmote {
+    return { name: emote.name, url: `${this.imagesUrl}/e/${emote.hash}.${emote.ext}` };
+  }
+
+  public prepareEmotes(emotes: Emote[]): PreparedEmote[] {
+    return emotes.map((e) => this.prepareEmote(e));
   }
 }

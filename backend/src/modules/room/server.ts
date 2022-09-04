@@ -1,11 +1,11 @@
 import * as bodyParser from "body-parser";
 import * as jwt from "jsonwebtoken";
 import * as express from "express";
-import { expressjwt } from "express-jwt";
 import * as socketio from "socket.io";
 
 import { Content, IAriaStore, RoomInfo } from "../../store";
 import { PlaybackState } from "./models";
+import { RequestHandler } from "express";
 
 interface RoomOptions {
   password?: string;
@@ -105,6 +105,7 @@ export class RoomServer {
 
   constructor(
     private readonly app: express.Express,
+    private readonly auth: RequestHandler,
     io: socketio.Server,
     private readonly store: IAriaStore,
     options: RoomServerOptions
@@ -158,11 +159,6 @@ export class RoomServer {
   private async setupExpress() {
     const app = this.app;
     const baseUrl = this.baseUrl;
-
-    const jwtmw = expressjwt({
-      secret: "sekrit",
-      algorithms: ["HS256"],
-    });
 
     const jsonBodyParser = bodyParser.json();
 
@@ -226,7 +222,7 @@ export class RoomServer {
       }
     });
 
-    app.post(`${baseUrl}/:room/loggedin`, jwtmw, (req, res) => {
+    app.post(`${baseUrl}/:room/loggedin`, this.auth, (req, res) => {
       res.send();
     });
 
@@ -252,7 +248,7 @@ export class RoomServer {
       }
     });
 
-    app.post(`${baseUrl}/:room/control`, jwtmw, jsonBodyParser, async (req, res) => {
+    app.post(`${baseUrl}/:room/control`, this.auth, jsonBodyParser, async (req, res) => {
       try {
         const roomName = req.params.room;
 
