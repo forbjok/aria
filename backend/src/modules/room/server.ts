@@ -6,6 +6,7 @@ import * as socketio from "socket.io";
 import { Content, IAriaStore, RoomInfo } from "../../store";
 import { PlaybackState } from "./models";
 import { RequestHandler } from "express";
+import { AriaJwt } from "../../auth";
 
 interface RoomOptions {
   password?: string;
@@ -223,6 +224,14 @@ export class RoomServer {
     });
 
     app.post(`${baseUrl}/:room/loggedin`, this.auth, (req, res) => {
+      const auth = (req as any).auth as AriaJwt;
+      const roomName = req.params.room;
+
+      if (auth.room !== roomName) {
+        res.sendStatus(401);
+        return;
+      }
+
       res.send();
     });
 

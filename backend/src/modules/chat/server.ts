@@ -10,6 +10,7 @@ import { PostViewModel } from "./viewmodels";
 import { Emote, IAriaStore, Post } from "../../store";
 import { ImageService, ProcessEmoteImageResult, ProcessPostImageResult } from "../../services/image";
 import { RequestHandler } from "express";
+import { AriaJwt } from "../../auth";
 
 const noImageFile = <multer.File>{};
 
@@ -258,7 +259,13 @@ export class ChatServer {
 
     app.post(`${baseUrl}/:room/emote`, this.auth, upload.single("image"), async (req, res) => {
       try {
+        const auth = (req as any).auth as AriaJwt;
         const roomName = req.params.room;
+
+        if (auth.room !== roomName) {
+          res.sendStatus(401);
+          return;
+        }
 
         console.log(`Creating emote for room ${roomName}.`);
 
