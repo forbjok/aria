@@ -44,12 +44,12 @@ class ChatRoom {
   ) {}
 
   public async initialize() {
-    // Retrieve recent posts from database
-    this.posts = await this.store.getPosts(this.name, { limit: 50 });
-
     // Retrieve emotes for this room
     const emotes = await this.store.getEmotes(this.name);
     this.emotes = this.chatServer.prepareEmotes(emotes);
+
+    // Retrieve recent posts from database
+    this.posts = (await this.store.getPosts(this.name, { limit: 50 })).map((p) => this.processPost(p));
   }
 
   public async join(socket: socketio.Socket) {
@@ -71,16 +71,10 @@ class ChatRoom {
     const addedPost = await this.store.addPost(this.name, post);
     if (!addedPost) return;
 
+    post = this.processPost(post);
+
     this.posts.push(post);
     this.io.to(this.name).emit("post", this.chatServer.postToViewModel(post));
-  }
-
-  public replaceEmotes(s: string): string {
-    for (const e of this.emotes) {
-      s = s.replace(e.regExp, `<img class="emote" src="${e.url}" title="${e.title}">`);
-    }
-
-    return s;
   }
 
   public updateEmote(emote: Emote) {
@@ -91,6 +85,33 @@ class ChatRoom {
     } else {
       this.emotes.push(newEmote);
     }
+  }
+
+  private replaceEmotes(s: string): string {
+    for (const e of this.emotes) {
+      s = s.replace(e.regExp, `<img class="emote" src="${e.url}" title="${e.title}">`);
+    }
+
+    return s;
+  }
+
+  private processComment(s: string): string {
+    s = xssFilters
+      .inHTMLData(s)
+      .replace(/((^|\n)>.*)/g, '<span class="quote">$1</span>') // Color quotes
+      .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1">$1</a>') // Clickable links
+      .replace(/\n/g, "<br>"); // Convert newlines to HTML line breaks
+
+    s = this.replaceEmotes(s);
+
+    return s;
+  }
+
+  private processPost(post: Post): Post {
+    return {
+      ...post,
+      comment: post.comment ? this.processComment(post.comment) : undefined,
+    };
   }
 }
 
@@ -212,16 +233,6 @@ export class ChatServer {
           comment: req.body.comment,
           ip: req.ip,
         };
-
-        if (post.comment) {
-          post.comment = xssFilters
-            .inHTMLData(post.comment)
-            .replace(/((^|\n)>.*)/g, '<span class="quote">$1</span>') // Color quotes
-            .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1">$1</a>') // Clickable links
-            .replace(/\n/g, "<br>"); // Convert newlines to HTML line breaks
-
-          post.comment = room.replaceEmotes(post.comment);
-        }
 
         const imageFile = (req as multer.File).file;
 
