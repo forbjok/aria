@@ -11,28 +11,28 @@ use rocket::{
 
 use aria_models::local as lm;
 
-use crate::server::AriaServer;
+use crate::server::{api::ApiError, AriaServer};
 
 #[derive(Debug, FromForm)]
-pub struct PostRequestModel<'r> {
+pub(super) struct PostRequestModel<'r> {
     pub name: Option<&'r str>,
     pub comment: Option<&'r str>,
     pub image: Option<TempFile<'r>>,
 }
 
 #[derive(Debug, FromForm)]
-pub struct EmoteRequestModel<'r> {
+pub(super) struct EmoteRequestModel<'r> {
     pub name: &'r str,
     pub image: Option<TempFile<'r>>,
 }
 
 #[post("/chat/<room>/post", data = "<req>")]
-pub async fn post(
+pub(super) async fn post(
     server: &State<AriaServer>,
     socket_addr: SocketAddr,
     room: &str,
     mut req: Form<PostRequestModel<'_>>,
-) -> Json<u64> {
+) -> Result<Json<u64>, ApiError> {
     let core = &server.core;
 
     let new_post = lm::NewPost {
@@ -67,13 +67,17 @@ pub async fn post(
         ip: socket_addr.ip(),
     };
 
-    let post = core.create_post(room, new_post).await.unwrap();
+    let post = core.create_post(room, new_post).await?;
 
-    Json(post.id)
+    Ok(Json(post.id))
 }
 
 #[post("/chat/<room>/emote", data = "<req>")]
-pub async fn create_emote(server: &State<AriaServer>, room: &str, mut req: Form<EmoteRequestModel<'_>>) -> Status {
+pub(super) async fn create_emote(
+    server: &State<AriaServer>,
+    room: &str,
+    mut req: Form<EmoteRequestModel<'_>>,
+) -> Result<Status, ApiError> {
     let core = &server.core;
 
     let image = req.image.take().and_then(|f| {
@@ -101,7 +105,7 @@ pub async fn create_emote(server: &State<AriaServer>, room: &str, mut req: Form<
     });
 
     if image.is_none() {
-        return Status::BadRequest;
+        return Ok(Status::BadRequest);
     }
 
     let image = image.unwrap();
@@ -111,7 +115,7 @@ pub async fn create_emote(server: &State<AriaServer>, room: &str, mut req: Form<
         image,
     };
 
-    core.create_emote(room, new_emote).await.unwrap();
+    core.create_emote(room, new_emote).await?;
 
-    Status::Created
+    Ok(Status::Created)
 }

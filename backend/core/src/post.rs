@@ -25,7 +25,7 @@ impl AriaCore {
 
             let original_ext = original_ext
                 .or_else(|| i.content_type.as_ref().and_then(|ct| mime2ext::mime2ext(&ct)))
-                .with_context(|| "Could not get a file extension for image file!")?;
+                .context("Could not determine file extension for image file")?;
 
             let (preserve_original, ext) = if original_ext == "gif" {
                 (true, original_ext)
@@ -74,7 +74,7 @@ impl AriaCore {
             if !thumbnail_path.exists() {
                 if preserve_original {
                     // If preserving original, simply create a hard link to the original file
-                    tokio::fs::hard_link(&original_image_path, &image_path).await?;
+                    tokio::fs::hard_link(&original_image_path, &thumbnail_path).await?;
                 } else {
                     let tn_img = img.thumbnail(100, 100);
                     tn_img.save(&thumbnail_path).context("Saving thumbnail")?;

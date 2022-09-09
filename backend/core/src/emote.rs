@@ -21,7 +21,7 @@ impl AriaCore {
 
         let original_ext = original_ext
             .or_else(|| i.content_type.as_ref().and_then(|ct| mime2ext::mime2ext(&ct)))
-            .with_context(|| "Could not get a file extension for image file!")?;
+            .context("Could not determine file extension for image file")?;
 
         let (preserve_original, ext) = if original_ext == "gif" {
             (true, original_ext)

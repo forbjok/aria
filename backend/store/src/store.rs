@@ -51,7 +51,7 @@ impl AriaStore for PgStore {
         )
         .fetch_all(&self.pool)
         .await
-        .with_context(|| "getting recent posts")?;
+        .context("Error getting recent posts")?;
 
         if posts.is_empty() {
             return Ok(Vec::new());
@@ -67,7 +67,7 @@ impl AriaStore for PgStore {
         let room = sqlx::query_as_unchecked!(dbm::Room, r#"SELECT * FROM get_room_by_name($1);"#, name)
             .fetch_optional(&self.pool)
             .await
-            .with_context(|| "getting room")?;
+            .context("Error getting room")?;
 
         Ok(room)
     }
@@ -76,7 +76,7 @@ impl AriaStore for PgStore {
         let room = sqlx::query_as_unchecked!(dbm::Room, r#"SELECT * FROM create_room($1, $2);"#, name, password)
             .fetch_one(&self.pool)
             .await
-            .with_context(|| "creating room")?;
+            .context("Error creating room")?;
 
         Ok(room)
     }
