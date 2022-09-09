@@ -1,6 +1,8 @@
+import { defineAsyncComponent } from "vue";
 import { createRouter, createWebHistory } from "vue-router";
-import ClaimView from "@/views/ClaimView.vue";
-import RoomView from "@/views/RoomView.vue";
+
+const ClaimView = defineAsyncComponent(() => import("@/views/ClaimView.vue"));
+const RoomView = defineAsyncComponent(() => import("@/views/RoomView.vue"));
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
