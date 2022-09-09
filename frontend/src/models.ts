@@ -11,9 +11,9 @@ export interface Content {
 }
 
 export interface Image {
+  filename: string;
   url: string;
-  thumbUrl: string;
-  originalFilename: string;
+  tn_url: string;
 }
 
 export interface Post {

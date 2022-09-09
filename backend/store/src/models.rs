@@ -1,0 +1,72 @@
+use std::net::IpAddr;
+
+use chrono::{DateTime, Utc};
+
+#[derive(Debug, sqlx::Type)]
+#[sqlx(type_name = "room")]
+pub struct Room {
+    pub id: Option<i32>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
+    pub name: Option<String>,
+    pub claimed_at: Option<DateTime<Utc>>,
+    pub expires_at: Option<DateTime<Utc>>,
+    pub password: Option<String>,
+    pub content: Option<String>,
+}
+
+#[derive(Debug, sqlx::Type)]
+#[sqlx(type_name = "post")]
+pub struct Post {
+    pub id: Option<i64>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
+    pub room_id: Option<i32>,
+    pub name: Option<String>,
+    pub comment: Option<String>,
+    pub ip: Option<IpAddr>,
+}
+
+#[derive(Debug, sqlx::Type)]
+#[sqlx(type_name = "image")]
+pub struct Image {
+    pub id: Option<i64>,
+    pub post_id: Option<i64>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
+    pub filename: Option<String>,
+    pub hash: Option<String>,
+    pub ext: Option<String>,
+    pub tn_ext: Option<String>,
+}
+
+#[derive(Debug)]
+pub struct PostAndImage {
+    pub post: Post,
+    pub image: Option<Image>,
+}
+
+#[derive(Debug, sqlx::Type)]
+#[sqlx(type_name = "new_post")]
+pub struct NewPost {
+    pub name: Option<String>,
+    pub comment: Option<String>,
+    pub ip: Option<IpAddr>,
+}
+
+#[derive(Debug, sqlx::Type)]
+#[sqlx(type_name = "new_image")]
+pub struct NewImage {
+    pub filename: Option<String>,
+    pub hash: Option<String>,
+    pub ext: Option<String>,
+    pub tn_ext: Option<String>,
+}
+
+#[derive(Debug, sqlx::Type)]
+#[sqlx(type_name = "new_emote")]
+pub struct NewEmote {
+    pub name: Option<String>,
+    pub hash: Option<String>,
+    pub ext: Option<String>,
+}

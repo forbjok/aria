@@ -339,8 +339,8 @@ defineExpose({
           <source v-for="source of sources" :key="source.description" :src="source.url" :type="source.mediaType" />
         </video>
       </div>
-      <div v-if="content.type == 'youtube'" class="video-container youtube-player">
-        <div ref="youtubePlayer" class="video-container"></div>
+      <div v-if="content.type == 'youtube'" class="video-container">
+        <div ref="youtubePlayer" class="video-container youtube-player"></div>
       </div>
       <div v-if="content.type == 'google_drive'" class="video-container">
         <video
@@ -361,5 +361,5 @@ defineExpose({
 </template>
 
 <style scoped lang="scss">
-@import "@/styles/player.scss";
+@use "@/styles/player.scss" as *;
 </style>

@@ -66,5 +66,5 @@ onBeforeMount(async () => {
 </template>
 
 <style scoped lang="scss">
-@import "@/styles/claim.scss";
+@use "@/styles/claim.scss" as *;
 </style>

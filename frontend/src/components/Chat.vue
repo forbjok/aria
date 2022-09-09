@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { inject, onMounted, reactive, ref, toRefs } from "vue";
-import io from "socket.io-client";
+import { inject, onMounted, onUnmounted, reactive, ref, toRefs } from "vue";
 import axios from "axios";
 import filesize from "filesize";
 
@@ -10,6 +9,7 @@ import { VERSION } from "@/version";
 import type { LocalRoomSettingsService } from "@/services/localroomsettingsservice";
 
 import type { Post } from "@/models";
+import type { AriaWebSocket, AriaWsListener } from "@/services/websocket";
 
 const props = defineProps<{
   room: string;
@@ -33,6 +33,7 @@ interface NewPost {
 }
 
 const settings: LocalRoomSettingsService | undefined = inject("settings");
+const ws: AriaWebSocket | undefined = inject("ws");
 
 const postContainer = ref<HTMLDivElement | null>(null);
 const postForm = ref<HTMLFormElement | null>(null);
@@ -213,48 +214,42 @@ const postingCooldownText = () => {
   }
 };
 
+let ws_listener: AriaWsListener | undefined;
+
 onMounted(() => {
-  const url = window.location.origin + "/chat";
+  ws_listener = ws?.create_listener();
+  if (ws_listener) {
+    ws_listener.on("post", (post: Post) => {
+      posts.push(post);
+      emit("post", post);
+    });
 
-  // We have to use this window.location.origin + "/namespace" workaround
-  // because of a bug in socket.io causing the port number to be omitted,
-  // that's apparently been there for ages and yet still hasn't been fixed
-  // in a release. Get your shit together, Socket.io people.
-  const socket = io(url, { path: "/aria-ws", autoConnect: false });
-
-  socket.on("connect", () => {
-    socket.emit("join", room.value);
-  });
-
-  socket.on("post", (post: Post) => {
-    posts.push(post);
-    emit("post", post);
-  });
-
-  socket.on("oldposts", (_posts: Post[]) => {
-    let newPosts: Post[];
-
-    if (posts.length > 0) {
-      const lastPost = posts[posts.length - 1];
-      newPosts = _posts.filter((p) => p.id > lastPost.id);
-    } else {
-      newPosts = _posts;
-    }
-
-    posts.push(...newPosts);
-
-    setTimeout(() => {
-      const _postContainer = postContainer.value;
-      if (!_postContainer) {
-        return;
+    ws_listener.on("oldposts", (_posts: Post[]) => {
+      let newPosts: Post[];
+      if (posts.length > 0) {
+        const lastPost = posts[posts.length - 1];
+        newPosts = _posts.filter((p) => p.id > lastPost.id);
+      } else {
+        newPosts = _posts;
       }
 
-      // Scroll to bottom of post container
-      _postContainer.scrollTo(0, _postContainer.scrollHeight);
-    }, 1);
-  });
+      posts.push(...newPosts);
 
-  socket.connect();
+      setTimeout(() => {
+        const _postContainer = postContainer.value;
+        if (!_postContainer) {
+          return;
+        }
+
+        // Scroll to bottom of post container
+        _postContainer.scrollTo(0, _postContainer.scrollHeight);
+      }, 1);
+    });
+  }
+});
+
+onUnmounted(() => {
+  ws_listener?.dispose();
 });
 </script>
 
@@ -361,7 +356,7 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
-@import "@/styles/chat.scss";
-@import "@/styles/chat-dark.scss";
-@import "@/styles/chat-yotsubab.scss";
+@use "@/styles/chat.scss" as *;
+@use "@/styles/chat-dark.scss" as *;
+@use "@/styles/chat-yotsubab.scss" as *;
 </style>

@@ -86,5 +86,5 @@ const setContent = async () => {
 </template>
 
 <style scoped lang="scss">
-@import "@/styles/roomcontrols.scss";
+@use "@/styles/roomcontrols.scss" as *;
 </style>

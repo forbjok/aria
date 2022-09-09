@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import { onBeforeMount, onMounted, provide, ref, toRefs } from "vue";
+import { onBeforeMount, onMounted, onUnmounted, provide, ref, toRefs } from "vue";
 import router from "@/router";
-
-import io, { Socket } from "socket.io-client";
 
 import Chat from "./Chat.vue";
 import ToastChat from "./ToastChat.vue";
@@ -14,11 +12,12 @@ import { LocalRoomAuthService } from "@/services/localroomauthservice";
 
 import type { Content, RoomInfo } from "@/models";
 import { RoomService } from "@/services/room";
+import { AriaWebSocket, AriaWsListener } from "@/services/websocket";
 
 interface PlaybackState {
   time: number;
   rate: number;
-  isPlaying: boolean;
+  is_playing: boolean;
 }
 
 function getTimestamp(): number {
@@ -37,10 +36,14 @@ const localRoomAuthService = new LocalRoomAuthService(roomInfo);
 const localRoomSettingsService = new LocalRoomSettingsService(roomInfo);
 const roomAdminService = new RoomAdminService(roomInfo, localRoomAuthService);
 
+const ws_url = `wss://${window.location.host}/aria-ws`;
+const ws = new AriaWebSocket(ws_url, name.value);
+
 provide("room", roomInfo);
 provide("auth", localRoomAuthService);
 provide("settings", localRoomSettingsService);
 provide("admin", roomAdminService);
+provide("ws", ws);
 
 const showRoomControls = ref(false);
 
@@ -51,62 +54,45 @@ const player = ref<typeof Player | null>(null);
 const chatTheme = ref<string>("dark");
 const theaterMode = ref(false);
 
-let socket: Socket;
 const content = ref<Content | null>(null);
-let latency = 0;
 let isMaster = false;
 let isViewerPaused = false;
 let serverPlaybackStateTimestamp = 0;
 let serverPlaybackState: PlaybackState = {
   time: 0,
   rate: 1,
-  isPlaying: false,
+  is_playing: false,
 };
 
+let ws_listener: AriaWsListener | undefined;
 onMounted(async () => {
   const isAuthorized = await roomAdminService.getLoginStatus();
   isMaster = isAuthorized;
 
-  // We have to use this window.location.origin + "/namespace" workaround
-  // because of a bug in socket.io causing the port number to be omitted,
-  // that's apparently been there for ages and yet still hasn't been fixed
-  // in a release. Get your shit together, Socket.io people.
-  socket = io(window.location.origin + "/room", { path: "/aria-ws", autoConnect: false });
+  ws_listener = ws.create_listener();
 
-  socket.on("connect", () => {
-    socket.emit("join", name.value);
-  });
-
-  socket.on("joined", () => {
+  ws_listener.on("joined", () => {
     if (isMaster) {
-      socket.emit("set-master");
+      ws.send("set-master");
     }
   });
 
-  socket.on("content", (content: Content) => {
-    setContent(content);
+  ws_listener.on("content", async (_content: Content) => {
+    await setContent(_content);
   });
 
-  socket.on("not-master", () => {
+  ws_listener.on("not-master", () => {
     isMaster = false;
   });
 
-  socket.on("playbackstate", (ps: PlaybackState) => {
+  ws_listener.on("playbackstate", async (ps: PlaybackState) => {
     serverPlaybackStateTimestamp = getTimestamp();
-    ps.time += latency * ps.rate;
+    ps.time += ws.latency * ps.rate;
 
-    setPlaybackState(ps);
+    await setPlaybackState(ps);
   });
 
-  socket.on("pong", (ts: number) => {
-    latency = (getTimestamp() - ts) / 2 / 1000;
-  });
-
-  setInterval(() => {
-    socket.emit("ping", getTimestamp());
-  }, 30000);
-
-  socket.connect();
+  ws.connect();
 });
 
 onBeforeMount(async () => {
@@ -115,6 +101,10 @@ onBeforeMount(async () => {
   if (!roomExists) {
     router.push({ name: "claim", params: { room: name.value } });
   }
+});
+
+onUnmounted(() => {
+  ws_listener?.dispose();
 });
 
 const setContent = async (_content: Content | null) => {
@@ -198,7 +188,7 @@ const getPlaybackState = async (): Promise<PlaybackState> => {
   return {
     time: await _player.getTime(),
     rate: await _player.getRate(),
-    isPlaying: _player.getIsPlaying(),
+    is_playing: _player.getIsPlaying(),
   };
 };
 
@@ -216,7 +206,7 @@ const setPlaybackState = async (ps: PlaybackState) => {
 
   const currentPlaybackState = await getPlaybackState();
 
-  if (ps.isPlaying) {
+  if (ps.is_playing) {
     const elapsedSinceTimestamp = ((getTimestamp() - serverPlaybackStateTimestamp) * ps.rate) / 1000;
     const newTime = ps.time + elapsedSinceTimestamp;
 
@@ -226,15 +216,15 @@ const setPlaybackState = async (ps: PlaybackState) => {
 
     const timeDiff = Math.abs(currentPlaybackState.time - newTime);
     if (timeDiff > 2) {
-      console.log("Synchronizing to server time.");
+      console.log("Synchronizing to server time.", timeDiff);
       _player.setTime(newTime);
     }
 
-    if (!currentPlaybackState.isPlaying) {
+    if (!currentPlaybackState.is_playing) {
       _player.setTime(newTime);
       _player.play();
     }
-  } else if (!ps.isPlaying && currentPlaybackState.isPlaying) {
+  } else if (!ps.is_playing && currentPlaybackState.is_playing) {
     _player.pause();
   }
 };
@@ -243,9 +233,9 @@ const broadcastPlaybackState = async () => {
   if (!isMaster) return;
 
   const ps = (await getPlaybackState()) || serverPlaybackState;
-  ps.time += latency * ps.rate;
+  ps.time += ws.latency * ps.rate;
 
-  socket.emit("master-playbackstate", ps);
+  ws.send("master-playbackstate", ps);
 };
 
 const onKeydown = (event: KeyboardEvent) => {
@@ -296,5 +286,5 @@ const onKeydown = (event: KeyboardEvent) => {
 </template>
 
 <style scoped lang="scss">
-@import "@/styles/room.scss";
+@use "@/styles/room.scss" as *;
 </style>

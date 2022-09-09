@@ -35,7 +35,7 @@ defineExpose({
 </template>
 
 <style scoped lang="scss">
-@import "@/styles/toast-chat.scss";
-@import "@/styles/chat-dark.scss";
-@import "@/styles/chat-yotsubab.scss";
+@use "@/styles/toast-chat.scss" as *;
+@use "@/styles/chat-dark.scss" as *;
+@use "@/styles/chat-yotsubab.scss" as *;
 </style>

@@ -1,0 +1,16 @@
+[workspace]
+members = [
+  "core",
+  "models",
+  "server",
+  "shared",
+  "store",
+]
+
+default-members = [
+  "core",
+  "models",
+  "server",
+  "shared",
+  "store",
+]

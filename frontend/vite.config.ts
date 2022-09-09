@@ -16,13 +16,13 @@ export default defineConfig({
     https: true,
     proxy: {
       "/api": {
-        target: "http://localhost:5000",
+        target: "http://localhost:3000",
       },
       "/f": {
-        target: "http://localhost:5000",
+        target: "http://localhost:3000",
       },
       "/aria-ws": {
-        target: "http://localhost:5000/aria-ws",
+        target: "ws://localhost:3001",
         ws: true,
       },
     },

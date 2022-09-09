@@ -36,15 +36,15 @@ const formatTime = (value: string): string => {
   <li class="post">
     <div class="post-header">
       <span class="time">{{ formatTime(post.posted) }}</span>
-      <span class="name">{{ post.name }}</span>
+      <span class="name">{{ post.name || "Anonymous" }}</span>
     </div>
     <div class="post-body">
       <div v-if="post.image" class="post-image" :class="post.showFullImage ? 'expanded' : ''">
         <a :href="post.image.url" @click.prevent="toggleImage(post)" target="_blank">
-          <img class="thumbnail" :src="post.image.thumbUrl" :title="post.image.originalFilename" />
+          <img class="thumbnail" :src="post.image.tn_url" :title="post.image.filename" />
           <img v-if="post.showFullImage" class="expanded-image" :src="post.image.url" />
         </a>
-        <div class="filename">{{ post.image.originalFilename }}</div>
+        <div class="filename">{{ post.image.filename }}</div>
       </div>
       <div class="comment" v-html="post.comment"></div>
     </div>
@@ -52,7 +52,7 @@ const formatTime = (value: string): string => {
 </template>
 
 <style scoped lang="scss">
-@import "@/styles/chat-post.scss";
-@import "@/styles/chat-dark.scss";
-@import "@/styles/chat-yotsubab.scss";
+@use "@/styles/chat-post.scss" as *;
+@use "@/styles/chat-dark.scss" as *;
+@use "@/styles/chat-yotsubab.scss" as *;
 </style>
