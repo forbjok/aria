@@ -36,7 +36,9 @@ const localRoomAuthService = new LocalRoomAuthService(roomInfo);
 const localRoomSettingsService = new LocalRoomSettingsService(roomInfo);
 const roomAdminService = new RoomAdminService(roomInfo, localRoomAuthService);
 
-const ws_url = `wss://${window.location.host}/aria-ws`;
+const ws_protocol = window.location.protocol === "https:" ? "wss" : "ws";
+
+const ws_url = `${ws_protocol}://${window.location.host}/aria-ws`;
 const ws = new AriaWebSocket(ws_url, name.value);
 
 provide("room", roomInfo);
