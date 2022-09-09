@@ -1,0 +1,440 @@
+{
+  "db": "PostgreSQL",
+  "2db027c980cfa556f2b3210a30999d46c48c681bff0f2146fa8364c10d5bb54e": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 1,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "updated_at",
+          "ordinal": 2,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "name",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "claimed_at",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "expires_at",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "password",
+          "ordinal": 6,
+          "type_info": "Text"
+        },
+        {
+          "name": "content",
+          "ordinal": 7,
+          "type_info": "Json"
+        }
+      ],
+      "nullable": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "SELECT * FROM create_room($1, $2);"
+  },
+  "34a51b29deb66ef2f8560ca687981acc90677aabca71cb89ecdb241556f8d705": {
+    "describe": {
+      "columns": [
+        {
+          "name": "set_room_content",
+          "ordinal": 0,
+          "type_info": "Void"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Json"
+        ]
+      }
+    },
+    "query": "SELECT set_room_content($1, $2::json);"
+  },
+  "92deeadd8d14c65d7a120860aefe18d423a5b0ec0f3ae45a1bc57f59de88d776": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          {
+            "Custom": {
+              "kind": {
+                "Composite": [
+                  [
+                    "name",
+                    "Text"
+                  ],
+                  [
+                    "hash",
+                    "Text"
+                  ],
+                  [
+                    "ext",
+                    "Text"
+                  ]
+                ]
+              },
+              "name": "new_emote"
+            }
+          }
+        ]
+      }
+    },
+    "query": "SELECT id FROM create_emote($1, $2);"
+  },
+  "b07d2eb0ce0e30d9bd61bd2eb659f89d473270fcb15fc11df2be642d661b9b7a": {
+    "describe": {
+      "columns": [
+        {
+          "name": "post",
+          "ordinal": 0,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Composite": [
+                  [
+                    "id",
+                    "Int8"
+                  ],
+                  [
+                    "created_at",
+                    "Timestamptz"
+                  ],
+                  [
+                    "updated_at",
+                    "Timestamptz"
+                  ],
+                  [
+                    "room_id",
+                    "Int4"
+                  ],
+                  [
+                    "name",
+                    "Text"
+                  ],
+                  [
+                    "comment",
+                    "Text"
+                  ],
+                  [
+                    "ip",
+                    "Inet"
+                  ]
+                ]
+              },
+              "name": "post"
+            }
+          }
+        },
+        {
+          "name": "image",
+          "ordinal": 1,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Composite": [
+                  [
+                    "id",
+                    "Int8"
+                  ],
+                  [
+                    "post_id",
+                    "Int8"
+                  ],
+                  [
+                    "created_at",
+                    "Timestamptz"
+                  ],
+                  [
+                    "updated_at",
+                    "Timestamptz"
+                  ],
+                  [
+                    "filename",
+                    "Text"
+                  ],
+                  [
+                    "hash",
+                    "Text"
+                  ],
+                  [
+                    "ext",
+                    "Text"
+                  ],
+                  [
+                    "tn_ext",
+                    "Text"
+                  ]
+                ]
+              },
+              "name": "image"
+            }
+          }
+        }
+      ],
+      "nullable": [
+        null,
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "SELECT post, image FROM get_posts($1) ORDER BY (post).id DESC LIMIT 50;"
+  },
+  "b97575fe6c9b82d4f2d222c8649a51f6be5c1f3b88f4298d48517ee4ba11f7b1": {
+    "describe": {
+      "columns": [
+        {
+          "name": "post",
+          "ordinal": 0,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Composite": [
+                  [
+                    "id",
+                    "Int8"
+                  ],
+                  [
+                    "created_at",
+                    "Timestamptz"
+                  ],
+                  [
+                    "updated_at",
+                    "Timestamptz"
+                  ],
+                  [
+                    "room_id",
+                    "Int4"
+                  ],
+                  [
+                    "name",
+                    "Text"
+                  ],
+                  [
+                    "comment",
+                    "Text"
+                  ],
+                  [
+                    "ip",
+                    "Inet"
+                  ]
+                ]
+              },
+              "name": "post"
+            }
+          }
+        },
+        {
+          "name": "image",
+          "ordinal": 1,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Composite": [
+                  [
+                    "id",
+                    "Int8"
+                  ],
+                  [
+                    "post_id",
+                    "Int8"
+                  ],
+                  [
+                    "created_at",
+                    "Timestamptz"
+                  ],
+                  [
+                    "updated_at",
+                    "Timestamptz"
+                  ],
+                  [
+                    "filename",
+                    "Text"
+                  ],
+                  [
+                    "hash",
+                    "Text"
+                  ],
+                  [
+                    "ext",
+                    "Text"
+                  ],
+                  [
+                    "tn_ext",
+                    "Text"
+                  ]
+                ]
+              },
+              "name": "image"
+            }
+          }
+        }
+      ],
+      "nullable": [
+        null,
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          {
+            "Custom": {
+              "kind": {
+                "Composite": [
+                  [
+                    "name",
+                    "Text"
+                  ],
+                  [
+                    "comment",
+                    "Text"
+                  ],
+                  [
+                    "ip",
+                    "Inet"
+                  ]
+                ]
+              },
+              "name": "new_post"
+            }
+          },
+          {
+            "Custom": {
+              "kind": {
+                "Composite": [
+                  [
+                    "filename",
+                    "Text"
+                  ],
+                  [
+                    "hash",
+                    "Text"
+                  ],
+                  [
+                    "ext",
+                    "Text"
+                  ],
+                  [
+                    "tn_ext",
+                    "Text"
+                  ]
+                ]
+              },
+              "name": "new_image"
+            }
+          }
+        ]
+      }
+    },
+    "query": "SELECT * FROM create_post($1, $2, $3);"
+  },
+  "c36d8e883fba2d999110c91ef7ffe35e865ffc7dd3bc412d1a2b1819b34fa551": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 1,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "updated_at",
+          "ordinal": 2,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "name",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "claimed_at",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "expires_at",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "password",
+          "ordinal": 6,
+          "type_info": "Text"
+        },
+        {
+          "name": "content",
+          "ordinal": 7,
+          "type_info": "Json"
+        }
+      ],
+      "nullable": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "SELECT * FROM get_room_by_name($1);"
+  }
+}
