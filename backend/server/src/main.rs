@@ -28,7 +28,7 @@ async fn main() -> Result<(), anyhow::Error> {
 
     let (notify_tx, notify_rx) = futures_channel::mpsc::unbounded();
 
-    let core = Arc::new(AriaCore::new(notify_tx));
+    let core = Arc::new(AriaCore::new(notify_tx)?);
 
     let server = AriaServer::new(core.clone());
 

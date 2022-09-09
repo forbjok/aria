@@ -1,5 +1,5 @@
-use std::env;
 use std::path::PathBuf;
+use std::{env, fs};
 
 use aria_models::local as lm;
 use aria_store::PgStore;
@@ -31,7 +31,7 @@ pub struct AriaCore {
 }
 
 impl AriaCore {
-    pub fn new(notify_tx: UnboundedSender<Notification>) -> Self {
+    pub fn new(notify_tx: UnboundedSender<Notification>) -> Result<Self, anyhow::Error> {
         let files_path = env::var("FILES_PATH")
             .ok()
             .map(PathBuf::from)
@@ -46,11 +46,18 @@ impl AriaCore {
         let public_thumbnail_path = public_path.join("t");
         let public_emote_path = public_path.join("e");
 
+        // Ensure that all necessary directories exist
+        fs::create_dir_all(&original_image_path)?;
+        fs::create_dir_all(&original_emote_path)?;
+        fs::create_dir_all(&public_image_path)?;
+        fs::create_dir_all(&public_thumbnail_path)?;
+        fs::create_dir_all(&public_emote_path)?;
+
         let store = PgStore::new(
             &env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://aria:aria@localhost/aria".to_owned()),
         );
 
-        Self {
+        Ok(Self {
             //files_path,
             //original_path,
             original_image_path,
@@ -61,6 +68,6 @@ impl AriaCore {
             public_emote_path,
             store,
             notify_tx,
-        }
+        })
     }
 }
