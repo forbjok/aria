@@ -1,5 +1,6 @@
 use anyhow::Context;
 use chrono::{DateTime, Utc};
+use tracing::error;
 
 use aria_core::AriaCore;
 use aria_models::api as am;
@@ -14,7 +15,7 @@ struct Member {
 
 pub(super) struct Room {
     members: Vec<Member>,
-    posts: Vec<lm::Post>,
+    posts: Vec<am::Post>,
     master: ConnectionId,
     content: Option<am::Content>,
     playback_state_timestamp: DateTime<Utc>,
@@ -29,11 +30,14 @@ impl Room {
             .context("Getting room")?
             .with_context(|| format!("Room not found: {name}"))?;
 
-        let recent_posts = core.get_recent_posts(name).await.context("Retting recent posts")?;
+        let recent_posts = core
+            .get_recent_posts(name)
+            .await
+            .context("Error getting recent posts")?;
 
         Ok(Self {
             members: Vec::new(),
-            posts: recent_posts,
+            posts: recent_posts.iter().map(am::Post::from).collect(),
             master: 0,
             content: room.content,
             playback_state_timestamp: Utc::now(),
@@ -61,7 +65,6 @@ impl Room {
         let posts_len = self.posts.len();
 
         let posts = &self.posts[posts_len - 50.min(posts_len)..];
-        let posts: Vec<_> = posts.iter().map(am::Post::from).collect();
 
         send(tx, "oldposts", posts)?;
 
@@ -69,11 +72,11 @@ impl Room {
     }
 
     pub fn post(&mut self, post: lm::Post) -> Result<(), anyhow::Error> {
-        let post_am = am::Post::from(&post);
-        self.posts.push(post);
+        let post = am::Post::from(&post);
+        self.posts.push(post.clone());
 
         for m in self.members.iter() {
-            send(&m.tx, "post", &post_am)?;
+            send(&m.tx, "post", &post).map_err(|err| error!("{err:?}")).ok();
         }
 
         Ok(())
@@ -83,8 +86,9 @@ impl Room {
         self.content = Some(content.clone());
 
         for m in self.members.iter() {
-            send(&m.tx, "content", content)?;
+            send(&m.tx, "content", content).map_err(|err| error!("{err:?}")).ok();
         }
+
         Ok(())
     }
 
@@ -122,7 +126,7 @@ impl Room {
         let ps = self.get_playback_state();
 
         for m in self.members.iter() {
-            send(&m.tx, "playbackstate", &ps)?;
+            send(&m.tx, "playbackstate", &ps).map_err(|err| error!("{err:?}")).ok();
         }
 
         Ok(())

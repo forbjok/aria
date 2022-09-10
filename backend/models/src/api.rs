@@ -32,14 +32,14 @@ pub struct Content {
     pub meta: ContentMetadata,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct Image {
     pub filename: String,
     pub url: String,
     pub tn_url: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct Post {
     pub id: u64,
     pub name: Option<String>,
