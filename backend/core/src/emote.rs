@@ -36,6 +36,12 @@ impl AriaCore {
         Ok(no as u64)
     }
 
+    pub async fn update_emote_images(&self, hash: &str, ext: &str) -> Result<(), anyhow::Error> {
+        self.store.update_emote_images(hash, ext).await?;
+
+        Ok(())
+    }
+
     /// Generate image and thumbnail
     pub async fn generate_emote_image<'a>(
         &self,

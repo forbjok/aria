@@ -458,5 +458,26 @@
       }
     },
     "query": "SELECT * FROM get_room_by_name($1);"
+  },
+  "d3a10c403be31344baebf67689a9d5609b94035b60999566854ffd9fefc8d198": {
+    "describe": {
+      "columns": [
+        {
+          "name": "update_emote_images",
+          "ordinal": 0,
+          "type_info": "Void"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "SELECT update_emote_images($1, $2);"
   }
 }

@@ -16,6 +16,8 @@ struct Opt {
 enum Command {
     #[clap(about = "Regenerate post images and thumbnails from original files")]
     RegeneratePostImages,
+    #[clap(about = "Regenerate emote images from original files")]
+    RegenerateEmoteImages,
 }
 
 #[tokio::main]
@@ -29,6 +31,7 @@ async fn main() -> Result<(), anyhow::Error> {
 
     match opt.command {
         Command::RegeneratePostImages => command::regenerate_post_images().await?,
+        Command::RegenerateEmoteImages => command::regenerate_emote_images().await?,
     };
 
     Ok(())

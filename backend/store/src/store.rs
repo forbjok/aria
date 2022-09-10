@@ -29,6 +29,8 @@ pub trait AriaStore: Send + Sync {
     async fn set_room_content(&self, room: &str, content: &str) -> Result<(), anyhow::Error>;
 
     async fn update_post_images(&self, hash: &str, ext: &str, tn_ext: &str) -> Result<(), anyhow::Error>;
+
+    async fn update_emote_images(&self, hash: &str, ext: &str) -> Result<(), anyhow::Error>;
 }
 
 pub struct PgStore {
@@ -120,6 +122,14 @@ impl AriaStore for PgStore {
 
     async fn update_post_images(&self, hash: &str, ext: &str, tn_ext: &str) -> Result<(), anyhow::Error> {
         sqlx::query_unchecked!(r#"SELECT update_post_images($1, $2, $3);"#, hash, ext, tn_ext)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(())
+    }
+
+    async fn update_emote_images(&self, hash: &str, ext: &str) -> Result<(), anyhow::Error> {
+        sqlx::query_unchecked!(r#"SELECT update_emote_images($1, $2);"#, hash, ext)
             .execute(&self.pool)
             .await?;
 
