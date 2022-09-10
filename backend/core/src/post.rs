@@ -96,7 +96,7 @@ impl AriaCore {
                 // If preserving original, simply create a hard link to the original file
                 tokio::fs::hard_link(original_image_path, &image_path).await?;
             } else {
-                let tn_img = img.thumbnail(500, 500);
+                let tn_img = img.thumbnail(350, 350);
                 tn_img.save(&image_path).context("Error saving post image")?;
             }
         }
