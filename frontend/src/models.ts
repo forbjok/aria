@@ -1,5 +1,6 @@
 export interface RoomInfo {
   name: string;
+  emotes: { [key: string]: Emote };
 }
 
 export interface Content {
@@ -23,4 +24,9 @@ export interface Post {
   image?: Image;
   posted: string;
   showFullImage: boolean;
+}
+
+export interface Emote {
+  name: string;
+  url: string;
 }

@@ -10,7 +10,7 @@ import { LocalRoomSettingsService } from "@/services/localroomsettingsservice";
 import { RoomAdminService } from "@/services/roomadminservice";
 import { LocalRoomAuthService } from "@/services/localroomauthservice";
 
-import type { Content, RoomInfo } from "@/models";
+import type { Content, Emote, RoomInfo } from "@/models";
 import { RoomService } from "@/services/room";
 import { AriaWebSocket, AriaWsListener } from "@/services/websocket";
 
@@ -30,7 +30,7 @@ const props = defineProps<{
 
 const { name } = toRefs(props);
 
-const roomInfo: RoomInfo = { name: name.value };
+const roomInfo: RoomInfo = { name: name.value, emotes: {} };
 const roomService = new RoomService(roomInfo);
 const localRoomAuthService = new LocalRoomAuthService(roomInfo);
 const localRoomSettingsService = new LocalRoomSettingsService(roomInfo);
@@ -77,6 +77,16 @@ onMounted(async () => {
     if (isMaster) {
       ws.send("set-master");
     }
+  });
+
+  ws_listener.on("emotes", async (emotes: Emote[]) => {
+    for (const e of emotes) {
+      roomInfo.emotes[e.name] = e;
+    }
+  });
+
+  ws_listener.on("emote", async (emote: Emote) => {
+    roomInfo.emotes[emote.name] = emote;
   });
 
   ws_listener.on("content", async (_content: Content) => {

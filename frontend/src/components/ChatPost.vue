@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { toRefs } from "vue";
+import { h, inject, toRefs, type VNodeArrayChildren } from "vue";
 
 import moment from "moment";
 
-import type { Post } from "@/models";
+import Emote from "./Emote.vue";
+
+import type { Emote as EmoteModel, Post, RoomInfo } from "@/models";
 
 const props = defineProps<{
   post: Post;
@@ -14,6 +16,8 @@ const emit = defineEmits<{
 }>();
 
 const { post } = toRefs(props);
+
+const room: RoomInfo | undefined = inject("room");
 
 const toggleImage = (_post: Post): void => {
   _post.showFullImage = !_post.showFullImage;
@@ -38,6 +42,47 @@ const formatTime = (value: string): string => {
   // If time is not this year, include full date with year
   return time.format("MMM Do YYYY, HH:mm:ss");
 };
+
+const emoteRegex = new RegExp("!([\\w\\d]+)");
+const Comment = (p: { text: string }) => {
+  const nodes: VNodeArrayChildren = [];
+
+  let remaining = p.text;
+
+  const mkHtml = (innerHTML: string) => {
+    nodes.push(h("span", { innerHTML }));
+  };
+
+  const mkEmote = (emote: EmoteModel) => {
+    nodes.push(h(Emote, { emote }));
+  };
+
+  // Traverse comment string and construct VNodes
+  while (remaining.length > 0) {
+    const m = emoteRegex.exec(remaining);
+    if (!m) {
+      mkHtml(remaining);
+      remaining = "";
+      break;
+    }
+
+    const preceding = remaining.substring(0, m.index);
+    mkHtml(preceding);
+
+    remaining = remaining.substring(preceding.length + m[0].length);
+
+    const name = m[1];
+    const emote = room?.emotes[name];
+    if (!emote) {
+      mkHtml(m[0]);
+      continue;
+    }
+
+    mkEmote(emote);
+  }
+
+  return h("div", { class: "comment" }, nodes);
+};
 </script>
 
 <template>
@@ -57,7 +102,7 @@ const formatTime = (value: string): string => {
         </a>
         <div class="filename">{{ post.image.filename }}</div>
       </div>
-      <div class="comment" v-html="post.comment"></div>
+      <Comment :text="post.comment" />
     </div>
   </li>
 </template>

@@ -1,6 +1,3 @@
-use std::borrow::Cow;
-use std::collections::HashMap;
-
 use anyhow::Context;
 use chrono::{DateTime, Utc};
 use tracing::error;
@@ -16,28 +13,14 @@ struct Member {
     tx: Tx,
 }
 
-struct PreparedEmote {
-    name: String,
-    html: String,
-}
-
 pub(super) struct Room {
     members: Vec<Member>,
     posts: Vec<am::Post>,
-    emotes: HashMap<String, PreparedEmote>,
+    emotes: Vec<am::Emote>,
     master: ConnectionId,
     content: Option<am::Content>,
     playback_state_timestamp: DateTime<Utc>,
     playback_state: am::PlaybackState,
-}
-
-impl From<&lm::Emote> for PreparedEmote {
-    fn from(e: &lm::Emote) -> Self {
-        let name = e.name.clone();
-        let html = format!(r#"<img class="emote" src="/f/e/{}.{}" title="!{name}">"#, e.hash, e.ext);
-
-        Self { name, html }
-    }
 }
 
 impl Room {
@@ -56,18 +39,11 @@ impl Room {
             .context("Error getting recent posts")?;
 
         // Prepare emotes
-        let emotes = emotes
-            .into_iter()
-            .map(|e| {
-                let emote = PreparedEmote::from(&e);
-
-                (e.name, emote)
-            })
-            .collect();
+        let emotes = emotes.iter().map(am::Emote::from).collect();
 
         Ok(Self {
             members: Vec::new(),
-            posts: recent_posts.iter().map(|p| process_post(p, &emotes)).collect(),
+            posts: recent_posts.iter().map(am::Post::from).collect(),
             emotes,
             master: 0,
             content: room.content,
@@ -81,6 +57,7 @@ impl Room {
         self.members.push(member);
 
         send(&tx, "content", &self.content)?;
+        self.send_emotes(&tx)?;
         self.send_recent_posts(&tx)?;
         send(&tx, "joined", ())?;
 
@@ -89,6 +66,12 @@ impl Room {
 
     pub fn leave(&mut self, id: ConnectionId) -> Result<(), anyhow::Error> {
         self.members.retain(|m| m.id != id);
+        Ok(())
+    }
+
+    pub fn send_emotes(&self, tx: &Tx) -> Result<(), anyhow::Error> {
+        send(tx, "emotes", &self.emotes)?;
+
         Ok(())
     }
 
@@ -103,7 +86,7 @@ impl Room {
     }
 
     pub fn post(&mut self, post: &lm::Post) -> Result<(), anyhow::Error> {
-        let post = process_post(post, &self.emotes);
+        let post = am::Post::from(post);
 
         self.posts.push(post.clone());
 
@@ -178,33 +161,15 @@ impl Room {
 
     /// Add or update emote
     pub fn add_emote(&mut self, emote: &lm::Emote) -> Result<(), anyhow::Error> {
-        let emote = PreparedEmote::from(emote);
+        let emote = am::Emote::from(emote);
 
-        self.emotes.insert(emote.name.clone(), emote);
+        self.emotes.retain(|e| e.name != emote.name);
+        self.emotes.push(emote.clone());
+
+        for m in self.members.iter() {
+            send(&m.tx, "emote", &emote).map_err(|err| error!("{err:?}")).ok();
+        }
 
         Ok(())
     }
-}
-
-fn replace_emotes<'a>(comment: &'a str, emotes: &HashMap<String, PreparedEmote>) -> Cow<'a, str> {
-    let re = regex::Regex::new(r#"!([^\s!]+)"#).unwrap();
-
-    re.replace_all(comment, |caps: &regex::Captures| {
-        let name = caps.get(1).unwrap().as_str();
-
-        // If an emote with that name is found, replace it with the emote html...
-        if let Some(emote) = emotes.get(name) {
-            Cow::Owned(emote.html.clone())
-        } else {
-            // ... otherwise, just leave it as it is.
-            Cow::Owned(caps.get(0).unwrap().as_str().to_owned())
-        }
-    })
-}
-
-fn process_post(post: &lm::Post, emotes: &HashMap<String, PreparedEmote>) -> am::Post {
-    let mut post = am::Post::from(post);
-    post.comment = post.comment.map(|c| replace_emotes(&c, emotes).into_owned());
-
-    post
 }

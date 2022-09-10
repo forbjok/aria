@@ -12,7 +12,7 @@ const props = defineProps<{
 
 const { room } = toRefs(props);
 
-const roomInfo: RoomInfo = { name: room.value };
+const roomInfo: RoomInfo = { name: room.value, emotes: {} };
 
 const auth = new LocalRoomAuthService(roomInfo);
 const roomService = new RoomService(roomInfo);

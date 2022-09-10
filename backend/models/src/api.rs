@@ -55,6 +55,12 @@ pub struct PlaybackState {
     pub is_playing: bool,
 }
 
+#[derive(Clone, Debug, Serialize)]
+pub struct Emote {
+    pub name: String,
+    pub url: String,
+}
+
 impl Default for PlaybackState {
     fn default() -> Self {
         Self {
@@ -80,6 +86,15 @@ impl From<&lm::Post> for Post {
                 tn_url: format!("/f/t/{}.{}", i.hash, i.tn_ext),
             }),
             posted: p.posted_at,
+        }
+    }
+}
+
+impl From<&lm::Emote> for Emote {
+    fn from(e: &lm::Emote) -> Self {
+        Self {
+            name: e.name.clone(),
+            url: format!("/f/e/{}.{}", e.hash, e.ext),
         }
     }
 }

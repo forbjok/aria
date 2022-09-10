@@ -1,0 +1,11 @@
+.emote {
+  cursor: pointer;
+
+  &:not(.expanded) {
+    max-height: 100px;
+  }
+
+  &.expanded {
+    max-width: 100%;
+  }
+}
