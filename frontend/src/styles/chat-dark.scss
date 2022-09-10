@@ -1,5 +1,11 @@
 @import url(https://fonts.googleapis.com/css?family=Roboto);
 
+:global(:root) {
+  --color-spoiler: black;
+  --color-spoiler-background: black;
+  --color-spoiler-hover: white;
+}
+
 .theme-dark {
   font-family: "Roboto", sans-serif;
   font-size: 0.8rem;
@@ -15,7 +21,7 @@
 
   .post-container {
     .post {
-      background-color: black;
+      background-color: rgb(13, 13, 13);
     }
 
     .post:nth-child(odd) {

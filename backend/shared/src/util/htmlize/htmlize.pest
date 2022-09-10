@@ -1,0 +1,15 @@
+newline = { NEWLINE }
+post_no = { NUMBER+ }
+
+spoiler_open = _{ "[spoiler]" }
+spoiler_close = _{ "[/spoiler]" }
+spoiler_text = { (!NEWLINE ~ !spoiler_close ~ ANY)+ }
+spoiler_body = { (newline | spoiler_text)* }
+spoiler = { spoiler_open ~ spoiler_body ~ spoiler_close? }
+
+text = { (!NEWLINE ~ !">>" ~ !spoiler_open ~ ANY)+ }
+quote = { ">" ~ text? }
+quotelink = { ">>" ~ post_no }
+
+line = _{ (quotelink | quote | spoiler | (text ~ quotelink?) | newline | ANY+) ~ newline? }
+comment = _{ SOI ~ line* ~ EOI }

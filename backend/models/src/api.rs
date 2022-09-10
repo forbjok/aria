@@ -1,3 +1,4 @@
+use aria_shared::util::htmlize::htmlize_comment;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -69,7 +70,10 @@ impl From<&lm::Post> for Post {
         Self {
             id: p.id,
             name: p.name.clone(),
-            comment: p.comment.clone(),
+            comment: p
+                .comment
+                .as_ref()
+                .map(|c| htmlize_comment(c).unwrap_or_else(|_| c.to_string())),
             image: p.image.as_ref().map(|i| Image {
                 filename: i.filename.clone(),
                 url: format!("/f/i/{}.{}", i.hash, i.ext),

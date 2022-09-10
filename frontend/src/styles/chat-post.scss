@@ -69,6 +69,16 @@
 .comment {
   word-wrap: break-word;
 
+  :deep(s) {
+    background-color: var(--color-spoiler-background);
+    color: var(--color-spoiler);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--color-spoiler-hover);
+    }
+  }
+
   :deep(.quote) {
     color: #789922;
   }
