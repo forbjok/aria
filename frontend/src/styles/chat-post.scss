@@ -1,22 +1,34 @@
 .post-header {
   padding-bottom: 1px;
+
   span {
     margin-right: 3px;
   }
-}
 
-.time {
-  vertical-align: top;
-  text-align: right;
-  color: gray;
-}
+  .time {
+    vertical-align: top;
+    text-align: right;
+    color: gray;
+  }
 
-.name {
-  vertical-align: top;
-  text-align: right;
-  padding-right: 2px;
-  color: #117743;
-  font-weight: bold;
+  .name {
+    vertical-align: top;
+    text-align: right;
+    padding-right: 2px;
+    color: #117743;
+    font-weight: bold;
+  }
+
+  .id {
+    text-decoration: none;
+    vertical-align: top;
+    text-align: right;
+    color: gray;
+
+    a {
+      cursor: pointer;
+    }
+  }
 }
 
 .post-image {

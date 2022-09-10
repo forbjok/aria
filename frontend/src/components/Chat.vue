@@ -37,6 +37,7 @@ const ws: AriaWebSocket | undefined = inject("ws");
 
 const postContainer = ref<HTMLDivElement | null>(null);
 const postForm = ref<HTMLFormElement | null>(null);
+const commentField = ref<HTMLTextAreaElement | null>(null);
 
 const posts = reactive<Post[]>([]);
 
@@ -172,6 +173,7 @@ const submitPost = async () => {
 
     postingProgress.value = "Posted.";
     clearPost();
+    scrollToBottom();
 
     // Activate posting cooldown
     activatePostingCooldown();
@@ -214,6 +216,21 @@ const postingCooldownText = () => {
   }
 };
 
+const quotePost = (id: number) => {
+  post.value.comment += `>>${id}\n`;
+  commentField.value?.focus();
+};
+
+const scrollToBottom = () => {
+  const _postContainer = postContainer.value;
+  if (!_postContainer) {
+    return;
+  }
+
+  // Scroll to bottom of post container
+  _postContainer.scrollTo(0, _postContainer.scrollHeight);
+};
+
 let ws_listener: AriaWsListener | undefined;
 
 onMounted(() => {
@@ -236,13 +253,7 @@ onMounted(() => {
       posts.push(...newPosts);
 
       setTimeout(() => {
-        const _postContainer = postContainer.value;
-        if (!_postContainer) {
-          return;
-        }
-
-        // Scroll to bottom of post container
-        _postContainer.scrollTo(0, _postContainer.scrollHeight);
+        scrollToBottom();
       }, 1);
     });
   }
@@ -257,7 +268,7 @@ onUnmounted(() => {
   <div class="chat" :class="[`theme-${theme}`]">
     <div ref="postContainer" class="post-container">
       <ul>
-        <ChatPost :post="post" v-for="post of posts" :key="post.id"></ChatPost>
+        <ChatPost :post="post" v-for="post of posts" :key="post.id" @quotepost="quotePost"></ChatPost>
         <li class="bottom-spacer"></li>
       </ul>
     </div>
@@ -276,6 +287,7 @@ onUnmounted(() => {
               <td>Comment</td>
               <td>
                 <textarea
+                  ref="commentField"
                   name="comment"
                   v-model="post.comment"
                   maxlength="600"
@@ -315,6 +327,7 @@ onUnmounted(() => {
         </div>
         <div v-if="useCompactPostForm" class="chatcontrols-table">
           <textarea
+            ref="commentField"
             name="comment"
             v-model="post.comment"
             maxlength="600"

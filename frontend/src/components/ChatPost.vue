@@ -9,10 +9,18 @@ const props = defineProps<{
   post: Post;
 }>();
 
+const emit = defineEmits<{
+  (e: "quotepost", id: number): void;
+}>();
+
 const { post } = toRefs(props);
 
 const toggleImage = (_post: Post): void => {
   _post.showFullImage = !_post.showFullImage;
+};
+
+const quotePost = (id: number) => {
+  emit("quotepost", id);
 };
 
 const formatTime = (value: string): string => {
@@ -33,10 +41,13 @@ const formatTime = (value: string): string => {
 </script>
 
 <template>
-  <li class="post">
+  <li :id="`p${post.id}`" class="post">
     <div class="post-header">
       <span class="time">{{ formatTime(post.posted) }}</span>
       <span class="name">{{ post.name || "Anonymous" }}</span>
+      <span class="id"
+        >No. <a @click="quotePost(post.id)">{{ post.id }}</a></span
+      >
     </div>
     <div class="post-body">
       <div v-if="post.image" class="post-image" :class="post.showFullImage ? 'expanded' : ''">
