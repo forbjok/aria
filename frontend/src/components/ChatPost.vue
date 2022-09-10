@@ -57,41 +57,62 @@ interface HtmlToken extends Token {
   t: "h";
 }
 
+interface LinkToken extends Token {
+  t: "l";
+}
+
 const commentParser = P.createLanguage<{
   comment: Token[];
   emote: EmoteToken;
   html: HtmlToken;
+  whitespace: HtmlToken;
+  link: LinkToken;
 }>({
-  comment: (r) => P.alt(r.html, r.emote).many(),
+  comment: (r) => P.alt(r.emote, r.link, r.html, r.whitespace).many(),
   emote: () => P.regexp(/!([\w\d]+)/).map((text) => ({ t: "e", text })),
-  html: () => P.regexp(/[^!]+/).map((text) => ({ t: "h", text })),
+  html: () => P.regexp(/[^\s]+/).map((text) => ({ t: "h", text })),
+  whitespace: () => P.regexp(/\s+/).map((text) => ({ t: "h", text })),
+  link: () => P.regexp(/(https?:\/\/[^\s]+)/).map((text) => ({ t: "l", text })),
 });
 
 const Comment = (p: { text: string }) => {
   const nodes: VNodeArrayChildren = [];
 
-  const mkHtml = (innerHTML: string) => {
-    nodes.push(h("span", { innerHTML }));
+  let html: string[] = [];
+
+  const addHtml = (_html: string) => {
+    html.push(_html);
+  };
+
+  const flushHtml = () => {
+    if (html.length > 0) {
+      nodes.push(h("span", { innerHTML: html.join(" ") }));
+      html = [];
+    }
   };
 
   const tokens = commentParser.comment.tryParse(p.text);
 
-  for (const token of tokens) {
-    if (token.t === "e") {
-      const e = token as EmoteToken;
-      const name = e.text.substring(1);
+  for (const t of tokens) {
+    if (t.t === "e") {
+      const name = t.text.substring(1);
       const emote = room?.emotes[name];
       if (!emote) {
-        mkHtml(e.text);
+        addHtml(t.text);
         continue;
       }
 
+      flushHtml();
       nodes.push(h(Emote, { emote }));
-    } else if (token.t === "h") {
-      const h = token as HtmlToken;
-      mkHtml(h.text);
+    } else if (t.t === "h") {
+      addHtml(t.text);
+    } else if (t.t === "l") {
+      flushHtml();
+      nodes.push(h("a", { href: t.text }, t.text));
     }
   }
+
+  flushHtml();
 
   return h("div", { class: "comment" }, nodes);
 };
