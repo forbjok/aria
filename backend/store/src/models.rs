@@ -64,6 +64,18 @@ pub struct NewImage {
 }
 
 #[derive(Debug, sqlx::Type)]
+#[sqlx(type_name = "emote")]
+pub struct Emote {
+    pub id: Option<i32>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
+    pub room_id: Option<i32>,
+    pub name: Option<String>,
+    pub hash: Option<String>,
+    pub ext: Option<String>,
+}
+
+#[derive(Debug, sqlx::Type)]
 #[sqlx(type_name = "new_emote")]
 pub struct NewEmote {
     pub name: Option<String>,

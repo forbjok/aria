@@ -6,10 +6,16 @@ use aria_models::local as lm;
 use aria_store::{models as dbm, AriaStore};
 
 use super::AriaCore;
-use crate::image::ProcessImageResult;
+use crate::{image::ProcessImageResult, transform::dbm_emote_to_lm, Notification};
 
 impl AriaCore {
-    pub async fn create_emote(&self, room: &str, emote: lm::NewEmote<'_>) -> Result<u64, anyhow::Error> {
+    pub async fn get_emotes(&self, name: &str) -> Result<Vec<lm::Emote>, anyhow::Error> {
+        let emotes = self.store.get_emotes(name).await?;
+
+        Ok(emotes.into_iter().map(dbm_emote_to_lm).collect())
+    }
+
+    pub async fn create_emote(&self, room: &str, emote: lm::NewEmote<'_>) -> Result<lm::Emote, anyhow::Error> {
         let i = emote.image;
 
         // Process image
@@ -31,9 +37,13 @@ impl AriaCore {
             ext: Some(ext.into()),
         };
 
-        let no = self.store.create_emote(room, &new_emote).await?;
+        let emote = self.store.create_emote(room, &new_emote).await?;
+        let emote = dbm_emote_to_lm(emote);
 
-        Ok(no as u64)
+        self.notify_tx
+            .unbounded_send(Notification::NewEmote(room.to_string(), emote.clone()))?;
+
+        Ok(emote)
     }
 
     pub async fn update_emote_images(&self, hash: &str, ext: &str) -> Result<(), anyhow::Error> {

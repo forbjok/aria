@@ -1,5 +1,82 @@
 {
   "db": "PostgreSQL",
+  "1d2943d25677b362f3e7109c65bc0965e58823a80f82607dc5584645539135a6": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 1,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "updated_at",
+          "ordinal": 2,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "room_id",
+          "ordinal": 3,
+          "type_info": "Int4"
+        },
+        {
+          "name": "name",
+          "ordinal": 4,
+          "type_info": "Text"
+        },
+        {
+          "name": "hash",
+          "ordinal": 5,
+          "type_info": "Text"
+        },
+        {
+          "name": "ext",
+          "ordinal": 6,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          {
+            "Custom": {
+              "kind": {
+                "Composite": [
+                  [
+                    "name",
+                    "Text"
+                  ],
+                  [
+                    "hash",
+                    "Text"
+                  ],
+                  [
+                    "ext",
+                    "Text"
+                  ]
+                ]
+              },
+              "name": "new_emote"
+            }
+          }
+        ]
+      }
+    },
+    "query": "SELECT * FROM create_emote($1, $2);"
+  },
   "2db027c980cfa556f2b3210a30999d46c48c681bff0f2146fa8364c10d5bb54e": {
     "describe": {
       "columns": [
@@ -63,6 +140,62 @@
     },
     "query": "SELECT * FROM create_room($1, $2);"
   },
+  "2f8fef67e93bca6ca0af8d8b0cc61c2d4e3e76873c7c6e024f25186f7cf6edee": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 1,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "updated_at",
+          "ordinal": 2,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "room_id",
+          "ordinal": 3,
+          "type_info": "Int4"
+        },
+        {
+          "name": "name",
+          "ordinal": 4,
+          "type_info": "Text"
+        },
+        {
+          "name": "hash",
+          "ordinal": 5,
+          "type_info": "Text"
+        },
+        {
+          "name": "ext",
+          "ordinal": 6,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "SELECT * FROM get_emotes($1);"
+  },
   "34a51b29deb66ef2f8560ca687981acc90677aabca71cb89ecdb241556f8d705": {
     "describe": {
       "columns": [
@@ -105,47 +238,6 @@
       }
     },
     "query": "SELECT update_post_images($1, $2, $3);"
-  },
-  "92deeadd8d14c65d7a120860aefe18d423a5b0ec0f3ae45a1bc57f59de88d776": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Int4"
-        }
-      ],
-      "nullable": [
-        null
-      ],
-      "parameters": {
-        "Left": [
-          "Text",
-          {
-            "Custom": {
-              "kind": {
-                "Composite": [
-                  [
-                    "name",
-                    "Text"
-                  ],
-                  [
-                    "hash",
-                    "Text"
-                  ],
-                  [
-                    "ext",
-                    "Text"
-                  ]
-                ]
-              },
-              "name": "new_emote"
-            }
-          }
-        ]
-      }
-    },
-    "query": "SELECT id FROM create_emote($1, $2);"
   },
   "b07d2eb0ce0e30d9bd61bd2eb659f89d473270fcb15fc11df2be642d661b9b7a": {
     "describe": {

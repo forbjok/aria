@@ -20,6 +20,7 @@ pub use self::room::*;
 #[derive(Debug)]
 pub enum Notification {
     NewPost(String, lm::Post),
+    NewEmote(String, lm::Emote),
     Content(String, lm::Content),
 }
 

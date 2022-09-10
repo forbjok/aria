@@ -24,7 +24,9 @@ pub trait AriaStore: Send + Sync {
         image: Option<&dbm::NewImage>,
     ) -> Result<dbm::PostAndImage, anyhow::Error>;
 
-    async fn create_emote(&self, room: &str, emote: &dbm::NewEmote) -> Result<i32, anyhow::Error>;
+    async fn get_emotes(&self, room: &str) -> Result<Vec<dbm::Emote>, anyhow::Error>;
+
+    async fn create_emote(&self, room: &str, emote: &dbm::NewEmote) -> Result<dbm::Emote, anyhow::Error>;
 
     async fn set_room_content(&self, room: &str, content: &str) -> Result<(), anyhow::Error>;
 
@@ -56,10 +58,6 @@ impl AriaStore for PgStore {
         .fetch_all(&self.pool)
         .await
         .context("Error getting recent posts")?;
-
-        if posts.is_empty() {
-            return Ok(Vec::new());
-        }
 
         // Reverse posts, as they are returned in reverse order
         posts.reverse();
@@ -104,12 +102,21 @@ impl AriaStore for PgStore {
         Ok(post)
     }
 
-    async fn create_emote(&self, room: &str, emote: &dbm::NewEmote) -> Result<i32, anyhow::Error> {
-        let no = sqlx::query_scalar_unchecked!(r#"SELECT id FROM create_emote($1, $2);"#, room, emote,)
+    async fn get_emotes(&self, room: &str) -> Result<Vec<dbm::Emote>, anyhow::Error> {
+        let emotes = sqlx::query_as_unchecked!(dbm::Emote, r#"SELECT * FROM get_emotes($1);"#, room,)
+            .fetch_all(&self.pool)
+            .await
+            .context("Error getting emotes")?;
+
+        Ok(emotes)
+    }
+
+    async fn create_emote(&self, room: &str, emote: &dbm::NewEmote) -> Result<dbm::Emote, anyhow::Error> {
+        let emote = sqlx::query_as_unchecked!(dbm::Emote, r#"SELECT * FROM create_emote($1, $2);"#, room, emote)
             .fetch_one(&self.pool)
             .await?;
 
-        Ok(no.unwrap())
+        Ok(emote)
     }
 
     async fn set_room_content(&self, room: &str, content: &str) -> Result<(), anyhow::Error> {

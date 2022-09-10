@@ -25,3 +25,11 @@ pub fn dbm_post_to_lm(p: dbm::PostAndImage) -> lm::Post {
         posted_at: p.post.created_at.unwrap(),
     }
 }
+
+pub fn dbm_emote_to_lm(e: dbm::Emote) -> lm::Emote {
+    lm::Emote {
+        name: e.name.unwrap(),
+        hash: e.hash.unwrap(),
+        ext: e.ext.unwrap(),
+    }
+}
