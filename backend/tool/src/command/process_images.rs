@@ -39,7 +39,7 @@ async fn process_post_images(core: &AriaCore) -> Result<(), anyhow::Error> {
 
             // Generate image and thumbnail
             let GeneratePostImageResult { tn_ext } = core
-                .generate_post_image(&original_image_path, &hash, &ext, false)
+                .generate_post_image(&original_image_path, &hash, &ext, true)
                 .await?;
 
             core.update_post_images(&hash, &ext, &tn_ext).await?;
@@ -77,7 +77,7 @@ async fn process_emote_images(core: &AriaCore) -> Result<(), anyhow::Error> {
                 ..
             } = core.process_image(&path, filename, &core.original_emote_path).await?;
 
-            core.generate_emote_image(&original_image_path, &hash, &ext, false)
+            core.generate_emote_image(&original_image_path, &hash, &ext, true)
                 .await?;
 
             core.update_emote_images(&hash, &ext).await?;
