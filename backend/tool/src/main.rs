@@ -12,8 +12,11 @@ struct Opt {
     command: Command,
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Debug, Parser)]
 enum Command {
+    #[clap(about = "Process images from the 'process' directory")]
+    ProcessImages,
     #[clap(about = "Regenerate post images and thumbnails from original files")]
     RegeneratePostImages,
     #[clap(about = "Regenerate emote images from original files")]
@@ -30,6 +33,7 @@ async fn main() -> Result<(), anyhow::Error> {
     debug!("Debug logging enabled.");
 
     match opt.command {
+        Command::ProcessImages => command::process_images().await?,
         Command::RegeneratePostImages => command::regenerate_post_images().await?,
         Command::RegenerateEmoteImages => command::regenerate_emote_images().await?,
     };
