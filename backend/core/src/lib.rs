@@ -6,10 +6,16 @@ use aria_store::PgStore;
 use futures_channel::mpsc::UnboundedSender;
 
 mod emote;
+mod image;
 mod post;
 mod room;
 mod transform;
 mod util;
+
+pub use self::emote::*;
+pub use self::image::*;
+pub use self::post::*;
+pub use self::room::*;
 
 #[derive(Debug)]
 pub enum Notification {
@@ -18,14 +24,12 @@ pub enum Notification {
 }
 
 pub struct AriaCore {
-    //files_path: PathBuf,
-    //original_path: PathBuf,
-    original_image_path: PathBuf,
-    original_emote_path: PathBuf,
+    pub original_image_path: PathBuf,
+    pub original_emote_path: PathBuf,
     pub public_path: PathBuf,
-    public_image_path: PathBuf,
-    public_thumbnail_path: PathBuf,
-    public_emote_path: PathBuf,
+    pub public_image_path: PathBuf,
+    pub public_thumbnail_path: PathBuf,
+    pub public_emote_path: PathBuf,
     store: PgStore,
     notify_tx: UnboundedSender<Notification>,
 }
@@ -58,8 +62,6 @@ impl AriaCore {
         );
 
         Ok(Self {
-            //files_path,
-            //original_path,
             original_image_path,
             original_emote_path,
             public_path,

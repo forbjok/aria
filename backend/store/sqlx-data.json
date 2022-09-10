@@ -84,6 +84,28 @@
     },
     "query": "SELECT set_room_content($1, $2::json);"
   },
+  "5f0887343c6ea22aab9b26f659a6ed4f4c0ac4885d0502a09c295e470cc6b17a": {
+    "describe": {
+      "columns": [
+        {
+          "name": "update_post_images",
+          "ordinal": 0,
+          "type_info": "Void"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "SELECT update_post_images($1, $2, $3);"
+  },
   "92deeadd8d14c65d7a120860aefe18d423a5b0ec0f3ae45a1bc57f59de88d776": {
     "describe": {
       "columns": [
