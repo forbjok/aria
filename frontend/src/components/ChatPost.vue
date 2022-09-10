@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { h, inject, toRefs, type VNodeArrayChildren } from "vue";
+import * as P from "parsimmon";
 
 import moment from "moment";
 
 import Emote from "./Emote.vue";
 
-import type { Emote as EmoteModel, Post, RoomInfo } from "@/models";
+import type { Post, RoomInfo } from "@/models";
 
 const props = defineProps<{
   post: Post;
@@ -43,42 +44,53 @@ const formatTime = (value: string): string => {
   return time.format("MMM Do YYYY, HH:mm:ss");
 };
 
-const emoteRegex = new RegExp("!([\\w\\d]+)");
+interface Token {
+  t: string;
+  text: string;
+}
+
+interface EmoteToken extends Token {
+  t: "e";
+}
+
+interface HtmlToken extends Token {
+  t: "h";
+}
+
+const commentParser = P.createLanguage<{
+  comment: Token[];
+  emote: EmoteToken;
+  html: HtmlToken;
+}>({
+  comment: (r) => P.alt(r.html, r.emote).many(),
+  emote: () => P.regexp(/!([\w\d]+)/).map((text) => ({ t: "e", text })),
+  html: () => P.regexp(/[^!]+/).map((text) => ({ t: "h", text })),
+});
+
 const Comment = (p: { text: string }) => {
   const nodes: VNodeArrayChildren = [];
-
-  let remaining = p.text;
 
   const mkHtml = (innerHTML: string) => {
     nodes.push(h("span", { innerHTML }));
   };
 
-  const mkEmote = (emote: EmoteModel) => {
-    nodes.push(h(Emote, { emote }));
-  };
+  const tokens = commentParser.comment.tryParse(p.text);
 
-  // Traverse comment string and construct VNodes
-  while (remaining.length > 0) {
-    const m = emoteRegex.exec(remaining);
-    if (!m) {
-      mkHtml(remaining);
-      remaining = "";
-      break;
+  for (const token of tokens) {
+    if (token.t === "e") {
+      const e = token as EmoteToken;
+      const name = e.text.substring(1);
+      const emote = room?.emotes[name];
+      if (!emote) {
+        mkHtml(e.text);
+        continue;
+      }
+
+      nodes.push(h(Emote, { emote }));
+    } else if (token.t === "h") {
+      const h = token as HtmlToken;
+      mkHtml(h.text);
     }
-
-    const preceding = remaining.substring(0, m.index);
-    mkHtml(preceding);
-
-    remaining = remaining.substring(preceding.length + m[0].length);
-
-    const name = m[1];
-    const emote = room?.emotes[name];
-    if (!emote) {
-      mkHtml(m[0]);
-      continue;
-    }
-
-    mkEmote(emote);
   }
 
   return h("div", { class: "comment" }, nodes);
