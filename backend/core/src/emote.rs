@@ -80,7 +80,7 @@ impl AriaCore {
                 let img =
                     image::open(original_image_path).with_context(|| "Error opening original emote image file")?;
 
-                let tn_img = img.thumbnail(200, 200);
+                let tn_img = img.thumbnail(350, 350);
                 tn_img.save(&emote_path).context("Error saving emote image")?;
             }
         }
