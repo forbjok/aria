@@ -13,6 +13,7 @@ import { LocalRoomAuthService } from "@/services/localroomauthservice";
 import type { Content, Emote, RoomInfo } from "@/models";
 import { RoomService } from "@/services/room";
 import { AriaWebSocket, AriaWsListener } from "@/services/websocket";
+import { CommentParser } from "@/services/comment";
 
 interface PlaybackState {
   time: number;
@@ -35,6 +36,7 @@ const roomService = new RoomService(roomInfo);
 const localRoomAuthService = new LocalRoomAuthService(roomInfo);
 const localRoomSettingsService = new LocalRoomSettingsService(roomInfo);
 const roomAdminService = new RoomAdminService(roomInfo, localRoomAuthService);
+const commentParser = new CommentParser(roomInfo);
 
 const ws_protocol = window.location.protocol === "https:" ? "wss" : "ws";
 
@@ -45,6 +47,7 @@ provide("room", roomInfo);
 provide("auth", localRoomAuthService);
 provide("settings", localRoomSettingsService);
 provide("admin", roomAdminService);
+provide("commentparser", commentParser);
 provide("ws", ws);
 
 const showRoomControls = ref(false);

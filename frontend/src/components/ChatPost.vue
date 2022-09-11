@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { h, inject, toRefs, type VNodeArrayChildren } from "vue";
-import * as P from "parsimmon";
+import { inject, toRefs } from "vue";
 
 import moment from "moment";
 
-import Emote from "./Emote.vue";
-
-import type { Post, RoomInfo } from "@/models";
+import type { Post } from "@/models";
+import type { CommentParser } from "@/services/comment";
 
 const props = defineProps<{
   post: Post;
@@ -18,7 +16,7 @@ const emit = defineEmits<{
 
 const { post } = toRefs(props);
 
-const room: RoomInfo | undefined = inject("room");
+const commentParser: CommentParser | undefined = inject("commentparser");
 
 const toggleImage = (_post: Post): void => {
   _post.showFullImage = !_post.showFullImage;
@@ -44,77 +42,8 @@ const formatTime = (value: string): string => {
   return time.format("MMM Do YYYY, HH:mm:ss");
 };
 
-interface Token {
-  t: string;
-  text: string;
-}
-
-interface EmoteToken extends Token {
-  t: "e";
-}
-
-interface HtmlToken extends Token {
-  t: "h";
-}
-
-interface LinkToken extends Token {
-  t: "l";
-}
-
-const commentParser = P.createLanguage<{
-  comment: Token[];
-  emote: EmoteToken;
-  html: HtmlToken;
-  whitespace: HtmlToken;
-  link: LinkToken;
-}>({
-  comment: (r) => P.alt(r.emote, r.link, r.html, r.whitespace).many(),
-  emote: () => P.regexp(/!([\w\d]+)/).map((text) => ({ t: "e", text })),
-  html: () => P.regexp(/[^\s]+/).map((text) => ({ t: "h", text })),
-  whitespace: () => P.regexp(/\s+/).map((text) => ({ t: "h", text })),
-  link: () => P.regexp(/(https?:\/\/[^\s]+)/).map((text) => ({ t: "l", text })),
-});
-
 const Comment = (p: { text: string }) => {
-  const nodes: VNodeArrayChildren = [];
-
-  let html: string[] = [];
-
-  const addHtml = (_html: string) => {
-    html.push(_html);
-  };
-
-  const flushHtml = () => {
-    if (html.length > 0) {
-      nodes.push(h("span", { innerHTML: html.join(" ") }));
-      html = [];
-    }
-  };
-
-  const tokens = commentParser.comment.tryParse(p.text);
-
-  for (const t of tokens) {
-    if (t.t === "e") {
-      const name = t.text.substring(1);
-      const emote = room?.emotes[name];
-      if (!emote) {
-        addHtml(t.text);
-        continue;
-      }
-
-      flushHtml();
-      nodes.push(h(Emote, { emote }));
-    } else if (t.t === "h") {
-      addHtml(t.text);
-    } else if (t.t === "l") {
-      flushHtml();
-      nodes.push(h("a", { href: t.text }, t.text));
-    }
-  }
-
-  flushHtml();
-
-  return h("div", { class: "comment" }, nodes);
+  return commentParser?.parseComment(p.text);
 };
 </script>
 

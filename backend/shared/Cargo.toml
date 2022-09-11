@@ -7,8 +7,5 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.64"
-html-escape = "0.2.11"
-pest = "2.3.0"
-pest_derive = "2.3.0"
 tokio = "1.21.0"
 tracing = "0.1.36"
