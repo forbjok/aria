@@ -253,7 +253,7 @@ const broadcastPlaybackState = async () => {
   ws.send("master-playbackstate", ps);
 };
 
-const onKeydown = (event: KeyboardEvent) => {
+const onContentAreaKeydown = (event: KeyboardEvent) => {
   if (event.key === "Tab" && !event.shiftKey) {
     toggleTheaterMode();
     event.preventDefault();
@@ -263,7 +263,7 @@ const onKeydown = (event: KeyboardEvent) => {
 </script>
 
 <template>
-  <div ref="room" class="room" @keydown="onKeydown($event)">
+  <div ref="room" class="room">
     <div class="usercontrols-activationzone">
       <div class="usercontrols">
         <a href="#" class="usercontrol" title="Reload" @click="reloadContent()"><span class="fa fa-refresh"></span></a>
@@ -279,7 +279,7 @@ const onKeydown = (event: KeyboardEvent) => {
     <div v-show="!theaterMode" ref="chatContainer" class="chat-container">
       <Chat @post="toastChat?.post($event)" @themechange="chatTheme = $event"></Chat>
     </div>
-    <div ref="contentArea" class="content-area">
+    <div ref="contentArea" class="content-area" @keydown="onContentAreaKeydown($event)">
       <div v-show="theaterMode" class="toast-chat-container">
         <ToastChat ref="toastChat" :theme="chatTheme"> </ToastChat>
       </div>
