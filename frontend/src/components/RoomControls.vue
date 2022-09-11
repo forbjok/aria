@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from "vue";
 
+import Tabs from "./common/Tabs.vue";
+import Tab from "./common/Tab.vue";
+
 import type { RoomAdminService } from "@/services/room-admin";
 
 const roomAdminService: RoomAdminService | undefined = inject("admin");
@@ -66,6 +69,11 @@ const setContent = async () => {
       <div class="login-error">{{ loginError }}</div>
     </div>
     <div v-if="authorized" class="controls">
+      <Tabs :defaultIndex="0">
+        <Tab title="One">CONTENT ONE</Tab>
+        <Tab title="Two">CONTENT TWO</Tab>
+      </Tabs>
+      <!--
       <div class="content-section">
         <form class="setcontent-form" @submit.prevent="setContent()">
           <table>
@@ -81,6 +89,7 @@ const setContent = async () => {
           </table>
         </form>
       </div>
+      -->
     </div>
   </div>
 </template>
