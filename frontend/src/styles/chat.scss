@@ -58,25 +58,41 @@
   }
 
   .options {
+    display: flex;
+    flex-direction: row;
+
     position: absolute;
     right: 2px;
     bottom: 2px;
   }
 
-  .toggle-compact-button {
-    margin-left: 2px;
+  .emote-button {
+    margin-right: 2px;
   }
 
-  #postbutton {
+  .theme-selector {
+    margin-right: 2px;
+  }
+
+  .post-button {
     min-width: 65px;
   }
+}
 
-  .version-text {
-    position: fixed;
-    left: 2px;
-    bottom: 1px;
+.overlay {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+}
 
-    font-size: 0.7rem;
-    color: #898989;
-  }
+.emote-selector {
+  position: fixed;
+  left: 100px;
+  bottom: 50px;
+
+  max-width: 665px; // Just enough for 6 emotes horizontally
+  max-height: 400px;
 }

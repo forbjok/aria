@@ -277,7 +277,7 @@ const onKeydown = (event: KeyboardEvent) => {
       </div>
     </div>
     <div v-show="!theaterMode" ref="chatContainer" class="chat-container">
-      <Chat :room="name" @post="toastChat?.post($event)" @themechange="chatTheme = $event"></Chat>
+      <Chat @post="toastChat?.post($event)" @themechange="chatTheme = $event"></Chat>
     </div>
     <div ref="contentArea" class="content-area">
       <div v-show="theaterMode" class="toast-chat-container">

@@ -1,0 +1,40 @@
+.emote-selector {
+  background-color: rgba(0, 0, 0, 0.8);
+
+  overflow: hidden;
+}
+
+.emotes {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 5px;
+
+  opacity: 1;
+
+  padding: 10px;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  width: 100%;
+  height: 100%;
+
+  .emote {
+    background-color: rgb(13, 13, 13);
+    display: flex;
+    justify-content: center;
+
+    width: 100px;
+    height: 100px;
+
+    cursor: pointer;
+
+    img {
+      align-self: center;
+
+      max-width: 100px;
+      max-height: 100px;
+    }
+  }
+}

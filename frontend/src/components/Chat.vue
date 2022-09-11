@@ -1,30 +1,24 @@
 <script setup lang="ts">
-import { inject, onMounted, onUnmounted, reactive, ref, toRefs } from "vue";
+import { inject, onMounted, onUnmounted, reactive, ref } from "vue";
 import axios from "axios";
 import filesize from "filesize";
 
 import ChatPost from "./ChatPost.vue";
+import EmoteSelector from "./EmoteSelector.vue";
 
-import { VERSION } from "@/version";
 import type { LocalRoomSettingsService } from "@/services/localroomsettingsservice";
 
-import type { Post } from "@/models";
+import type { Post, RoomInfo } from "@/models";
 import type { AriaWebSocket, AriaWsListener } from "@/services/websocket";
-
-const props = defineProps<{
-  room: string;
-}>();
 
 const emit = defineEmits<{
   (e: "post", post: Post): void;
   (e: "themechange", theme: string): void;
 }>();
 
-const { room } = toRefs(props);
+const room: RoomInfo | undefined = inject("room");
 
 const maxImageSize = 2097152;
-
-const versionText = `v${VERSION}`;
 
 interface NewPost {
   name: string;
@@ -113,7 +107,7 @@ const canSubmitPost = (): boolean => {
 };
 
 const postUrl = () => {
-  return `/api/chat/${room.value}/post`;
+  return `/api/chat/${room?.name}/post`;
 };
 
 const activatePostingCooldown = () => {
@@ -231,6 +225,18 @@ const scrollToBottom = () => {
   _postContainer.scrollTo(0, _postContainer.scrollHeight);
 };
 
+const showEmoteSelector = ref(false);
+const openEmoteSelector = () => {
+  showEmoteSelector.value = !showEmoteSelector.value;
+  console.log("SHOW EMOTE SELECTOR", showEmoteSelector.value);
+};
+
+const selectEmote = (name: string) => {
+  post.value.comment += `!${name}`;
+  showEmoteSelector.value = false;
+  commentField.value?.focus();
+};
+
 let ws_listener: AriaWsListener | undefined;
 
 onMounted(() => {
@@ -278,18 +284,17 @@ onUnmounted(() => {
         <div v-if="!useCompactPostForm">
           <table class="chatcontrols-table">
             <tr>
-              <td>Name</td>
               <td>
                 <input name="name" type="text" v-model="post.name" placeholder="Anonymous" :readonly="posting" />
               </td>
             </tr>
             <tr>
-              <td>Comment</td>
               <td>
                 <textarea
                   ref="commentField"
                   name="comment"
                   v-model="post.comment"
+                  placeholder="Comment"
                   maxlength="600"
                   class="comment-field"
                   wrap="soft"
@@ -300,7 +305,6 @@ onUnmounted(() => {
               </td>
             </tr>
             <tr>
-              <td>Image</td>
               <td>
                 <input
                   name="image"
@@ -314,22 +318,21 @@ onUnmounted(() => {
               </td>
             </tr>
             <tr>
-              <td></td>
               <td>
-                <button id="postbutton" type="submit" :disabled="!canSubmitPost">
+                <button class="post-button" type="submit" :disabled="!canSubmitPost">
                   {{ postingCooldownText() || "Post" }}
                 </button>
                 <span class="progress">{{ postingProgress }}</span>
               </td>
             </tr>
           </table>
-          <div class="version-text">{{ versionText }}</div>
         </div>
         <div v-if="useCompactPostForm" class="chatcontrols-table">
           <textarea
             ref="commentField"
             name="comment"
             v-model="post.comment"
+            placeholder="Comment"
             maxlength="600"
             class="comment-field"
             wrap="soft"
@@ -337,7 +340,7 @@ onUnmounted(() => {
             @keydown="submitOnEnterKeydown($event)"
             autofocus
           ></textarea>
-          <button id="postbutton" type="submit" :disabled="!canSubmitPost">
+          <button class="post-button" type="submit" :disabled="!canSubmitPost">
             {{ postingCooldownText() || postingProgress || "Post" }}
           </button>
           <input
@@ -352,7 +355,10 @@ onUnmounted(() => {
         </div>
       </form>
       <div class="options">
-        <select v-if="!useCompactPostForm" v-model="theme" @change="themeSelected()">
+        <button class="emote-button" title="Emotes" @click="openEmoteSelector">
+          <span class="fa-regular fa-face-smile"></span>
+        </button>
+        <select v-if="!useCompactPostForm" class="theme-selector" v-model="theme" @change="themeSelected()">
           <option v-for="theme of themes" :key="theme.name" :value="theme.name">{{ theme.description }}</option>
         </select>
         <button
@@ -365,6 +371,9 @@ onUnmounted(() => {
         </button>
       </div>
     </div>
+  </div>
+  <div v-if="showEmoteSelector" class="overlay" @click="showEmoteSelector = false">
+    <EmoteSelector class="emote-selector dialog" @selectemote="selectEmote" />
   </div>
 </template>
 
