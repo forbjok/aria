@@ -12,8 +12,8 @@ export class LocalRoomAuthService {
     return `room_${this.room.name}_auth`;
   }
 
-  get(): string {
-    return this.localStorageService?.get(this.authKeyName) || {};
+  get(): string | null {
+    return this.localStorageService?.get(this.authKeyName) || null;
   }
 
   set(value: string) {

@@ -4,13 +4,16 @@ import type { LocalRoomAuthService } from "@/services/localroomauthservice";
 import type { RoomInfo } from "@/models";
 
 export class RoomAdminService {
-  private token: string | undefined;
+  private token?: string | null;
   private isAdmin = false;
 
   constructor(private room: RoomInfo, private auth: LocalRoomAuthService) {}
 
   async getLoginStatus(): Promise<boolean> {
     this.token = this.auth.get();
+    if (!this.token) {
+      return false;
+    }
 
     try {
       await axios.post(`/api/r/${this.room.name}/loggedin`, null, {

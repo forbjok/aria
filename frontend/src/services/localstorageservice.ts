@@ -1,16 +1,16 @@
 export class LocalStorageService {
-  _getKeyName(name: string): string {
-    return `aria_${name}`;
-  }
-
-  get(name: string): any {
-    const json = window.localStorage.getItem(this._getKeyName(name));
+  get<T>(name: string): T | null {
+    const json = window.localStorage.getItem(this.getKeyName(name));
     if (!json) return null;
 
     return JSON.parse(json);
   }
 
-  set(name: string, value: any) {
-    window.localStorage.setItem(this._getKeyName(name), JSON.stringify(value));
+  set<T>(name: string, value: T | null) {
+    window.localStorage.setItem(this.getKeyName(name), JSON.stringify(value));
+  }
+
+  private getKeyName(name: string): string {
+    return `aria_${name}`;
   }
 }
