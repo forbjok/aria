@@ -2,7 +2,7 @@ import { createApp } from "vue";
 import App from "@/App.vue";
 import router from "@/router";
 
-import { LocalStorageService } from "@/services/localstorageservice";
+import { LocalStorageService } from "@/services/localstorage";
 
 // CSS reset
 import "ress";

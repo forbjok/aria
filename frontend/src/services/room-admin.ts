@@ -1,13 +1,13 @@
 import axios, { type AxiosResponse } from "axios";
 
-import type { LocalRoomAuthService } from "@/services/localroomauthservice";
+import type { RoomAuthService } from "@/services/room-auth";
 import type { RoomInfo } from "@/models";
 
 export class RoomAdminService {
   private token?: string | null;
   private isAdmin = false;
 
-  constructor(private room: RoomInfo, private auth: LocalRoomAuthService) {}
+  constructor(private room: RoomInfo, private auth: RoomAuthService) {}
 
   async getLoginStatus(): Promise<boolean> {
     this.token = this.auth.get();

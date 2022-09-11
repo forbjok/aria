@@ -1,9 +1,9 @@
 import type { RoomInfo } from "@/models";
 import { inject } from "vue";
 
-import type { LocalStorageService } from "@/services/localstorageservice";
+import type { LocalStorageService } from "@/services/localstorage";
 
-export class LocalRoomAuthService {
+export class RoomAuthService {
   private localStorageService: LocalStorageService | undefined = inject("storage");
 
   constructor(private room: RoomInfo) {}

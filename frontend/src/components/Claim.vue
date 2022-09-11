@@ -3,7 +3,7 @@ import { onBeforeMount, ref, toRefs } from "vue";
 
 import router from "@/router";
 import type { RoomInfo } from "@/models";
-import { LocalRoomAuthService } from "@/services/localroomauthservice";
+import { RoomAuthService } from "@/services/room-auth";
 import { RoomService, type ClaimInfo } from "@/services/room";
 
 const props = defineProps<{
@@ -14,7 +14,7 @@ const { room } = toRefs(props);
 
 const roomInfo: RoomInfo = { name: room.value, emotes: {} };
 
-const auth = new LocalRoomAuthService(roomInfo);
+const auth = new RoomAuthService(roomInfo);
 const roomService = new RoomService(roomInfo);
 
 const claimInfo = ref<ClaimInfo | null>(null);

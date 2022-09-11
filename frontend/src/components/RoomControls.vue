@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from "vue";
 
-import type { RoomAdminService } from "@/services/roomadminservice";
+import type { RoomAdminService } from "@/services/room-admin";
 
 const roomAdminService: RoomAdminService | undefined = inject("admin");
 

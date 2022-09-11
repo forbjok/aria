@@ -6,7 +6,7 @@ import filesize from "filesize";
 import ChatPost from "./ChatPost.vue";
 import EmoteSelector from "./EmoteSelector.vue";
 
-import type { LocalRoomSettingsService } from "@/services/localroomsettingsservice";
+import type { RoomSettingsService } from "@/services/room-settings";
 
 import type { Post, RoomInfo } from "@/models";
 import type { AriaWebSocket, AriaWsListener } from "@/services/websocket";
@@ -26,7 +26,7 @@ interface NewPost {
   image?: File;
 }
 
-const settings: LocalRoomSettingsService | undefined = inject("settings");
+const settings: RoomSettingsService | undefined = inject("settings");
 const ws: AriaWebSocket | undefined = inject("ws");
 
 const postContainer = ref<HTMLDivElement | null>(null);
@@ -228,7 +228,6 @@ const scrollToBottom = () => {
 const showEmoteSelector = ref(false);
 const openEmoteSelector = () => {
   showEmoteSelector.value = !showEmoteSelector.value;
-  console.log("SHOW EMOTE SELECTOR", showEmoteSelector.value);
 };
 
 const selectEmote = (name: string) => {

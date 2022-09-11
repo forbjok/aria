@@ -6,9 +6,9 @@ import Chat from "./Chat.vue";
 import ToastChat from "./ToastChat.vue";
 import Player from "./Player.vue";
 import RoomControls from "./RoomControls.vue";
-import { LocalRoomSettingsService } from "@/services/localroomsettingsservice";
-import { RoomAdminService } from "@/services/roomadminservice";
-import { LocalRoomAuthService } from "@/services/localroomauthservice";
+import { RoomSettingsService } from "@/services/room-settings";
+import { RoomAdminService } from "@/services/room-admin";
+import { RoomAuthService } from "@/services/room-auth";
 
 import type { Content, Emote, RoomInfo } from "@/models";
 import { RoomService } from "@/services/room";
@@ -33,8 +33,8 @@ const { name } = toRefs(props);
 
 const roomInfo: RoomInfo = { name: name.value, emotes: {} };
 const roomService = new RoomService(roomInfo);
-const localRoomAuthService = new LocalRoomAuthService(roomInfo);
-const localRoomSettingsService = new LocalRoomSettingsService(roomInfo);
+const localRoomAuthService = new RoomAuthService(roomInfo);
+const localRoomSettingsService = new RoomSettingsService(roomInfo);
 const roomAdminService = new RoomAdminService(roomInfo, localRoomAuthService);
 const commentParser = new CommentParser(roomInfo);
 
