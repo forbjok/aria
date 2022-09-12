@@ -37,6 +37,13 @@ impl AriaCore {
         // If image does not already exist in originals path, move it there.
         if !original_image_path.exists() {
             util::move_file(path, &original_image_path).await?;
+
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+
+                tokio::fs::set_permissions(&original_image_path, std::fs::Permissions::from_mode(0o644)).await?;
+            }
         } else {
             // ... otherwise, delete it.
             tokio::fs::remove_file(path).await?;
