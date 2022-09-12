@@ -1,33 +1,20 @@
 <script setup lang="ts">
-import { inject, onMounted, ref } from "vue";
+import { inject, ref } from "vue";
 
 import type { RoomAdminService } from "@/services/room-admin";
+import type { RoomAuthService } from "@/services/room-auth";
 
-const emit = defineEmits<{
-  (e: "authorized", authorized: boolean): void;
-}>();
+const auth: RoomAuthService | undefined = inject("auth");
+const admin: RoomAdminService | undefined = inject("admin");
 
-const roomAdminService: RoomAdminService | undefined = inject("admin");
-
-const initialized = ref(false);
-const authorized = ref(false);
 const contentUrl = ref("");
 
 const password = ref("");
 const loginError = ref<string | null>(null);
 
-onMounted(async () => {
-  authorized.value = (await roomAdminService?.getLoginStatus()) || false;
-  initialized.value = true;
-});
-
 const login = async () => {
-  const success = await roomAdminService?.login(password.value);
-
-  if (success) {
-    authorized.value = true;
-    emit("authorized", true);
-  } else {
+  const success = await auth?.login(password.value);
+  if (!success) {
     loginError.value = "Nope, that's not it.";
 
     setTimeout(() => {
@@ -41,20 +28,15 @@ const login = async () => {
 
 const setContent = async () => {
   if (contentUrl.value) {
-    if (contentUrl.value.indexOf(":") === -1) {
-      // No scheme was present - assume HTTP
-      contentUrl.value = "http://" + contentUrl.value;
-    }
-
-    await roomAdminService?.setContentUrl(contentUrl.value);
+    await admin?.setContentUrl(contentUrl.value);
     contentUrl.value = "";
   }
 };
 </script>
 
 <template>
-  <div v-if="initialized" class="roomcontrols">
-    <div v-if="!authorized" class="login">
+  <div class="roomcontrols">
+    <div v-if="!auth?.isAuthorized" class="login">
       <form class="login-form" @submit.prevent="login()">
         <table>
           <tr>
@@ -70,7 +52,7 @@ const setContent = async () => {
       </form>
       <div class="login-error">{{ loginError }}</div>
     </div>
-    <div v-if="authorized" class="controls">
+    <div v-if="auth?.isAuthorized" class="controls">
       <div class="content-section">
         <form class="setcontent-form" @submit.prevent="setContent()">
           <table>

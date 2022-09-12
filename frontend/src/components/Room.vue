@@ -6,6 +6,7 @@ import Chat from "./Chat.vue";
 import ToastChat from "./ToastChat.vue";
 import Player from "./Player.vue";
 import RoomControls from "./RoomControls.vue";
+
 import { RoomSettingsService } from "@/services/room-settings";
 import { RoomAdminService } from "@/services/room-admin";
 import { RoomAuthService } from "@/services/room-auth";
@@ -33,9 +34,9 @@ const { name } = toRefs(props);
 
 const roomInfo: RoomInfo = { name: name.value, emotes: {} };
 const roomService = new RoomService(roomInfo);
-const localRoomAuthService = new RoomAuthService(roomInfo);
-const localRoomSettingsService = new RoomSettingsService(roomInfo);
-const roomAdminService = new RoomAdminService(roomInfo, localRoomAuthService);
+const auth = new RoomAuthService(roomInfo);
+const settings = new RoomSettingsService(roomInfo);
+const admin = new RoomAdminService(roomInfo, auth);
 const commentParser = new CommentParser(roomInfo);
 
 const ws_protocol = window.location.protocol === "https:" ? "wss" : "ws";
@@ -44,9 +45,9 @@ const ws_url = `${ws_protocol}://${window.location.host}/aria-ws`;
 const ws = new AriaWebSocket(ws_url, name.value);
 
 provide("room", roomInfo);
-provide("auth", localRoomAuthService);
-provide("settings", localRoomSettingsService);
-provide("admin", roomAdminService);
+provide("auth", auth);
+provide("settings", settings);
+provide("admin", admin);
 provide("commentparser", commentParser);
 provide("ws", ws);
 
@@ -60,7 +61,6 @@ const chatTheme = ref<string>("dark");
 const theaterMode = ref(false);
 
 const content = ref<Content | null>(null);
-const isAuthorized = ref(false);
 const isMaster = ref(false);
 const isDetached = ref(false);
 
@@ -76,7 +76,7 @@ let serverPlaybackState: PlaybackState = {
 
 let ws_listener: AriaWsListener | undefined;
 onMounted(async () => {
-  isAuthorized.value = await roomAdminService.getLoginStatus();
+  await auth.setup();
 
   ws_listener = ws.create_listener();
 
@@ -317,32 +317,38 @@ const onContentAreaKeydown = (event: KeyboardEvent) => {
   }
 };
 
-const toggleMaster = () => {
-  isMaster.value = !isMaster.value;
+const setMaster = (v: boolean) => {
+  if (isMaster.value === v) {
+    return;
+  }
+
+  isMaster.value = v;
 
   if (isMaster.value) {
     isDetached.value = false;
   }
 
   if (isMaster.value) {
-    ws.send("set-master");
+    ws.send("set-master", auth.getToken());
+  } else {
+    ws.send("not-master");
   }
+};
+
+const toggleMaster = () => {
+  setMaster(!isMaster.value);
 };
 
 const toggleDetached = () => {
   isDetached.value = !isDetached.value;
 
   if (isDetached.value) {
-    isMaster.value = false;
+    setMaster(false);
   }
 
   if (!isDetached.value) {
     setPlaybackState(serverPlaybackState);
   }
-};
-
-const setAuthorized = (authorized: boolean) => {
-  isAuthorized.value = authorized;
 };
 </script>
 
@@ -359,7 +365,7 @@ const setAuthorized = (authorized: boolean) => {
           ><span class="fa fa-wrench"></span
         ></a>
         <a
-          v-if="isAuthorized"
+          v-if="auth.isAuthorized"
           href="#"
           class="usercontrol"
           :class="isMaster ? '' : 'usercontrol-off'"
@@ -398,7 +404,7 @@ const setAuthorized = (authorized: boolean) => {
     </div>
     <div v-if="showRoomControls" class="roomcontrols-container">
       <div class="overlay" @click="toggleRoomControls()"></div>
-      <RoomControls class="dialog" @authorized="setAuthorized"></RoomControls>
+      <RoomControls class="dialog"></RoomControls>
     </div>
   </div>
 </template>

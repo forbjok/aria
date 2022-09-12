@@ -32,7 +32,7 @@ async fn main() -> Result<(), anyhow::Error> {
     let auth = Arc::new(AriaAuth::new(b"sekrit"));
     let core = Arc::new(AriaCore::new(notify_tx)?);
 
-    let server = AriaServer::new(auth, core.clone());
+    let server = AriaServer::new(auth.clone(), core.clone());
 
     let shutdown = || async {
         tokio::signal::ctrl_c().await.expect("Error awaiting Ctrl-C signal");
@@ -40,7 +40,7 @@ async fn main() -> Result<(), anyhow::Error> {
     };
 
     let http_server = server.run_server();
-    let ws_server = websocket_server::run_server(core.clone(), notify_rx, shutdown());
+    let ws_server = websocket_server::run_server(auth.clone(), core.clone(), notify_rx, shutdown());
 
     let (http_result, ws_result) = tokio::join!(http_server, ws_server);
 

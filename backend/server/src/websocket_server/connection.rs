@@ -11,6 +11,8 @@ use tracing::{error, info, warn};
 
 use aria_models::api as am;
 
+use crate::websocket_server::send;
+
 use super::{room::Room, send_raw, ConnectionId, ServerState, Tx};
 
 struct ConnectionState {
@@ -106,10 +108,32 @@ pub(super) async fn handle_connection(
                                 }
                             }
                             "set-master" => {
+                                let token: String =
+                                    serde_json::from_str(data).context("Error deserializing authorization token")?;
+
+                                if let Some(room) = cn_state.room.lock().await.as_ref() {
+                                    let mut is_authorized = false;
+                                    if let Some(claims) = sv_state.auth.verify(&token) {
+                                        if &claims.name == room {
+                                            is_authorized = true;
+                                        }
+                                    }
+
+                                    if is_authorized {
+                                        let mut rooms = sv_state.rooms.lock().await;
+                                        if let Some(room) = rooms.get_mut(room) {
+                                            room.set_master(id).context("setting master")?;
+                                        }
+                                    } else {
+                                        send(tx, "not-master", ())?;
+                                    }
+                                }
+                            }
+                            "not-master" => {
                                 if let Some(room) = cn_state.room.lock().await.as_ref() {
                                     let mut rooms = sv_state.rooms.lock().await;
                                     if let Some(room) = rooms.get_mut(room) {
-                                        room.set_master(id).context("setting master")?;
+                                        room.relinquish_master(id).context("relinquishing master")?;
                                     }
                                 }
                             }

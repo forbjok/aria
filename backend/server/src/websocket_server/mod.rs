@@ -15,6 +15,8 @@ use tokio::{
 use tokio_tungstenite::tungstenite::Message;
 use tracing::info;
 
+use crate::auth::AriaAuth;
+
 use self::connection::*;
 use self::notification::*;
 use self::room::*;
@@ -23,6 +25,7 @@ type ConnectionId = u64;
 type Tx = UnboundedSender<Message>;
 
 struct ServerState {
+    auth: Arc<AriaAuth>,
     core: Arc<AriaCore>,
     rooms: Mutex<HashMap<String, Room>>,
 }
@@ -37,13 +40,14 @@ struct ImageViewModel {
 const LISTEN_ADDR: &str = "0.0.0.0:3001";
 
 pub async fn run_server(
+    auth: Arc<AriaAuth>,
     core: Arc<AriaCore>,
     notify_rx: UnboundedReceiver<Notification>,
     shutdown: impl Future,
 ) -> Result<(), anyhow::Error> {
     let rooms = Mutex::new(HashMap::new());
 
-    let state = Arc::new(ServerState { core, rooms });
+    let state = Arc::new(ServerState { auth, core, rooms });
 
     let listener = TcpListener::bind(LISTEN_ADDR).await?;
     info!("WebSocket server listening on: {LISTEN_ADDR}");
@@ -60,7 +64,7 @@ pub async fn run_server(
     ));
 
     // Accept connections
-    let mut next_id: ConnectionId = 0;
+    let mut next_id: ConnectionId = 1;
 
     pin_mut!(shutdown);
 

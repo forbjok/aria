@@ -126,6 +126,18 @@ impl Room {
         Ok(())
     }
 
+    pub fn relinquish_master(&mut self, id: ConnectionId) -> Result<(), anyhow::Error> {
+        // If this id is not master, return immediately.
+        if self.master != id {
+            return Ok(());
+        }
+
+        // Clear master
+        self.master = 0;
+
+        Ok(())
+    }
+
     pub fn set_playback_state(&mut self, id: ConnectionId, ps: &am::PlaybackState) -> Result<(), anyhow::Error> {
         // Sender is not master. Ignore.
         if id != self.master {
