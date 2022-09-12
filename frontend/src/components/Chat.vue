@@ -152,6 +152,7 @@ const submitPost = async () => {
   // Save chat name
   if (settings) {
     settings.chatName.value = post.value.name;
+    settings.save();
   }
 
   try {
