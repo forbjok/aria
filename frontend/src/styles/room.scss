@@ -80,6 +80,10 @@
         &:hover {
           color: #a862f8;
         }
+
+        &.usercontrol-off {
+          filter: brightness(0.6);
+        }
       }
 
       .spacer {

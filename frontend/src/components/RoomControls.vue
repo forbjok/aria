@@ -3,6 +3,10 @@ import { inject, onMounted, ref } from "vue";
 
 import type { RoomAdminService } from "@/services/room-admin";
 
+const emit = defineEmits<{
+  (e: "authorized", authorized: boolean): void;
+}>();
+
 const roomAdminService: RoomAdminService | undefined = inject("admin");
 
 const initialized = ref(false);
@@ -22,6 +26,7 @@ const login = async () => {
 
   if (success) {
     authorized.value = true;
+    emit("authorized", true);
   } else {
     loginError.value = "Nope, that's not it.";
 

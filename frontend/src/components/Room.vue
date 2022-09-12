@@ -60,7 +60,9 @@ const chatTheme = ref<string>("dark");
 const theaterMode = ref(false);
 
 const content = ref<Content | null>(null);
-let isMaster = false;
+const isAuthorized = ref(false);
+const isMaster = ref(false);
+
 let isPlayerInteractedWith = false;
 let isMasterInitiatedPlay = false;
 let isViewerPaused = false;
@@ -73,16 +75,9 @@ let serverPlaybackState: PlaybackState = {
 
 let ws_listener: AriaWsListener | undefined;
 onMounted(async () => {
-  const isAuthorized = await roomAdminService.getLoginStatus();
-  isMaster = isAuthorized;
+  isAuthorized.value = await roomAdminService.getLoginStatus();
 
   ws_listener = ws.create_listener();
-
-  ws_listener.on("joined", () => {
-    if (isMaster) {
-      ws.send("set-master");
-    }
-  });
 
   ws_listener.on("emotes", async (emotes: Emote[]) => {
     for (const e of emotes) {
@@ -99,16 +94,17 @@ onMounted(async () => {
   });
 
   ws_listener.on("not-master", () => {
-    isMaster = false;
+    isMaster.value = false;
   });
 
   ws_listener.on("playbackstate", async (ps: PlaybackState) => {
-    if (isMaster && isPlayerInteractedWith) {
+    serverPlaybackStateTimestamp = getTimestamp();
+    serverPlaybackState = ps;
+    serverPlaybackState.time += ws.latency * ps.rate;
+
+    if (isMaster.value && isPlayerInteractedWith) {
       return;
     }
-
-    serverPlaybackStateTimestamp = getTimestamp();
-    ps.time += ws.latency * ps.rate;
 
     await setPlaybackState(ps);
   });
@@ -180,19 +176,19 @@ const onPlay = async (auto: boolean) => {
 
   isViewerPaused = false;
 
-  if (!isMaster || !isPlayerInteractedWith) {
+  if (!isMaster.value || !isPlayerInteractedWith) {
     await setPlaybackState(serverPlaybackState);
   }
 
   isPlayerInteractedWith = true;
 
-  if (isMaster) {
+  if (isMaster.value) {
     isMasterInitiatedPlay = true;
   }
 };
 
 const onPlaying = async () => {
-  if (isMaster) {
+  if (isMaster.value) {
     if (isMasterInitiatedPlay) {
       await broadcastPlaybackState();
     }
@@ -248,8 +244,6 @@ const getPlaybackState = async (): Promise<PlaybackState> => {
 };
 
 const setPlaybackState = async (ps: PlaybackState) => {
-  serverPlaybackState = ps;
-
   const _player = player.value;
   if (!_player || !_player.getIsContentLoaded()) {
     setTimeout(() => {
@@ -293,7 +287,7 @@ const setPlaybackState = async (ps: PlaybackState) => {
       return;
     }
 
-    if (isMaster && !isPlayerInteractedWith) {
+    if (isMaster.value && !isPlayerInteractedWith) {
       return;
     }
 
@@ -302,7 +296,7 @@ const setPlaybackState = async (ps: PlaybackState) => {
 };
 
 const broadcastPlaybackState = async () => {
-  if (!isMaster || !isPlayerInteractedWith) return;
+  if (!isMaster.value || !isPlayerInteractedWith) return;
 
   const ps = (await getPlaybackState()) || serverPlaybackState;
   ps.time += ws.latency * ps.rate;
@@ -316,6 +310,18 @@ const onContentAreaKeydown = (event: KeyboardEvent) => {
     event.preventDefault();
     return;
   }
+};
+
+const toggleMaster = () => {
+  isMaster.value = !isMaster.value;
+
+  if (isMaster.value) {
+    ws.send("set-master");
+  }
+};
+
+const setAuthorized = (authorized: boolean) => {
+  isAuthorized.value = authorized;
 };
 </script>
 
@@ -331,6 +337,16 @@ const onContentAreaKeydown = (event: KeyboardEvent) => {
         <a href="#" class="usercontrol" title="Room Admin" @click="toggleRoomControls()"
           ><span class="fa fa-wrench"></span
         ></a>
+        <a
+          v-if="isAuthorized"
+          href="#"
+          class="usercontrol"
+          :class="isMaster ? '' : 'usercontrol-off'"
+          title="Toggle master"
+          @click="toggleMaster"
+        >
+          <span class="fa fa-star"></span>
+        </a>
       </div>
     </div>
     <div v-show="!theaterMode" ref="chatContainer" class="chat-container">
@@ -352,7 +368,7 @@ const onContentAreaKeydown = (event: KeyboardEvent) => {
     </div>
     <div v-if="showRoomControls" class="roomcontrols-container">
       <div class="overlay" @click="toggleRoomControls()"></div>
-      <RoomControls class="dialog"></RoomControls>
+      <RoomControls class="dialog" @authorized="setAuthorized"></RoomControls>
     </div>
   </div>
 </template>
