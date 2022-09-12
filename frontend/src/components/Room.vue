@@ -62,6 +62,7 @@ const theaterMode = ref(false);
 const content = ref<Content | null>(null);
 const isAuthorized = ref(false);
 const isMaster = ref(false);
+const isDetached = ref(false);
 
 let isPlayerInteractedWith = false;
 let isMasterInitiatedPlay = false;
@@ -244,6 +245,10 @@ const getPlaybackState = async (): Promise<PlaybackState> => {
 };
 
 const setPlaybackState = async (ps: PlaybackState) => {
+  if (isDetached.value) {
+    return;
+  }
+
   const _player = player.value;
   if (!_player || !_player.getIsContentLoaded()) {
     setTimeout(() => {
@@ -296,7 +301,7 @@ const setPlaybackState = async (ps: PlaybackState) => {
 };
 
 const broadcastPlaybackState = async () => {
-  if (!isMaster.value || !isPlayerInteractedWith) return;
+  if (isDetached.value || !isMaster.value || !isPlayerInteractedWith) return;
 
   const ps = (await getPlaybackState()) || serverPlaybackState;
   ps.time += ws.latency * ps.rate;
@@ -316,7 +321,23 @@ const toggleMaster = () => {
   isMaster.value = !isMaster.value;
 
   if (isMaster.value) {
+    isDetached.value = false;
+  }
+
+  if (isMaster.value) {
     ws.send("set-master");
+  }
+};
+
+const toggleDetached = () => {
+  isDetached.value = !isDetached.value;
+
+  if (isDetached.value) {
+    isMaster.value = false;
+  }
+
+  if (!isDetached.value) {
+    setPlaybackState(serverPlaybackState);
   }
 };
 
@@ -346,6 +367,15 @@ const setAuthorized = (authorized: boolean) => {
           @click="toggleMaster"
         >
           <span class="fa fa-star"></span>
+        </a>
+        <a
+          href="#"
+          class="usercontrol"
+          :class="isDetached ? 'usercontrol-off' : ''"
+          :title="isDetached ? 'Attach' : 'Detach'"
+          @click="toggleDetached"
+        >
+          <span class="fa fa-plug"></span>
         </a>
       </div>
     </div>
