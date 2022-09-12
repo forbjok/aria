@@ -61,6 +61,8 @@ const theaterMode = ref(false);
 
 const content = ref<Content | null>(null);
 let isMaster = false;
+let isPlayerInteractedWith = false;
+let isMasterInitiatedPlay = false;
 let isViewerPaused = false;
 let serverPlaybackStateTimestamp = 0;
 let serverPlaybackState: PlaybackState = {
@@ -101,6 +103,10 @@ onMounted(async () => {
   });
 
   ws_listener.on("playbackstate", async (ps: PlaybackState) => {
+    if (isMaster && isPlayerInteractedWith) {
+      return;
+    }
+
     serverPlaybackStateTimestamp = getTimestamp();
     ps.time += ws.latency * ps.rate;
 
@@ -128,6 +134,7 @@ const setContent = async (_content: Content | null) => {
   if (!player.value) return;
 
   player.value.setContent(_content);
+  isPlayerInteractedWith = false;
 };
 
 const reloadContent = async () => {
@@ -158,38 +165,71 @@ const toggleRoomControls = () => {
   showRoomControls.value = !showRoomControls.value;
 };
 
+let isPlayerStateCooldown = false;
+const activatePlayerStateCooldown = () => {
+  isPlayerStateCooldown = true;
+  setTimeout(() => {
+    isPlayerStateCooldown = false;
+  }, 100);
+};
+
 const onPlay = async (auto: boolean) => {
-  if (!auto) {
-    isViewerPaused = false;
+  if (auto) {
+    return;
   }
 
-  if (!isMaster) {
+  isViewerPaused = false;
+
+  if (!isMaster || !isPlayerInteractedWith) {
     await setPlaybackState(serverPlaybackState);
+  }
+
+  isPlayerInteractedWith = true;
+
+  if (isMaster) {
+    isMasterInitiatedPlay = true;
+  }
+};
+
+const onPlaying = async () => {
+  if (isMaster) {
+    if (isMasterInitiatedPlay) {
+      await broadcastPlaybackState();
+    }
+
+    if (isPlayerInteractedWith) {
+      return;
+    }
+  }
+
+  setTimeout(() => {
+    setPlaybackState(serverPlaybackState);
+  }, 1);
+};
+
+const onPause = async (auto: boolean) => {
+  if (auto) {
+    return;
+  }
+
+  isPlayerInteractedWith = true;
+  isViewerPaused = true;
+  await broadcastPlaybackState();
+};
+
+const onSeek = async (auto: boolean) => {
+  if (auto) {
     return;
   }
 
   await broadcastPlaybackState();
 };
 
-const onPlaying = async () => {
-  if (isMaster) return;
-
-  await setPlaybackState(serverPlaybackState);
-};
-
-const onPause = async (auto: boolean) => {
-  if (!auto) {
-    isViewerPaused = true;
+const onRateChange = async (auto: boolean) => {
+  if (auto) {
+    return;
   }
 
-  await broadcastPlaybackState();
-};
-
-const onSeek = async () => {
-  await broadcastPlaybackState();
-};
-
-const onRateChange = async () => {
   await broadcastPlaybackState();
 };
 
@@ -212,6 +252,9 @@ const setPlaybackState = async (ps: PlaybackState) => {
 
   const _player = player.value;
   if (!_player || !_player.getIsContentLoaded()) {
+    setTimeout(() => {
+      setPlaybackState(ps);
+    }, 1000);
     return;
   }
 
@@ -221,7 +264,7 @@ const setPlaybackState = async (ps: PlaybackState) => {
 
   const currentPlaybackState = await getPlaybackState();
 
-  if (ps.is_playing) {
+  if (ps.is_playing || !isPlayerInteractedWith) {
     const elapsedSinceTimestamp = ((getTimestamp() - serverPlaybackStateTimestamp) * ps.rate) / 1000;
     const newTime = ps.time + elapsedSinceTimestamp;
 
@@ -235,17 +278,31 @@ const setPlaybackState = async (ps: PlaybackState) => {
       _player.setTime(newTime);
     }
 
-    if (!currentPlaybackState.is_playing) {
+    if (ps.is_playing && !currentPlaybackState.is_playing) {
       _player.setTime(newTime);
+
+      if (isPlayerStateCooldown) {
+        return;
+      }
+
       _player.play();
+      activatePlayerStateCooldown();
     }
   } else if (!ps.is_playing && currentPlaybackState.is_playing) {
+    if (isPlayerStateCooldown) {
+      return;
+    }
+
+    if (isMaster && !isPlayerInteractedWith) {
+      return;
+    }
+
     _player.pause();
   }
 };
 
 const broadcastPlaybackState = async () => {
-  if (!isMaster) return;
+  if (!isMaster || !isPlayerInteractedWith) return;
 
   const ps = (await getPlaybackState()) || serverPlaybackState;
   ps.time += ws.latency * ps.rate;

@@ -110,6 +110,7 @@ const setContent = async (_content: Content | null) => {
       ytp.on("stateChange", (event) => {
         if (event.data === PlayerStates.PLAYING) {
           onPlay();
+          onPlaying();
         } else if (event.data === PlayerStates.PAUSED) {
           onPause();
         }

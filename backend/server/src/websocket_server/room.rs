@@ -57,6 +57,8 @@ impl Room {
         self.members.push(member);
 
         send(&tx, "content", &self.content)?;
+        send(&tx, "playbackstate", &self.get_playback_state())?;
+
         self.send_emotes(&tx)?;
         self.send_recent_posts(&tx)?;
         send(&tx, "joined", ())?;
@@ -149,8 +151,14 @@ impl Room {
 
     fn get_playback_state(&self) -> am::PlaybackState {
         let rate = self.playback_state.rate;
-        let time_diff = ((Utc::now() - self.playback_state_timestamp).num_milliseconds() as f64 * rate) / 1000.;
-        let time = self.playback_state.time + time_diff;
+
+        let time = if self.playback_state.is_playing {
+            let time_diff = ((Utc::now() - self.playback_state_timestamp).num_milliseconds() as f64 * rate) / 1000.;
+
+            self.playback_state.time + time_diff
+        } else {
+            self.playback_state.time
+        };
 
         am::PlaybackState {
             time,

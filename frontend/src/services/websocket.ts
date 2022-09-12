@@ -56,6 +56,7 @@ export class AriaWebSocket {
     this.ws = ws;
 
     ws.onopen = () => {
+      console.log("Connected to server.");
       this.send("join", this.room);
       this.ping_interval = setInterval(() => {
         this.send("ping", getTimestamp());
@@ -67,6 +68,7 @@ export class AriaWebSocket {
         return;
       }
 
+      console.log("Disconnected from server. Trying to reconnect.");
       setTimeout(() => this.try_connect(), 5000);
     };
 
