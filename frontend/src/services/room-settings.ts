@@ -1,39 +1,48 @@
 import type { RoomInfo } from "@/models";
-import { inject } from "vue";
+import { inject, ref } from "vue";
 
 import type { LocalStorageService } from "@/services/localstorage";
 
-export class RoomSettingsService {
-  private localStorageService: LocalStorageService | undefined = inject("storage");
+interface RoomSettings {
+  chatName?: string;
+  theme: string;
+  isRightSideChat: boolean;
+}
 
-  private settings: { [key: string]: any[] } = {};
+const DefaultSettings: RoomSettings = {
+  theme: "dark",
+  isRightSideChat: false,
+};
+
+export class RoomSettingsService {
+  public readonly chatName = ref<string | undefined>(undefined);
+  public readonly theme = ref("");
+  public readonly isRightSideChat = ref(false);
+
+  private localStorageService: LocalStorageService | undefined = inject("storage");
 
   constructor(private room: RoomInfo) {
     this.load();
   }
 
+  public load() {
+    const settings: RoomSettings = { ...DefaultSettings, ...this.localStorageService?.get(this.getSettingsKeyName()) };
+    this.chatName.value = settings.chatName;
+    this.theme.value = settings.theme;
+    this.isRightSideChat.value = settings.isRightSideChat;
+  }
+
+  public save() {
+    const settings: RoomSettings = {
+      chatName: this.chatName.value,
+      theme: this.theme.value,
+      isRightSideChat: this.isRightSideChat.value,
+    };
+
+    this.localStorageService?.set(this.getSettingsKeyName(), settings);
+  }
+
   private getSettingsKeyName(): string {
     return `room_${this.room.name}`;
-  }
-
-  load() {
-    this.settings = this.localStorageService?.get(this.getSettingsKeyName()) || {};
-  }
-
-  save() {
-    this.localStorageService?.set(this.getSettingsKeyName(), this.settings);
-  }
-
-  get(name: string, defaultValue: any): any {
-    if (name in this.settings) {
-      return this.settings[name];
-    }
-
-    return defaultValue;
-  }
-
-  set(name: string, value: any): void {
-    this.settings[name] = value;
-    this.save();
   }
 }

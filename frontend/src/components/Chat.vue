@@ -13,7 +13,6 @@ import type { AriaWebSocket, AriaWsListener } from "@/services/websocket";
 
 const emit = defineEmits<{
   (e: "post", post: Post): void;
-  (e: "themechange", theme: string): void;
 }>();
 
 const room: RoomInfo | undefined = inject("room");
@@ -40,9 +39,6 @@ const themes = [
   { name: "yotsubab", description: "Yotsuba B" },
 ];
 
-const theme = ref<string>(settings?.get("chat_theme", null) || "dark");
-emit("themechange", theme.value);
-
 let posting = false;
 const postingProgress = ref("");
 const postingCooldown = ref(0);
@@ -50,7 +46,7 @@ let submitOnCooldown = false;
 
 const createEmptyPost = (): NewPost => {
   return {
-    name: settings?.get("chat_name", null) || "",
+    name: settings?.chatName.value || "",
     comment: "",
   };
 };
@@ -71,9 +67,12 @@ const imageSelected = (event: Event) => {
   }
 };
 
+const theme = ref(settings?.theme || "");
 const themeSelected = () => {
-  settings?.set("chat_theme", theme.value);
-  emit("themechange", theme.value);
+  if (settings) {
+    settings.theme.value = theme.value;
+    settings.save();
+  }
 };
 
 const toggleCompactPostForm = () => {
@@ -150,8 +149,10 @@ const submitPost = async () => {
   // Disable post controls while posting
   posting = true;
 
-  // Save name in cookie
-  settings?.set("chat_name", post.value.name);
+  // Save chat name
+  if (settings) {
+    settings.chatName.value = post.value.name;
+  }
 
   try {
     await axios.post(postUrl(), formData, {
@@ -270,10 +271,10 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="chat" :class="[`theme-${theme}`]">
+  <div class="chat" :class="`theme-${settings?.theme.value}`">
     <div ref="postContainer" class="post-container">
       <ul>
-        <ChatPost :post="post" v-for="post of posts" :key="post.id" @quotepost="quotePost"></ChatPost>
+        <ChatPost :post="post" v-for="post of posts" :key="post.id" @quotepost="quotePost" />
         <li class="bottom-spacer"></li>
       </ul>
     </div>
@@ -370,9 +371,9 @@ onUnmounted(() => {
         </button>
       </div>
     </div>
-  </div>
-  <div v-if="showEmoteSelector" class="overlay" @click="showEmoteSelector = false">
-    <EmoteSelector class="emote-selector dialog" @selectemote="selectEmote" />
+    <div v-if="showEmoteSelector" class="overlay" @click="showEmoteSelector = false">
+      <EmoteSelector class="emote-selector dialog" @selectemote="selectEmote" />
+    </div>
   </div>
 </template>
 

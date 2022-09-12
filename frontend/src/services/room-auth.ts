@@ -18,16 +18,21 @@ export class RoomAuthService {
   }
 
   public async setup() {
-    this.token = this.loadToken();
+    const token = this.loadToken();
+    await this.setToken(token);
+  }
+
+  public getToken(): string | undefined {
+    return this.token;
+  }
+
+  public async setToken(token?: string) {
+    this.token = token;
     if (!!this.token && (await this.verifyToken(this.token))) {
       this.isAuthorized.value = true;
     } else {
       this.token = undefined;
     }
-  }
-
-  public getToken(): string | undefined {
-    return this.token;
   }
 
   public async verifyToken(token: string): Promise<boolean> {

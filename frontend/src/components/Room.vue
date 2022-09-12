@@ -57,7 +57,6 @@ const room = ref<HTMLDivElement | null>(null);
 const toastChat = ref<typeof ToastChat | null>(null);
 const player = ref<typeof Player | null>(null);
 
-const chatTheme = ref<string>("dark");
 const theaterMode = ref(false);
 
 const content = ref<Content | null>(null);
@@ -350,15 +349,25 @@ const toggleDetached = () => {
     setPlaybackState(serverPlaybackState);
   }
 };
+
+const toggleRightSideChat = () => {
+  if (settings) {
+    settings.isRightSideChat.value = !settings.isRightSideChat.value;
+    settings.save();
+  }
+};
 </script>
 
 <template>
-  <div ref="room" class="room">
+  <div ref="room" class="room" :class="settings.isRightSideChat.value ? 'right-side-chat' : ''">
     <div class="usercontrols-activationzone">
       <div class="usercontrols">
         <a href="#" class="usercontrol" title="Reload" @click="reloadContent()"><span class="fa fa-refresh"></span></a>
         <a href="#" class="usercontrol" title="Theater mode" @click="toggleTheaterMode()"
           ><span class="fa fa-television"></span
+        ></a>
+        <a href="#" class="usercontrol" title="Switch chat side" @click="toggleRightSideChat"
+          ><span class="fa fa-arrow-right-arrow-left"></span
         ></a>
         <div class="spacer"></div>
         <a href="#" class="usercontrol" title="Room Admin" @click="toggleRoomControls()"
@@ -386,11 +395,11 @@ const toggleDetached = () => {
       </div>
     </div>
     <div v-show="!theaterMode" ref="chatContainer" class="chat-container">
-      <Chat @post="toastChat?.post($event)" @themechange="chatTheme = $event"></Chat>
+      <Chat :class="settings.isRightSideChat.value ? 'right-side-chat' : ''" @post="toastChat?.post($event)" />
     </div>
     <div ref="contentArea" class="content-area" @keydown="onContentAreaKeydown($event)">
       <div v-show="theaterMode" class="toast-chat-container">
-        <ToastChat ref="toastChat" :theme="chatTheme"> </ToastChat>
+        <ToastChat ref="toastChat" />
       </div>
       <Player
         ref="player"
@@ -400,11 +409,11 @@ const toggleDetached = () => {
         @pause="onPause"
         @seek="onSeek"
         @ratechange="onRateChange"
-      ></Player>
+      />
     </div>
     <div v-if="showRoomControls" class="roomcontrols-container">
       <div class="overlay" @click="toggleRoomControls()"></div>
-      <RoomControls class="dialog"></RoomControls>
+      <RoomControls class="dialog" />
     </div>
   </div>
 </template>
