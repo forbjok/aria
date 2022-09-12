@@ -5,8 +5,9 @@ use clap::Parser;
 use tracing::{debug, info};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
-use crate::server::AriaServer;
+use crate::{auth::AriaAuth, server::AriaServer};
 
+mod auth;
 mod server;
 mod websocket_server;
 
@@ -28,9 +29,10 @@ async fn main() -> Result<(), anyhow::Error> {
 
     let (notify_tx, notify_rx) = futures_channel::mpsc::unbounded();
 
+    let auth = Arc::new(AriaAuth::new(b"sekrit"));
     let core = Arc::new(AriaCore::new(notify_tx)?);
 
-    let server = AriaServer::new(core.clone());
+    let server = AriaServer::new(auth, core.clone());
 
     let shutdown = || async {
         tokio::signal::ctrl_c().await.expect("Error awaiting Ctrl-C signal");

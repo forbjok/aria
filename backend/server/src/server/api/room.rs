@@ -55,7 +55,7 @@ pub(super) async fn login(
         return Err(ApiError::Unauthorized);
     }
 
-    let token = server.generate_room_token(name)?;
+    let token = server.auth.generate_room_token(name)?;
 
     Ok(Some(Json(LoginResponse {
         name: name.to_owned(),
@@ -75,7 +75,7 @@ pub(super) async fn logged_in(auth: Authorized, name: &str) -> Result<(), ApiErr
 #[post("/r/<name>/claim")]
 pub(super) async fn claim(server: &State<AriaServer>, name: &str) -> Result<Json<ClaimResponse>, ApiError> {
     let room = server.core.claim_room(name).await?;
-    let token = server.generate_room_token(name)?;
+    let token = server.auth.generate_room_token(name)?;
 
     Ok(Json(ClaimResponse {
         name: room.name,

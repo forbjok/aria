@@ -1,7 +1,6 @@
 mod chat;
 mod room;
 
-use jwt::VerifyWithKey;
 use rocket::{
     http::Status,
     request::{FromRequest, Outcome},
@@ -10,7 +9,9 @@ use rocket::{
 };
 use tracing::error;
 
-use super::{AriaServer, Claims};
+use crate::auth::Claims;
+
+use super::AriaServer;
 
 pub trait MountApi {
     fn mount_api(self, path: &str) -> Self;
@@ -77,7 +78,7 @@ impl<'r> FromRequest<'r> for Authorized {
                 let server = request.rocket().state::<AriaServer>().unwrap();
 
                 if bearer == "Bearer" {
-                    let claims: Option<Claims> = token.verify_with_key(&server.key).ok();
+                    let claims: Option<Claims> = server.auth.verify(token);
 
                     if let Some(claims) = claims {
                         return Outcome::Success(Authorized { claims });
