@@ -374,7 +374,7 @@ const toggleRightSideChat = () => {
           ><span class="fa fa-wrench"></span
         ></a>
         <a
-          v-if="auth.isAuthorized"
+          v-if="auth.isAuthorized.value"
           href="#"
           class="usercontrol"
           :class="isMaster ? '' : 'usercontrol-off'"
