@@ -9,7 +9,7 @@
     flex-grow: 1;
 
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column;
 
     overflow-y: scroll;
     overflow-x: hidden;
@@ -18,25 +18,19 @@
     // when scrolled to the bottom.
     scroll-snap-type: y proximity;
 
-    ul {
-      list-style-type: none;
-      padding: 0px;
-      margin: 0px;
+    .post {
+      flex-shrink: 0;
+    }
 
-      li {
-        flex-shrink: 0;
-      }
-
-      // Make scrollbar scroll to new posts automatically
-      // when scrolled to the bottom.
-      li:last-child {
-        scroll-margin-bottom: 2px;
-        scroll-snap-align: end;
-      }
+    // Make scrollbar scroll to new posts automatically
+    // when scrolled to the bottom.
+    .post:last-child {
+      scroll-margin-bottom: 2px;
+      scroll-snap-align: end;
     }
   }
 
-  .chatcontrols {
+  .chat-controls {
     flex-shrink: 0;
     overflow: hidden;
 
@@ -45,7 +39,7 @@
     position: relative;
   }
 
-  .chatcontrols-table {
+  .chat-controls-table {
     width: 100%;
   }
 

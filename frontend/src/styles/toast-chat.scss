@@ -12,13 +12,11 @@
   display: flex;
   flex-direction: column;
 
-  ul {
-    list-style-type: none;
-    padding: 0px;
-    margin: 0px;
+  list-style-type: none;
+  padding: 0px;
+  margin: 0px;
 
-    li {
-      flex-shrink: 0;
-    }
+  .post {
+    flex-shrink: 0;
   }
 }

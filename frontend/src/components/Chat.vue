@@ -274,15 +274,13 @@ onUnmounted(() => {
 <template>
   <div class="chat" :class="`theme-${settings?.theme.value}`">
     <div ref="postContainer" class="post-container">
-      <ul>
-        <ChatPost :post="post" v-for="post of posts" :key="post.id" @quotepost="quotePost" />
-      </ul>
+      <ChatPost :post="post" v-for="post of posts" :key="post.id" @quotepost="quotePost" />
     </div>
 
-    <div ref="chatControls" class="chatcontrols">
+    <div ref="chatControls" class="chat-controls">
       <form ref="postForm" @submit.prevent="submitPost()">
         <div v-if="!useCompactPostForm">
-          <table class="chatcontrols-table">
+          <table class="chat-controls-table">
             <tr>
               <td>
                 <input name="name" type="text" v-model="post.name" placeholder="Anonymous" :readonly="posting" />
@@ -327,7 +325,7 @@ onUnmounted(() => {
             </tr>
           </table>
         </div>
-        <div v-if="useCompactPostForm" class="chatcontrols-table">
+        <div v-if="useCompactPostForm" class="chat-controls-table">
           <textarea
             ref="commentField"
             name="comment"

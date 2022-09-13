@@ -48,7 +48,7 @@ const Comment = (p: { text: string }) => {
 </script>
 
 <template>
-  <li :id="`p${post.id}`" class="post">
+  <div :id="`p${post.id}`" class="post">
     <div class="post-header">
       <span class="time">{{ formatTime(post.posted) }}</span>
       <span class="name">{{ post.name || "Anonymous" }}</span>
@@ -66,7 +66,7 @@ const Comment = (p: { text: string }) => {
       </div>
       <Comment :text="post.comment" />
     </div>
-  </li>
+  </div>
 </template>
 
 <style scoped lang="scss">
