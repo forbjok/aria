@@ -25,6 +25,13 @@
     margin: 2px;
     min-width: 250px;
 
+    &.highlight {
+      background: #d6bad0;
+      border: 1px solid #ba9dbf;
+      border-left: none;
+      border-top: none;
+    }
+
     .comment {
       :deep(a) {
         color: #34345c;

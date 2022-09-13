@@ -22,18 +22,21 @@
   .post-container {
     .post {
       background-color: rgb(13, 13, 13);
-    }
 
-    .post:nth-child(odd) {
-      background-color: #121212;
-    }
-  }
+      &:nth-child(odd) {
+        background-color: #121212;
+      }
 
-  .post {
-    .comment {
-      :deep(a) {
-        color: #898ed6;
-        text-decoration: none;
+      &.highlight {
+        background-color: rgb(36, 36, 36);
+        filter: drop-shadow(0px 0px 3px #fff);
+      }
+
+      .comment {
+        :deep(a) {
+          color: #898ed6;
+          text-decoration: none;
+        }
       }
     }
   }

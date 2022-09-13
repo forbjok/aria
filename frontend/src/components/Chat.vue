@@ -52,6 +52,7 @@ const createEmptyPost = (): NewPost => {
 };
 
 const post = ref(createEmptyPost());
+const highlightedPost = ref(-1);
 const useCompactPostForm = ref(false);
 
 const imageSelected = (event: Event) => {
@@ -238,6 +239,10 @@ const selectEmote = (name: string) => {
   commentField.value?.focus();
 };
 
+const highlightPost = (id: number) => {
+  highlightedPost.value = id;
+};
+
 let ws_listener: AriaWsListener | undefined;
 
 onMounted(() => {
@@ -274,7 +279,14 @@ onUnmounted(() => {
 <template>
   <div class="chat" :class="`theme-${settings?.theme.value}`">
     <div ref="postContainer" class="post-container">
-      <ChatPost :post="post" v-for="post of posts" :key="post.id" @quotepost="quotePost" />
+      <ChatPost
+        :post="post"
+        v-for="post of posts"
+        :key="post.id"
+        :highlight="highlightedPost === post.id"
+        @quotepost="quotePost"
+        @clickquotelink="highlightPost"
+      />
     </div>
 
     <div ref="chatControls" class="chat-controls">

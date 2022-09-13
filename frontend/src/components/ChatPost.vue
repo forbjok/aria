@@ -1,22 +1,23 @@
 <script setup lang="ts">
-import { inject, toRefs } from "vue";
+import { toRefs } from "vue";
+
+import PostComment from "./PostComment.vue";
 
 import moment from "moment";
 
 import type { Post } from "@/models";
-import type { CommentParser } from "@/services/comment";
 
 const props = defineProps<{
   post: Post;
+  highlight: boolean;
 }>();
 
 const emit = defineEmits<{
   (e: "quotepost", id: number): void;
+  (e: "clickquotelink", id: number): void;
 }>();
 
-const { post } = toRefs(props);
-
-const commentParser: CommentParser | undefined = inject("commentparser");
+const { post, highlight } = toRefs(props);
 
 const toggleImage = (_post: Post): void => {
   _post.showFullImage = !_post.showFullImage;
@@ -24,6 +25,10 @@ const toggleImage = (_post: Post): void => {
 
 const quotePost = (id: number) => {
   emit("quotepost", id);
+};
+
+const clickQuoteLink = (id: number) => {
+  emit("clickquotelink", id);
 };
 
 const formatTime = (value: string): string => {
@@ -41,14 +46,10 @@ const formatTime = (value: string): string => {
   // If time is not this year, include full date with year
   return time.format("MMM Do YYYY, HH:mm:ss");
 };
-
-const Comment = (p: { text: string }) => {
-  return commentParser?.parseComment(p.text);
-};
 </script>
 
 <template>
-  <div :id="`p${post.id}`" class="post">
+  <div :id="`p${post.id}`" class="post" :class="highlight ? 'highlight' : ''">
     <div class="post-header">
       <span class="time">{{ formatTime(post.posted) }}</span>
       <span class="name">{{ post.name || "Anonymous" }}</span>
@@ -64,7 +65,7 @@ const Comment = (p: { text: string }) => {
         </a>
         <div class="filename">{{ post.image.filename }}</div>
       </div>
-      <Comment :text="post.comment" />
+      <PostComment :text="post.comment" @clickquotelink="clickQuoteLink" />
     </div>
   </div>
 </template>

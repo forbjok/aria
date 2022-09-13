@@ -94,4 +94,8 @@
   :deep(.quote) {
     color: #789922;
   }
+
+  :deep(.quotelink) {
+    cursor: pointer;
+  }
 }
