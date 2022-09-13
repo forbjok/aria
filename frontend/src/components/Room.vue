@@ -86,6 +86,10 @@ onMounted(async () => {
     roomInfo.emotes[emote.name] = emote;
   });
 
+  ws_listener.on("delete-emote", async (name: string) => {
+    delete roomInfo.emotes[name];
+  });
+
   ws_listener.on("content", async (_content: Content) => {
     await setContent(_content);
   });

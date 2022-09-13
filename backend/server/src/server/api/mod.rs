@@ -24,6 +24,7 @@ impl MountApi for Rocket<Build> {
             routes![
                 chat::post,
                 chat::create_emote,
+                chat::delete_emote,
                 room::get_room,
                 room::login,
                 room::logged_in,

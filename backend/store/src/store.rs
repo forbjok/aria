@@ -28,6 +28,8 @@ pub trait AriaStore: Send + Sync {
 
     async fn create_emote(&self, room: &str, emote: &dbm::NewEmote) -> Result<dbm::Emote, anyhow::Error>;
 
+    async fn delete_emote(&self, room: &str, emote_name: &str) -> Result<(), anyhow::Error>;
+
     async fn set_room_content(&self, room: &str, content: &str) -> Result<(), anyhow::Error>;
 
     async fn update_post_images(&self, hash: &str, ext: &str, tn_ext: &str) -> Result<(), anyhow::Error>;
@@ -117,6 +119,14 @@ impl AriaStore for PgStore {
             .await?;
 
         Ok(emote)
+    }
+
+    async fn delete_emote(&self, room: &str, emote_name: &str) -> Result<(), anyhow::Error> {
+        sqlx::query_unchecked!(r#"SELECT delete_emote($1, $2);"#, room, emote_name)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(())
     }
 
     async fn set_room_content(&self, room: &str, content: &str) -> Result<(), anyhow::Error> {

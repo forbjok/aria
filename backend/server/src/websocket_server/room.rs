@@ -192,4 +192,17 @@ impl Room {
 
         Ok(())
     }
+
+    /// Delete emote
+    pub fn delete_emote(&mut self, emote_name: &str) -> Result<(), anyhow::Error> {
+        self.emotes.retain(|e| e.name != emote_name);
+
+        for m in self.members.iter() {
+            send(&m.tx, "delete-emote", emote_name)
+                .map_err(|err| error!("{err:?}"))
+                .ok();
+        }
+
+        Ok(())
+    }
 }

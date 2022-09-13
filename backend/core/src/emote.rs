@@ -41,9 +41,18 @@ impl AriaCore {
         let emote = dbm_emote_to_lm(emote);
 
         self.notify_tx
-            .unbounded_send(Notification::NewEmote(room.to_string(), emote.clone()))?;
+            .unbounded_send(Notification::NewEmote(room.to_owned(), emote.clone()))?;
 
         Ok(emote)
+    }
+
+    pub async fn delete_emote(&self, room: &str, emote_name: &str) -> Result<(), anyhow::Error> {
+        self.store.delete_emote(room, emote_name).await?;
+
+        self.notify_tx
+            .unbounded_send(Notification::DeleteEmote(room.to_owned(), emote_name.to_owned()))?;
+
+        Ok(())
     }
 
     pub async fn update_emote_images(&self, hash: &str, ext: &str) -> Result<(), anyhow::Error> {

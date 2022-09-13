@@ -1,6 +1,7 @@
 use std::net::SocketAddr;
 
 use rocket::{
+    delete,
     form::{Form, FromForm},
     fs::TempFile,
     http::Status,
@@ -11,7 +12,10 @@ use rocket::{
 
 use aria_models::local as lm;
 
-use crate::server::{api::ApiError, AriaServer};
+use crate::server::{
+    api::{ApiError, Authorized},
+    AriaServer,
+};
 
 #[derive(Debug, FromForm)]
 pub(super) struct PostRequestModel<'r> {
@@ -33,8 +37,6 @@ pub(super) async fn post(
     room: &str,
     mut req: Form<PostRequestModel<'_>>,
 ) -> Result<Json<u64>, ApiError> {
-    let core = &server.core;
-
     let new_post = lm::NewPost {
         name: req
             .name
@@ -67,18 +69,21 @@ pub(super) async fn post(
         ip: socket_addr.ip(),
     };
 
-    let post = core.create_post(room, new_post).await?;
+    let post = server.core.create_post(room, new_post).await?;
 
     Ok(Json(post.id))
 }
 
 #[post("/chat/<room>/emote", data = "<req>")]
 pub(super) async fn create_emote(
+    auth: Authorized,
     server: &State<AriaServer>,
     room: &str,
     mut req: Form<EmoteRequestModel<'_>>,
 ) -> Result<Status, ApiError> {
-    let core = &server.core;
+    if auth.claims.name != room {
+        return Err(ApiError::Unauthorized);
+    }
 
     let image = req.image.take().and_then(|f| {
         if let TempFile::File {
@@ -115,7 +120,23 @@ pub(super) async fn create_emote(
         image,
     };
 
-    core.create_emote(room, new_emote).await?;
+    server.core.create_emote(room, new_emote).await?;
 
     Ok(Status::Created)
+}
+
+#[delete("/chat/<room>/emote/<name>")]
+pub(super) async fn delete_emote(
+    auth: Authorized,
+    server: &State<AriaServer>,
+    room: &str,
+    name: &str,
+) -> Result<(), ApiError> {
+    if auth.claims.name != room {
+        return Err(ApiError::Unauthorized);
+    }
+
+    server.core.delete_emote(room, name).await?;
+
+    Ok(())
 }

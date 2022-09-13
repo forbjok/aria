@@ -239,6 +239,27 @@
     },
     "query": "SELECT update_post_images($1, $2, $3);"
   },
+  "91b0c635260da818106323d8a960a0ef88667d9cf0e0d200d7795fcd4ff45ec5": {
+    "describe": {
+      "columns": [
+        {
+          "name": "delete_emote",
+          "ordinal": 0,
+          "type_info": "Void"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "SELECT delete_emote($1, $2);"
+  },
   "b07d2eb0ce0e30d9bd61bd2eb659f89d473270fcb15fc11df2be642d661b9b7a": {
     "describe": {
       "columns": [
