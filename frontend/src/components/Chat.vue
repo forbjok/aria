@@ -356,7 +356,7 @@ onUnmounted(() => {
       </form>
       <div class="options">
         <button class="emote-button" title="Emotes" @click="openEmoteSelector">
-          <span class="fa-regular fa-face-smile"></span>
+          <i class="fa-regular fa-face-smile"></i>
         </button>
         <select v-if="!useCompactPostForm" class="theme-selector" v-model="theme" @change="themeSelected()">
           <option v-for="theme of themes" :key="theme.name" :value="theme.name">{{ theme.description }}</option>

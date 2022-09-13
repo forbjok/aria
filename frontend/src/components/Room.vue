@@ -362,16 +362,24 @@ const toggleRightSideChat = () => {
   <div ref="room" class="room" :class="settings.isRightSideChat.value ? 'right-side-chat' : ''">
     <div class="usercontrols-activationzone">
       <div class="usercontrols">
-        <a href="#" class="usercontrol" title="Reload" @click="reloadContent()"><span class="fa fa-refresh"></span></a>
-        <a href="#" class="usercontrol" title="Theater mode" @click="toggleTheaterMode()"
-          ><span class="fa fa-television"></span
+        <a href="#" class="usercontrol" title="Reload" @click="reloadContent()"
+          ><i class="fa-solid fa-arrows-rotate"></i
+        ></a>
+        <div class="spacer"></div>
+        <a
+          href="#"
+          class="usercontrol"
+          :class="theaterMode ? '' : 'usercontrol-off'"
+          title="Theater mode"
+          @click="toggleTheaterMode()"
+          ><i class="fa-solid fa-film"></i
         ></a>
         <a href="#" class="usercontrol" title="Switch chat side" @click="toggleRightSideChat"
-          ><span class="fa fa-arrow-right-arrow-left"></span
+          ><i class="fa-solid fa-arrow-right-arrow-left"></i
         ></a>
         <div class="spacer"></div>
         <a href="#" class="usercontrol" title="Room Admin" @click="toggleRoomControls()"
-          ><span class="fa fa-wrench"></span
+          ><i class="fa-solid fa-wrench"></i
         ></a>
         <a
           v-if="auth.isAuthorized.value"
@@ -381,7 +389,7 @@ const toggleRightSideChat = () => {
           title="Toggle master"
           @click="toggleMaster"
         >
-          <span class="fa fa-star"></span>
+          <i class="fa-solid fa-star"></i>
         </a>
         <a
           href="#"
@@ -390,7 +398,7 @@ const toggleRightSideChat = () => {
           :title="isDetached ? 'Attach' : 'Detach'"
           @click="toggleDetached"
         >
-          <span class="fa fa-plug"></span>
+          <i class="fa-solid fa-plug"></i>
         </a>
       </div>
     </div>
