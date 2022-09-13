@@ -30,6 +30,7 @@
       // Make scrollbar scroll to new posts automatically
       // when scrolled to the bottom.
       li:last-child {
+        scroll-margin-bottom: 2px;
         scroll-snap-align: end;
       }
     }

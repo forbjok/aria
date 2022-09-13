@@ -276,7 +276,6 @@ onUnmounted(() => {
     <div ref="postContainer" class="post-container">
       <ul>
         <ChatPost :post="post" v-for="post of posts" :key="post.id" @quotepost="quotePost" />
-        <li class="bottom-spacer"></li>
       </ul>
     </div>
 
