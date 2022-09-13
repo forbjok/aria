@@ -53,9 +53,9 @@ const formatTime = (value: string): string => {
     <div class="post-header">
       <span class="time">{{ formatTime(post.posted) }}</span>
       <span class="name">{{ post.name || "Anonymous" }}</span>
-      <span class="id"
-        >No. <a @click="quotePost(post.id)">{{ post.id }}</a></span
-      >
+      <div class="id">
+        <a @click="clickQuoteLink(post.id)">No.</a> <a @click="quotePost(post.id)">{{ post.id }}</a>
+      </div>
     </div>
     <div class="post-body">
       <div v-if="post.image" class="post-image" :class="post.showFullImage ? 'expanded' : ''">
