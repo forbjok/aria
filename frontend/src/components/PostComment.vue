@@ -140,4 +140,26 @@ export default defineComponent({
 });
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.comment {
+  word-wrap: break-word;
+
+  s {
+    background-color: var(--color-spoiler-background);
+    color: var(--color-spoiler);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--color-spoiler-hover);
+    }
+  }
+
+  .quote {
+    color: #789922;
+  }
+
+  .quotelink {
+    cursor: pointer;
+  }
+}
+</style>
