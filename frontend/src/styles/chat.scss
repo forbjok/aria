@@ -5,11 +5,11 @@
   display: flex;
   flex-direction: column;
 
-  .post-container {
+  .chat-posts {
     flex-grow: 1;
 
     display: flex;
-    flex-direction: column;
+    flex-direction: column-reverse;
 
     overflow-y: scroll;
     overflow-x: hidden;
@@ -18,15 +18,20 @@
     // when scrolled to the bottom.
     scroll-snap-type: y proximity;
 
-    .post {
-      flex-shrink: 0;
-    }
+    .post-container {
+      display: flex;
+      flex-direction: column;
 
-    // Make scrollbar scroll to new posts automatically
-    // when scrolled to the bottom.
-    .post:last-child {
-      scroll-margin-bottom: 2px;
-      scroll-snap-align: end;
+      .post {
+        flex-shrink: 0;
+      }
+
+      // Make scrollbar scroll to new posts automatically
+      // when scrolled to the bottom.
+      .post:last-child {
+        scroll-margin-bottom: 2px;
+        scroll-snap-align: end;
+      }
     }
   }
 

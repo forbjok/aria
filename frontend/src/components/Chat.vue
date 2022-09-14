@@ -278,17 +278,18 @@ onUnmounted(() => {
 
 <template>
   <div class="chat" :class="`theme-${settings?.theme.value}`">
-    <div ref="postContainer" class="post-container">
-      <ChatPost
-        :post="post"
-        v-for="post of posts"
-        :key="post.id"
-        :highlight="highlightedPost === post.id"
-        @quotepost="quotePost"
-        @clickquotelink="highlightPost"
-      />
+    <div class="chat-posts">
+      <div ref="postContainer" class="post-container">
+        <ChatPost
+          :post="post"
+          v-for="post of posts"
+          :key="post.id"
+          :highlight="highlightedPost === post.id"
+          @quotepost="quotePost"
+          @clickquotelink="highlightPost"
+        />
+      </div>
     </div>
-
     <div ref="chatControls" class="chat-controls">
       <form ref="postForm" @submit.prevent="submitPost()">
         <div v-if="!useCompactPostForm">
