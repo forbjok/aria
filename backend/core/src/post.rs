@@ -3,6 +3,8 @@ use std::{borrow::Cow, path::Path};
 use anyhow::Context;
 use aria_models::local as lm;
 use aria_store::{models as dbm, AriaStore};
+use once_cell::unsync::Lazy;
+use tracing::error;
 
 use super::AriaCore;
 use crate::{image::ProcessImageResult, transform::dbm_post_to_lm, Notification};
@@ -80,7 +82,7 @@ impl AriaCore {
         let tn_ext = ext;
 
         // Open image file
-        let img = image::open(original_image_path).with_context(|| "Error opening image file")?;
+        let img = Lazy::new(|| image::open(original_image_path).map_err(|err| error!("{err}")).ok());
 
         let image_filename = format!("{hash}.{ext}");
         let image_path = self.public_image_path.join(image_filename);
@@ -96,6 +98,8 @@ impl AriaCore {
                 // If preserving original, simply create a hard link to the original file
                 tokio::fs::hard_link(original_image_path, &image_path).await?;
             } else {
+                let img = img.as_ref().context("Error opening image file")?;
+
                 let tn_img = img.thumbnail(350, 350);
                 tn_img.save(&image_path).context("Error saving post image")?;
             }
@@ -115,6 +119,8 @@ impl AriaCore {
                 // If preserving original, simply create a hard link to the original file
                 tokio::fs::hard_link(&original_image_path, &thumbnail_path).await?;
             } else {
+                let img = img.as_ref().context("Error opening image file")?;
+
                 let tn_img = img.thumbnail(100, 100);
                 tn_img.save(&thumbnail_path).context("Error saving post thumbnail")?;
             }

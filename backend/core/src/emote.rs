@@ -86,8 +86,7 @@ impl AriaCore {
                 tokio::fs::hard_link(original_image_path, &emote_path).await?;
             } else {
                 // Open image file
-                let img =
-                    image::open(original_image_path).with_context(|| "Error opening original emote image file")?;
+                let img = image::open(original_image_path).context("Error opening original emote image file")?;
 
                 let tn_img = img.thumbnail(350, 350);
                 tn_img.save(&emote_path).context("Error saving emote image")?;
