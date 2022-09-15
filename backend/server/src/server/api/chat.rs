@@ -1,5 +1,6 @@
 use std::{net::SocketAddr, sync::Arc};
 
+use anyhow::Context;
 use aria_models::local as lm;
 use axum::{
     extract::{ConnectInfo, ContentLengthLimit, Multipart, Path, State},
@@ -32,9 +33,12 @@ async fn create_post(
     let mut comment: Option<String> = None;
     let mut image: Option<lm::NewPostImage> = None;
 
-    while let Some(mut field) = multipart.next_field().await.unwrap() {
+    while let Some(mut field) = multipart
+        .next_field()
+        .await
+        .context("Error getting next multipart field")?
+    {
         let field_name = field.name().ok_or_else(|| anyhow::anyhow!("Field has no name."))?;
-        //let data = field.bytes().await.unwrap();
 
         match field_name {
             "name" => {
@@ -94,9 +98,12 @@ async fn create_emote(
     let mut name: Option<String> = None;
     let mut image: Option<lm::NewPostImage> = None;
 
-    while let Some(mut field) = multipart.next_field().await.unwrap() {
+    while let Some(mut field) = multipart
+        .next_field()
+        .await
+        .context("Error getting next multipart field")?
+    {
         let field_name = field.name().ok_or_else(|| anyhow::anyhow!("Field has no name."))?;
-        //let data = field.bytes().await.unwrap();
 
         match field_name {
             "name" => {
