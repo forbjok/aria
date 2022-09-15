@@ -18,8 +18,7 @@ export class RoomAuthService {
   }
 
   public async setup() {
-    const token = this.loadToken();
-    await this.setToken(token);
+    await this.loadToken();
   }
 
   public getToken(): string | undefined {
@@ -28,21 +27,25 @@ export class RoomAuthService {
 
   public async setToken(token?: string) {
     this.token = token;
-    if (!!this.token && (await this.verifyToken(this.token))) {
-      this.isAuthorized.value = true;
-    } else {
-      this.token = undefined;
-    }
+    this.saveToken();
+    this.verifyToken();
   }
 
-  public async verifyToken(token: string): Promise<boolean> {
+  public async verifyToken(): Promise<boolean> {
+    if (!this.token) {
+      return false;
+    }
+
     try {
       await axios.post(`/api/r/${this.room.name}/loggedin`, null, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${this.token}`,
         },
       });
+
+      this.isAuthorized.value = true;
     } catch {
+      this.isAuthorized.value = false;
       return false;
     }
 
@@ -65,17 +68,18 @@ export class RoomAuthService {
     const res = await response.data;
 
     this.token = res.token;
-    this.saveToken(this.token);
+    this.saveToken();
 
     this.isAuthorized.value = true;
     return true;
   }
 
-  private loadToken(): string | undefined {
-    return this.localStorageService?.get(this.authKeyName);
+  private async loadToken() {
+    this.token = this.localStorageService?.get(this.authKeyName);
+    await this.verifyToken();
   }
 
-  private saveToken(value: string | undefined) {
-    this.localStorageService?.set(this.authKeyName, value);
+  private saveToken() {
+    this.localStorageService?.set(this.authKeyName, this.token);
   }
 }
