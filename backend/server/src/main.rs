@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use aria_core::AriaCore;
 use clap::Parser;
-use tracing::{debug, info};
+use tracing::debug;
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
 use crate::{auth::AriaAuth, server::AriaServer};
@@ -18,7 +18,7 @@ struct Opt {
     generate_config: bool,
 }
 
-#[rocket::main]
+#[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
     let _opt = Opt::parse();
 
@@ -36,10 +36,9 @@ async fn main() -> Result<(), anyhow::Error> {
 
     let shutdown = || async {
         tokio::signal::ctrl_c().await.expect("Error awaiting Ctrl-C signal");
-        info!("User initiated shutdown.");
     };
 
-    let http_server = server.run_server();
+    let http_server = server.run_server(shutdown());
     let ws_server = websocket_server::run_server(auth.clone(), core.clone(), notify_rx, shutdown());
 
     let (http_result, ws_result) = tokio::join!(http_server, ws_server);

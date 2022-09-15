@@ -13,6 +13,6 @@ anyhow = "1.0.64"
 chrono = "0.4.22"
 clap = { version = "3.2.20", features = ["derive"] }
 futures-channel = "0.3.24"
-tokio = "1.21.0"
+tokio = "1.21.1"
 tracing = "0.1.36"
 tracing-subscriber = { version = "0.3.15", features = ["env-filter"] }

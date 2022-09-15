@@ -7,5 +7,5 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.64"
-tokio = "1.21.0"
+tokio = "1.21.1"
 tracing = "0.1.36"

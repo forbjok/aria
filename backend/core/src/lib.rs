@@ -26,6 +26,7 @@ pub enum Notification {
 }
 
 pub struct AriaCore {
+    pub temp_path: PathBuf,
     pub process_image_path: PathBuf,
     pub process_emote_path: PathBuf,
     pub original_image_path: PathBuf,
@@ -46,6 +47,8 @@ impl AriaCore {
             .or_else(|| dirs::cache_dir().map(|p| p.join("aria/files")))
             .expect("No files path configured!");
 
+        let temp_path = files_path.join("temp");
+
         let process_path = files_path.join("process");
         let process_image_path = process_path.join("i");
         let process_emote_path = process_path.join("e");
@@ -60,6 +63,7 @@ impl AriaCore {
         let public_emote_path = public_path.join("e");
 
         // Ensure that all necessary directories exist
+        fs::create_dir_all(&temp_path)?;
         fs::create_dir_all(&original_image_path)?;
         fs::create_dir_all(&original_emote_path)?;
         fs::create_dir_all(&public_image_path)?;
@@ -71,6 +75,7 @@ impl AriaCore {
         );
 
         Ok(Self {
+            temp_path,
             process_image_path,
             process_emote_path,
             original_image_path,

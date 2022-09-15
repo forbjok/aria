@@ -27,7 +27,7 @@ impl AriaCore {
                 original_image_path,
                 ..
             } = self
-                .process_image(&i.path, &i.filename, &self.original_image_path)
+                .process_image(i.file, &i.filename, &self.original_image_path)
                 .await?;
 
             // Generate image and thumbnail

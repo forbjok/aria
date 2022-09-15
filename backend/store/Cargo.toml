@@ -12,5 +12,5 @@ chrono = "0.4.22"
 serde = "1.0.144"
 serde_derive = "1.0.144"
 sqlx = { version = "0.6.1", features = ["chrono", "ipnetwork", "offline", "postgres", "runtime-tokio-rustls"] }
-tokio = "1.21.0"
+tokio = "1.21.1"
 tracing = "0.1.36"

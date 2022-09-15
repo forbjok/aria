@@ -1,70 +1,79 @@
-use std::borrow::Cow;
-
-use rocket::serde::json::Json;
-use rocket::{get, post, FromForm, State};
+use std::sync::Arc;
 
 use aria_models::api as am;
+use axum::extract::{Path, State};
+use axum::routing::{get, post};
+use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
 
 use crate::server::api::{ApiError, Authorized};
 use crate::server::AriaServer;
 
-#[derive(Clone, Debug, Deserialize, Serialize, FromForm)]
-pub(super) struct LoginRequest<'a> {
-    pub password: Cow<'a, str>,
+#[derive(Debug, Deserialize)]
+struct LoginRequest {
+    pub password: String,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub(super) struct LoginResponse {
+#[derive(Debug, Serialize)]
+struct LoginResponse {
     pub name: String,
     pub token: String,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub(super) struct ClaimResponse {
+#[derive(Debug, Serialize)]
+struct ClaimResponse {
     pub name: String,
     pub password: String,
     pub token: String,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, FromForm)]
-pub(super) struct RoomControlAction<'a> {
-    pub action: Cow<'a, str>,
-    pub url: Cow<'a, str>,
+#[derive(Debug, Deserialize)]
+struct RoomControlAction {
+    pub action: String,
+    pub url: String,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, FromForm)]
-pub(super) struct RoomControlRequest<'a> {
-    pub action: RoomControlAction<'a>,
+#[derive(Debug, Deserialize)]
+struct RoomControlRequest {
+    pub action: RoomControlAction,
 }
 
-#[get("/r/<name>")]
-pub(super) async fn get_room(server: &State<AriaServer>, name: &str) -> Result<Option<Json<am::Room>>, ApiError> {
-    let room = server.core.get_room(name).await?;
-
-    Ok(room.map(Json))
+pub fn router(server: Arc<AriaServer>) -> Router<Arc<AriaServer>> {
+    Router::with_state(server)
+        .route("/:name", get(get_room))
+        .route("/:name/login", post(login))
+        .route("/:name/loggedin", post(logged_in))
+        .route("/:name/claim", post(claim))
+        .route("/:name/control", post(control))
 }
 
-#[post("/r/<name>/login", data = "<req>")]
-pub(super) async fn login(
-    server: &State<AriaServer>,
-    name: &str,
-    req: Json<LoginRequest<'_>>,
-) -> Result<Option<Json<LoginResponse>>, ApiError> {
-    if !server.core.login(name, &req.password).await? {
+#[axum::debug_handler(state = Arc<AriaServer>)]
+async fn get_room(State(server): State<Arc<AriaServer>>, Path(name): Path<String>) -> Result<Json<am::Room>, ApiError> {
+    let room = server.core.get_room(&name).await?;
+    if let Some(room) = room {
+        Ok(Json(room))
+    } else {
+        Err(ApiError::NotFound)
+    }
+}
+
+#[axum::debug_handler(state = Arc<AriaServer>)]
+async fn login(
+    State(server): State<Arc<AriaServer>>,
+    Path(name): Path<String>,
+    Json(req): Json<LoginRequest>,
+) -> Result<Json<LoginResponse>, ApiError> {
+    if !server.core.login(&name, &req.password).await? {
         return Err(ApiError::Unauthorized);
     }
 
-    let token = server.auth.generate_room_token(name)?;
+    let token = server.auth.generate_room_token(&name)?;
 
-    Ok(Some(Json(LoginResponse {
-        name: name.to_owned(),
-        token,
-    })))
+    Ok(Json(LoginResponse { name, token }))
 }
 
-#[post("/r/<name>/loggedin")]
-pub(super) async fn logged_in(auth: Authorized, name: &str) -> Result<(), ApiError> {
+#[axum::debug_handler(state = Arc<AriaServer>)]
+async fn logged_in(auth: Authorized, Path(name): Path<String>) -> Result<(), ApiError> {
     if auth.claims.name != name {
         return Err(ApiError::Unauthorized);
     }
@@ -72,10 +81,13 @@ pub(super) async fn logged_in(auth: Authorized, name: &str) -> Result<(), ApiErr
     Ok(())
 }
 
-#[post("/r/<name>/claim")]
-pub(super) async fn claim(server: &State<AriaServer>, name: &str) -> Result<Json<ClaimResponse>, ApiError> {
-    let room = server.core.claim_room(name).await?;
-    let token = server.auth.generate_room_token(name)?;
+#[axum::debug_handler(state = Arc<AriaServer>)]
+async fn claim(
+    State(server): State<Arc<AriaServer>>,
+    Path(name): Path<String>,
+) -> Result<Json<ClaimResponse>, ApiError> {
+    let room = server.core.claim_room(&name).await?;
+    let token = server.auth.generate_room_token(&name)?;
 
     Ok(Json(ClaimResponse {
         name: room.name,
@@ -84,19 +96,19 @@ pub(super) async fn claim(server: &State<AriaServer>, name: &str) -> Result<Json
     }))
 }
 
-#[post("/r/<name>/control", data = "<req>")]
-pub(super) async fn control(
+#[axum::debug_handler(state = Arc<AriaServer>)]
+async fn control(
     auth: Authorized,
-    server: &State<AriaServer>,
-    name: &str,
-    req: Json<RoomControlRequest<'_>>,
+    State(server): State<Arc<AriaServer>>,
+    Path(name): Path<String>,
+    Json(req): Json<RoomControlRequest>,
 ) -> Result<(), ApiError> {
     if auth.claims.name != name {
         return Err(ApiError::Unauthorized);
     }
 
     if req.action.action == "set content url" {
-        server.core.set_room_content(name, &req.action.url).await?;
+        server.core.set_room_content(&name, &req.action.url).await?;
     }
 
     Ok(())

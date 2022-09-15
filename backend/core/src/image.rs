@@ -4,10 +4,13 @@ use std::{
 };
 
 use anyhow::Context;
+use aria_models::local::HashedFile;
 use aria_shared::util;
+use bytes::Bytes;
+use futures_core::Stream;
 
 use super::AriaCore;
-use crate::util::hash_blake3;
+use crate::util::{hash_blake3_file, hash_blake3_to_file_from_stream};
 
 pub struct ProcessImageResult<'a> {
     pub hash: Cow<'a, str>,
@@ -17,11 +20,33 @@ pub struct ProcessImageResult<'a> {
 }
 
 impl AriaCore {
+    pub async fn hash_file(&self, path: &Path) -> Result<HashedFile, anyhow::Error> {
+        let result = hash_blake3_file(path).await?;
+
+        Ok(HashedFile {
+            hash: result.hash,
+            path: path.to_path_buf(),
+        })
+    }
+
+    pub async fn hash_stream_to_temp_file<S: Stream<Item = Result<Bytes, E>> + Unpin, E>(
+        &self,
+        stream: &mut S,
+    ) -> Result<HashedFile, anyhow::Error> {
+        let temp_path = self.temp_path.join(uuid::Uuid::new_v4().to_string());
+        let result = hash_blake3_to_file_from_stream(stream, &temp_path).await?;
+
+        Ok(HashedFile {
+            hash: result.hash,
+            path: temp_path,
+        })
+    }
+
     /// Process image and move it into the originals directory,
     /// or delete it if it already exists there.
     pub async fn process_image<'a>(
         &self,
-        path: &Path,
+        file: HashedFile,
         filename: &'a str,
         destination_path: &Path,
     ) -> Result<ProcessImageResult<'a>, anyhow::Error> {
@@ -29,14 +54,14 @@ impl AriaCore {
             .rsplit_once('.')
             .context("Could not get extension from filename")?;
 
-        let hash = hash_blake3(path).await?;
+        let hash = file.hash;
 
         let original_image_filename = format!("{hash}.{original_ext}");
         let original_image_path = destination_path.join(original_image_filename);
 
         // If image does not already exist in originals path, move it there.
         if !original_image_path.exists() {
-            util::move_file(path, &original_image_path).await?;
+            util::move_file(file.path, &original_image_path).await?;
 
             #[cfg(unix)]
             {
@@ -46,7 +71,7 @@ impl AriaCore {
             }
         } else {
             // ... otherwise, delete it.
-            tokio::fs::remove_file(path).await?;
+            tokio::fs::remove_file(file.path).await?;
         }
 
         let ext = if original_ext == "gif" {

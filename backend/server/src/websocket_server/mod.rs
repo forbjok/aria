@@ -2,7 +2,7 @@ mod connection;
 mod notification;
 mod room;
 
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 
 use aria_core::{AriaCore, Notification};
 use futures::{pin_mut, Future};
@@ -30,15 +30,6 @@ struct ServerState {
     rooms: Mutex<HashMap<String, Room>>,
 }
 
-#[derive(Debug, Serialize)]
-struct ImageViewModel {
-    filename: String,
-    url: String,
-    tn_url: String,
-}
-
-const LISTEN_ADDR: &str = "0.0.0.0:3001";
-
 pub async fn run_server(
     auth: Arc<AriaAuth>,
     core: Arc<AriaCore>,
@@ -49,8 +40,10 @@ pub async fn run_server(
 
     let state = Arc::new(ServerState { auth, core, rooms });
 
-    let listener = TcpListener::bind(LISTEN_ADDR).await?;
-    info!("WebSocket server listening on: {LISTEN_ADDR}");
+    let addr = SocketAddr::from(([0, 0, 0, 0], 3001));
+
+    let listener = TcpListener::bind(addr).await?;
+    info!("WebSocket server listening on: {addr}");
 
     let (shutdown_tx, shutdown_rx) = broadcast::channel::<()>(1);
     let (shutdown_complete_tx, mut shutdown_complete_rx) = tokio::sync::mpsc::channel(1);

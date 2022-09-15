@@ -1,142 +1,154 @@
-use std::net::SocketAddr;
-
-use rocket::{
-    delete,
-    form::{Form, FromForm},
-    fs::TempFile,
-    http::Status,
-    post,
-    serde::json::Json,
-    Either, State,
-};
+use std::{net::SocketAddr, sync::Arc};
 
 use aria_models::local as lm;
+use axum::{
+    extract::{ConnectInfo, ContentLengthLimit, Multipart, Path, State},
+    http::StatusCode,
+    routing::post,
+    Json, Router,
+};
 
 use crate::server::{
     api::{ApiError, Authorized},
     AriaServer,
 };
 
-#[derive(Debug, FromForm)]
-pub(super) struct PostRequestModel<'r> {
-    pub name: Option<&'r str>,
-    pub comment: Option<&'r str>,
-    pub image: Option<TempFile<'r>>,
+const MAX_IMAGE_SIZE: u64 = 2 * 1024 * 1024; // 2MB
+
+pub fn router(server: Arc<AriaServer>) -> Router<Arc<AriaServer>> {
+    Router::with_state(server)
+        .route("/:room/post", post(create_post))
+        .route("/:room/emote", post(create_emote).delete(delete_emote))
 }
 
-#[derive(Debug, FromForm)]
-pub(super) struct EmoteRequestModel<'r> {
-    pub name: &'r str,
-    pub image: Option<TempFile<'r>>,
-}
-
-#[post("/chat/<room>/post", data = "<req>")]
-pub(super) async fn post(
-    server: &State<AriaServer>,
-    socket_addr: SocketAddr,
-    room: &str,
-    mut req: Form<PostRequestModel<'_>>,
+#[axum::debug_handler(state = Arc<AriaServer>)]
+async fn create_post(
+    State(server): State<Arc<AriaServer>>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    Path(room): Path<String>,
+    ContentLengthLimit(mut multipart): ContentLengthLimit<Multipart, { MAX_IMAGE_SIZE }>,
 ) -> Result<Json<u64>, ApiError> {
+    let mut name: Option<String> = None;
+    let mut comment: Option<String> = None;
+    let mut image: Option<lm::NewPostImage> = None;
+
+    while let Some(mut field) = multipart.next_field().await.unwrap() {
+        let field_name = field.name().ok_or_else(|| anyhow::anyhow!("Field has no name."))?;
+        //let data = field.bytes().await.unwrap();
+
+        match field_name {
+            "name" => {
+                name = Some(field.text().await.map_err(|err| ApiError::Anyhow(err.into()))?);
+            }
+            "comment" => {
+                comment = Some(field.text().await.map_err(|err| ApiError::Anyhow(err.into()))?);
+            }
+            "image" => {
+                let filename = field
+                    .file_name()
+                    .ok_or_else(|| anyhow::anyhow!("Image has no filename."))?
+                    .to_string();
+
+                let content_type = field
+                    .content_type()
+                    .ok_or_else(|| anyhow::anyhow!("Image has no content type."))?
+                    .to_string();
+
+                let file = server.core.hash_stream_to_temp_file(&mut field).await?;
+
+                image = Some(lm::NewPostImage {
+                    filename: filename.into(),
+                    content_type: Some(content_type.into()),
+                    file,
+                });
+            }
+            _ => {}
+        }
+    }
+
     let new_post = lm::NewPost {
-        name: req
-            .name
+        name: name
             .and_then(|v| if v.is_empty() { None } else { Some(v) })
             .map(|v| v.into()),
-        comment: req.comment.map(|v| v.into()),
-        image: req.image.take().and_then(|f| {
-            if let TempFile::File {
-                file_name,
-                content_type,
-                path,
-                ..
-            } = f
-            {
-                let filename = file_name.unwrap().dangerous_unsafe_unsanitized_raw().as_str();
-                let path = match path {
-                    Either::Left(p) => p.keep().unwrap(),
-                    Either::Right(p) => p,
-                };
-
-                Some(lm::NewPostImage {
-                    filename: filename.into(),
-                    content_type: content_type.map(|v| v.to_string().into()),
-                    path: path.into(),
-                })
-            } else {
-                None
-            }
-        }),
-        ip: socket_addr.ip(),
+        comment: comment.map(|v| v.into()),
+        image,
+        ip: addr.ip(),
     };
 
-    let post = server.core.create_post(room, new_post).await?;
+    let post = server.core.create_post(&room, new_post).await?;
 
     Ok(Json(post.id))
 }
 
-#[post("/chat/<room>/emote", data = "<req>")]
-pub(super) async fn create_emote(
+#[axum::debug_handler(state = Arc<AriaServer>)]
+async fn create_emote(
     auth: Authorized,
-    server: &State<AriaServer>,
-    room: &str,
-    mut req: Form<EmoteRequestModel<'_>>,
-) -> Result<Status, ApiError> {
+    State(server): State<Arc<AriaServer>>,
+    Path(room): Path<String>,
+    ContentLengthLimit(mut multipart): ContentLengthLimit<Multipart, { MAX_IMAGE_SIZE }>,
+) -> Result<(StatusCode, ()), ApiError> {
     if auth.claims.name != room {
         return Err(ApiError::Unauthorized);
     }
 
-    let image = req.image.take().and_then(|f| {
-        if let TempFile::File {
-            file_name,
-            content_type,
-            path,
-            ..
-        } = f
-        {
-            let filename = file_name.unwrap().dangerous_unsafe_unsanitized_raw().as_str();
-            let path = match path {
-                Either::Left(p) => p.keep().unwrap(),
-                Either::Right(p) => p,
-            };
+    let mut name: Option<String> = None;
+    let mut image: Option<lm::NewPostImage> = None;
 
-            Some(lm::NewPostImage {
-                filename: filename.into(),
-                content_type: content_type.map(|v| v.to_string().into()),
-                path: path.into(),
-            })
-        } else {
-            None
+    while let Some(mut field) = multipart.next_field().await.unwrap() {
+        let field_name = field.name().ok_or_else(|| anyhow::anyhow!("Field has no name."))?;
+        //let data = field.bytes().await.unwrap();
+
+        match field_name {
+            "name" => {
+                name = Some(field.text().await.map_err(|err| ApiError::Anyhow(err.into()))?);
+            }
+            "image" => {
+                let filename = field
+                    .file_name()
+                    .ok_or_else(|| anyhow::anyhow!("Image has no filename."))?
+                    .to_string();
+
+                let content_type = field
+                    .content_type()
+                    .ok_or_else(|| anyhow::anyhow!("Image has no content type."))?
+                    .to_string();
+
+                let file = server.core.hash_stream_to_temp_file(&mut field).await?;
+
+                image = Some(lm::NewPostImage {
+                    filename: filename.into(),
+                    content_type: Some(content_type.into()),
+                    file,
+                });
+            }
+            _ => {}
         }
-    });
-
-    if image.is_none() {
-        return Ok(Status::BadRequest);
     }
 
-    let image = image.unwrap();
+    if let (Some(name), Some(image)) = (name, image) {
+        let new_emote = lm::NewEmote {
+            name: name.into(),
+            image,
+        };
 
-    let new_emote = lm::NewEmote {
-        name: req.name.into(),
-        image,
-    };
-
-    server.core.create_emote(room, new_emote).await?;
-
-    Ok(Status::Created)
+        server.core.create_emote(&room, new_emote).await?;
+        Ok((StatusCode::CREATED, ()))
+    } else {
+        Err(ApiError::BadRequest)
+    }
 }
 
-#[delete("/chat/<room>/emote/<name>")]
-pub(super) async fn delete_emote(
+#[axum::debug_handler(state = Arc<AriaServer>)]
+async fn delete_emote(
     auth: Authorized,
-    server: &State<AriaServer>,
-    room: &str,
-    name: &str,
+    State(server): State<Arc<AriaServer>>,
+    Path((room, name)): Path<(String, String)>,
 ) -> Result<(), ApiError> {
     if auth.claims.name != room {
         return Err(ApiError::Unauthorized);
     }
 
-    server.core.delete_emote(room, name).await?;
+    server.core.delete_emote(&room, &name).await?;
 
     Ok(())
 }

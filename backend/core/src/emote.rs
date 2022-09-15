@@ -25,7 +25,7 @@ impl AriaCore {
             original_image_path,
             ..
         } = self
-            .process_image(&i.path, &i.filename, &self.original_emote_path)
+            .process_image(i.file, &i.filename, &self.original_emote_path)
             .await?;
 
         self.generate_emote_image(&original_image_path, &hash, &ext, false)

@@ -10,6 +10,8 @@ aria_core = { path = "../core" }
 aria_models = { path = "../models" }
 aria_shared = { path = "../shared" }
 anyhow = "1.0.64"
+axum = { version = "0.6.0-rc.2" , features = ["headers", "macros", "multipart"] }
+axum-extra = { version = "0.4.0-rc.1", features = ["spa"] }
 chrono = "0.4.22"
 clap = { version = "3.2.20", features = ["derive"] }
 futures = "0.3.24"
@@ -17,12 +19,12 @@ futures-channel = "0.3.24"
 hmac = "0.12.1"
 jwt = "0.16.0"
 regex = "1.6.0"
-rocket = { version = "0.5.0-rc.2", features = ["json"] }
 serde = "1.0.144"
 serde_derive = "1.0.144"
 serde_json = "1.0.85"
 sha2 = "0.10.5"
-tokio = "1.21.0"
+tokio = { version = "1.21.1", features = ["macros", "signal"] }
 tokio-tungstenite = "0.17.2"
+tower-http = { version = "0.3.4", features = ["trace"] }
 tracing = "0.1.36"
 tracing-subscriber = { version = "0.3.15", features = ["env-filter"] }
