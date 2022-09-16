@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { toRefs } from "vue";
+import { format, isSameDay, isSameYear, parseJSON } from "date-fns";
 
 import PostComment from "./PostComment.vue";
-
-import moment from "moment";
 
 import type { Post } from "@/models";
 
@@ -32,19 +31,19 @@ const clickQuoteLink = (id: number) => {
 };
 
 const formatTime = (value: string): string => {
-  const now = moment();
-  const time = moment(value);
+  const now = new Date();
+  const time = parseJSON(value);
 
-  if (now.isSame(time, "day")) {
+  if (isSameDay(now, time)) {
     // If time is today, omit the date
-    return time.format("HH:mm:ss");
-  } else if (now.isSame(time, "year")) {
+    return format(time, "HH:mm:ss");
+  } else if (isSameYear(now, time)) {
     // If time is not today, but this year, include date without year
-    return time.format("MMM Do, HH:mm:ss");
+    return format(time, "MMM do, HH:mm:ss");
   }
 
   // If time is not this year, include full date with year
-  return time.format("MMM Do YYYY, HH:mm:ss");
+  return format(time, "MMM do yyyy, HH:mm:ss");
 };
 </script>
 
