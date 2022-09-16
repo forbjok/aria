@@ -1,9 +1,15 @@
+use once_cell::sync::Lazy;
+use regex::Regex;
+
 use aria_models::local as lm;
 use aria_store::AriaStore;
 
 use crate::{transform::dbm_room_to_lm, util::password::generate_simple_password, Notification};
 
 use super::AriaCore;
+
+static RE_YOUTUBE_URL: Lazy<Regex> = Lazy::new(|| Regex::new(r#"https?://www.youtube.com/watch\?v=(.+)"#).unwrap());
+static RE_GDRIVE_URL: Lazy<Regex> = Lazy::new(|| Regex::new(r#"https?://drive.google.com/file/d/(.+)/view"#).unwrap());
 
 impl AriaCore {
     pub async fn get_room(&self, name: &str) -> Result<Option<lm::Room>, anyhow::Error> {
@@ -30,14 +36,11 @@ impl AriaCore {
     }
 
     pub async fn set_room_content(&self, room: &str, content_url: &str) -> Result<(), anyhow::Error> {
-        let youtube_regex = regex::Regex::new(r#"https?://www.youtube.com/watch\?v=(.+)"#).unwrap();
-        let google_drive_regex = regex::Regex::new(r#"https?://drive.google.com/file/d/(.+)/view"#).unwrap();
-
-        let meta = if let Some(m) = youtube_regex.captures(content_url) {
+        let meta = if let Some(m) = RE_YOUTUBE_URL.captures(content_url) {
             lm::ContentMetadata::YouTube {
                 id: m.get(1).unwrap().as_str().to_owned(),
             }
-        } else if let Some(m) = google_drive_regex.captures(content_url) {
+        } else if let Some(m) = RE_GDRIVE_URL.captures(content_url) {
             lm::ContentMetadata::GoogleDrive {
                 id: m.get(1).unwrap().as_str().to_owned(),
             }
