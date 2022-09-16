@@ -6,7 +6,7 @@ use aria_models::local as lm;
 use aria_store::{models as dbm, AriaStore};
 
 use super::AriaCore;
-use crate::{image::ProcessImageResult, transform::dbm_emote_to_lm, Notification};
+use crate::{image::ProcessImageResult, transform::dbm_emote_to_lm, util::thumbnail::ThumbnailGenerator, Notification};
 
 impl AriaCore {
     pub async fn get_emotes(&self, name: &str) -> Result<Vec<lm::Emote>, anyhow::Error> {
@@ -85,11 +85,9 @@ impl AriaCore {
                 // If preserving original, simply create a hard link to the original file
                 tokio::fs::hard_link(original_image_path, &emote_path).await?;
             } else {
-                // Open image file
-                let img = image::open(original_image_path).context("Error opening original emote image file")?;
-
-                let tn_img = img.thumbnail(350, 350);
-                tn_img.save(&emote_path).context("Error saving emote image")?;
+                let mut tn_gen = ThumbnailGenerator::new(original_image_path);
+                tn_gen.add(&emote_path, 350, 350);
+                tn_gen.generate().context("Error generating emote image")?;
             }
         }
 
