@@ -44,6 +44,15 @@ const emotes = computed((): Emote[] => {
     .map((n) => room.emotes.value[n]);
 });
 
+const newEmoteImage = computed((): string | undefined => {
+  const _newEmote = newEmote.value;
+  if (!_newEmote || !_newEmote.image) {
+    return;
+  }
+
+  return URL.createObjectURL(_newEmote.image);
+});
+
 const addEmote = () => {
   newEmote.value = { name: "" };
   addEmoteDialog.value?.show();
@@ -180,6 +189,7 @@ const submitEmote = async () => {
       <form class="add-form dialog-content" @submit.prevent="submitEmote">
         <input name="name" type="text" v-model="newEmote.name" placeholder="Emote name" :disabled="adding" />
         <input name="image" type="file" accept="image/*" @change="imageSelected" :disabled="adding" />
+        <img v-show="newEmoteImage" class="image-preview" :src="newEmoteImage" alt="Preview" />
         <button class="add-button" type="submit" :disabled="!canSubmitEmote">
           {{ adding ? progressText : "Upload" }}
         </button>
@@ -245,8 +255,13 @@ const submitEmote = async () => {
 }
 
 .add-form {
-  .add-button {
-    min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+
+  .image-preview {
+    max-width: 350px;
+    max-height: 350px;
   }
 }
 
