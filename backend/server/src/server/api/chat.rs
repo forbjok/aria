@@ -5,7 +5,7 @@ use aria_models::local as lm;
 use axum::{
     extract::{ConnectInfo, ContentLengthLimit, Multipart, Path, State},
     http::StatusCode,
-    routing::post,
+    routing::{delete, post},
     Json, Router,
 };
 
@@ -19,7 +19,8 @@ const MAX_IMAGE_SIZE: u64 = 2 * 1024 * 1024; // 2MB
 pub fn router(server: Arc<AriaServer>) -> Router<Arc<AriaServer>> {
     Router::with_state(server)
         .route("/:room/post", post(create_post))
-        .route("/:room/emote", post(create_emote).delete(delete_emote))
+        .route("/:room/emote", post(create_emote))
+        .route("/:room/emote/:name", delete(delete_emote))
 }
 
 #[axum::debug_handler(state = Arc<AriaServer>)]
