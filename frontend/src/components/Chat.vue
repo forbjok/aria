@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, onMounted, onUnmounted, reactive, ref } from "vue";
+import { inject, onMounted, onUnmounted, ref } from "vue";
 import axios from "axios";
 import filesize from "filesize";
 
@@ -17,6 +17,7 @@ const emit = defineEmits<{
 
 const room: RoomInfo | undefined = inject("room");
 
+const maxPosts = 200;
 const maxImageSize = 2097152;
 
 interface NewPost {
@@ -32,7 +33,7 @@ const postContainer = ref<HTMLDivElement | null>(null);
 const postForm = ref<HTMLFormElement | null>(null);
 const commentField = ref<HTMLTextAreaElement | null>(null);
 
-const posts = reactive<Post[]>([]);
+const posts = ref<Post[]>([]);
 
 const themes = [
   { name: "dark", description: "Dark" },
@@ -249,20 +250,26 @@ onMounted(() => {
   ws_listener = ws?.create_listener();
   if (ws_listener) {
     ws_listener.on("post", (post: Post) => {
-      posts.push(post);
+      const _posts = posts.value;
+      if (_posts.length >= maxPosts) {
+        _posts.splice(0, 2);
+      }
+
+      _posts.push(post);
       emit("post", post);
     });
 
-    ws_listener.on("oldposts", (_posts: Post[]) => {
+    ws_listener.on("oldposts", (__posts: Post[]) => {
+      const _posts = posts.value;
       let newPosts: Post[];
-      if (posts.length > 0) {
-        const lastPost = posts[posts.length - 1];
-        newPosts = _posts.filter((p) => p.id > lastPost.id);
+      if (_posts.length > 0) {
+        const lastPost = _posts[_posts.length - 1];
+        newPosts = __posts.filter((p) => p.id > lastPost.id);
       } else {
-        newPosts = _posts;
+        newPosts = __posts;
       }
 
-      posts.push(...newPosts);
+      _posts.push(...newPosts);
 
       setTimeout(() => {
         scrollToBottom();
