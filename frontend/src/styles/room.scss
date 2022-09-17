@@ -116,30 +116,6 @@
     }
   }
 
-  .overlay {
-    position: fixed;
-    left: 0;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 900;
-
-    background-color: rgba(0, 0, 0, 0.5);
-  }
-
-  .dialog {
-    position: fixed;
-    left: 50%;
-    top: 50%;
-    transform: translateX(-50%) translateY(-50%);
-    z-index: 999;
-
-    min-height: 100px;
-
-    margin: 10px;
-    border: 1px solid black;
-  }
-
   .toast-chat-container {
     position: absolute;
     left: 10px;
@@ -150,6 +126,11 @@
     z-index: 999;
     pointer-events: none;
     opacity: 0.8;
+  }
+
+  .admin-panel {
+    width: 665px; // Just enough for 6 emotes horizontally
+    height: 500px;
   }
 
   &.right-side-chat {

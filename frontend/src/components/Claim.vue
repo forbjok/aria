@@ -2,7 +2,7 @@
 import { onBeforeMount, ref, toRefs } from "vue";
 
 import router from "@/router";
-import type { RoomInfo } from "@/models";
+
 import { RoomAuthService } from "@/services/room-auth";
 import { RoomService, type ClaimInfo } from "@/services/room";
 
@@ -12,10 +12,8 @@ const props = defineProps<{
 
 const { room } = toRefs(props);
 
-const roomInfo: RoomInfo = { name: room.value, emotes: {} };
-
-const auth = new RoomAuthService(roomInfo);
-const roomService = new RoomService(roomInfo);
+const roomService = new RoomService(room.value);
+const auth = new RoomAuthService(roomService);
 
 const claimInfo = ref<ClaimInfo | null>(null);
 const claimError = ref<string | null>(null);
@@ -32,7 +30,7 @@ const claim = async () => {
 };
 
 const enterRoom = () => {
-  router.push({ name: "room", params: { name: roomInfo.name } });
+  router.push({ name: "room", params: { name: roomService.name } });
 };
 
 onBeforeMount(async () => {
@@ -48,7 +46,7 @@ onBeforeMount(async () => {
   <div class="claim">
     <div v-if="!claimInfo" class="unclaimed">
       <p class="unclaimed-text">This room has not yet been claimed.</p>
-      <button type="button" name="claim" class="claim-button" @click="claim()">Claim</button>
+      <button type="button" name="claim" class="claim-button" @click="claim">Claim</button>
     </div>
     <div v-if="claimInfo" class="claim-result">
       <div class="claim-result-text">
@@ -57,7 +55,7 @@ onBeforeMount(async () => {
           The password is: <span class="password">{{ claimInfo.password }}</span>
         </div>
       </div>
-      <button type="button" name="enter" class="enter-button" @click="enterRoom()">Enter</button>
+      <button type="button" name="enter" class="enter-button" @click="enterRoom">Enter</button>
     </div>
     <div v-if="claimError" class="claim-error">
       <p>An error occurred claiming the room: {{ claimError }}</p>

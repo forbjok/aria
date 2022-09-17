@@ -1,7 +1,7 @@
-import type { RoomInfo } from "@/models";
 import { inject, ref } from "vue";
 
 import type { LocalStorageService } from "@/services/localstorage";
+import type { RoomService } from "./room";
 
 interface RoomSettings {
   chatName?: string;
@@ -21,7 +21,7 @@ export class RoomSettingsService {
 
   private localStorageService: LocalStorageService | undefined = inject("storage");
 
-  constructor(private room: RoomInfo) {
+  constructor(private room: RoomService) {
     this.load();
   }
 

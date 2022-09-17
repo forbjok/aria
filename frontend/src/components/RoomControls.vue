@@ -35,9 +35,9 @@ const setContent = async () => {
 </script>
 
 <template>
-  <div class="roomcontrols">
+  <div class="room-controls">
     <div v-if="!auth?.isAuthorized.value" class="login">
-      <form class="login-form" @submit.prevent="login()">
+      <form class="login-form" @submit.prevent="login">
         <table>
           <tr>
             <td>Password</td>
@@ -54,7 +54,7 @@ const setContent = async () => {
     </div>
     <div v-if="auth?.isAuthorized.value" class="controls">
       <div class="content-section">
-        <form class="setcontent-form" @submit.prevent="setContent()">
+        <form class="setcontent-form" @submit.prevent="setContent">
           <table>
             <tr>
               <td>Content URL</td>

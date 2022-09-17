@@ -6,16 +6,16 @@ import filesize from "filesize";
 import ChatPost from "./ChatPost.vue";
 import EmoteSelector from "./EmoteSelector.vue";
 
+import type { Post } from "@/models";
+import type { RoomService } from "@/services/room";
 import type { RoomSettingsService } from "@/services/room-settings";
-
-import type { Post, RoomInfo } from "@/models";
 import type { AriaWebSocket, AriaWsListener } from "@/services/websocket";
 
 const emit = defineEmits<{
   (e: "post", post: Post): void;
 }>();
 
-const room: RoomInfo | undefined = inject("room");
+const room: RoomService | undefined = inject("room");
 
 const maxPosts = 200;
 const maxImageSize = 2097152;
@@ -298,7 +298,7 @@ onUnmounted(() => {
       </div>
     </div>
     <div ref="chatControls" class="chat-controls">
-      <form ref="postForm" @submit.prevent="submitPost()">
+      <form ref="postForm" @submit.prevent="submitPost">
         <div v-if="!useCompactPostForm">
           <table class="chat-controls-table">
             <tr>
@@ -317,7 +317,7 @@ onUnmounted(() => {
                   class="comment-field"
                   wrap="soft"
                   :readonly="posting"
-                  @keydown="submitOnEnterKeydown($event)"
+                  @keydown="submitOnEnterKeydown"
                   autofocus
                 ></textarea>
               </td>
@@ -328,10 +328,10 @@ onUnmounted(() => {
                   name="image"
                   type="file"
                   accept="image/*"
-                  @change="imageSelected($event)"
+                  @change="imageSelected"
                   :disabled="posting"
-                  @keydown="submitOnEnterKeydown($event)"
-                  @click="clearFileOnShiftClick($event)"
+                  @keydown="submitOnEnterKeydown"
+                  @click="clearFileOnShiftClick"
                 />
               </td>
             </tr>
@@ -376,14 +376,14 @@ onUnmounted(() => {
         <button class="emote-button" title="Emotes" @click="openEmoteSelector">
           <i class="fa-regular fa-face-smile"></i>
         </button>
-        <select v-if="!useCompactPostForm" class="theme-selector" v-model="theme" @change="themeSelected()">
+        <select v-if="!useCompactPostForm" class="theme-selector" v-model="theme" @change="themeSelected">
           <option v-for="theme of themes" :key="theme.name" :value="theme.name">{{ theme.description }}</option>
         </select>
         <button
           type="button"
           class="toggle-compact-button"
           title="Toggle compact post form"
-          @click="toggleCompactPostForm()"
+          @click="toggleCompactPostForm"
         >
           <span class="fa" :class="useCompactPostForm ? 'fa-caret-up' : 'fa-caret-down'"></span>
         </button>

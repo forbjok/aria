@@ -3,8 +3,7 @@ import { defineComponent, h, inject, type VNodeArrayChildren } from "vue";
 import * as P from "parsimmon";
 
 import Emote from "./Emote.vue";
-
-import type { RoomInfo } from "@/models";
+import type { RoomService } from "@/services/room";
 
 export default defineComponent({
   props: {
@@ -12,7 +11,7 @@ export default defineComponent({
   },
   emits: ["clickquotelink"],
   setup(props, ctx) {
-    const room: RoomInfo | undefined = inject("room");
+    const room: RoomService | undefined = inject("room");
 
     return () => {
       if (!props.text) {
@@ -39,7 +38,7 @@ export default defineComponent({
 
       const addEmote = (text: string) => {
         const name = text.substring(1);
-        const emote = room?.emotes[name];
+        const emote = room?.emotes.value[name];
         if (!emote) {
           addText(text);
           return;

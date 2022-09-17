@@ -1,9 +1,8 @@
 import axios, { type AxiosResponse } from "axios";
 import { inject, ref } from "vue";
 
-import type { RoomInfo } from "@/models";
-
 import type { LocalStorageService } from "@/services/localstorage";
+import type { RoomService } from "./room";
 
 export class RoomAuthService {
   public readonly isAuthorized = ref(false);
@@ -11,7 +10,7 @@ export class RoomAuthService {
   private token?: string;
   private localStorageService: LocalStorageService | undefined = inject("storage");
 
-  constructor(private room: RoomInfo) {}
+  constructor(private room: RoomService) {}
 
   private get authKeyName(): string {
     return `room_${this.room.name}_auth`;

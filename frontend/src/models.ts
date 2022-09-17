@@ -1,8 +1,3 @@
-export interface RoomInfo {
-  name: string;
-  emotes: { [key: string]: Emote };
-}
-
 export interface Content {
   type: string;
   url: string;

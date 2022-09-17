@@ -1,13 +1,24 @@
 <script setup lang="ts">
-import { inject } from "vue";
+import { computed, inject } from "vue";
 
-import type { Emote, RoomInfo } from "@/models";
+import type { Emote } from "@/models";
+import type { RoomService } from "@/services/room";
 
 const emit = defineEmits<{
   (e: "selectemote", name: string): void;
 }>();
 
-const room: RoomInfo | undefined = inject("room");
+const room: RoomService | undefined = inject("room");
+
+const emotes = computed((): Emote[] => {
+  if (!room) {
+    return [];
+  }
+
+  return Object.keys(room.emotes.value)
+    .sort()
+    .map((n) => room.emotes.value[n]);
+});
 
 const selectEmote = (emote: Emote) => {
   emit("selectemote", emote.name);
@@ -17,7 +28,7 @@ const selectEmote = (emote: Emote) => {
 <template>
   <div class="emote-selector">
     <div class="emotes">
-      <div v-for="e of room?.emotes" :key="e.name" :value="e.name" class="emote">
+      <div v-for="e of emotes" :key="e.name" :value="e.name" class="emote">
         <div class="emote">
           <img :src="e.url" :title="e.name" @click.stop="selectEmote(e)" />
         </div>

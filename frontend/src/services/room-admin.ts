@@ -1,10 +1,10 @@
 import axios from "axios";
 
 import type { RoomAuthService } from "@/services/room-auth";
-import type { RoomInfo } from "@/models";
+import type { RoomService } from "./room";
 
 export class RoomAdminService {
-  constructor(private room: RoomInfo, private auth: RoomAuthService) {}
+  constructor(private room: RoomService, private auth: RoomAuthService) {}
 
   action(action: any) {
     if (!this.auth.isAuthorized.value) {

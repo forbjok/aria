@@ -331,11 +331,11 @@ defineExpose({
           controls
           ref="embeddedVideo"
           class="video-container video-js"
-          @play="onPlay()"
-          @playing="onPlaying()"
-          @pause="onPause()"
-          @seeked="onSeek()"
-          @ratechange="onRateChange()"
+          @play="onPlay"
+          @playing="onPlaying"
+          @pause="onPause"
+          @seeked="onSeek"
+          @ratechange="onRateChange"
         >
           <source v-for="source of sources" :key="source.description" :src="source.url" :type="source.mediaType" />
         </video>
@@ -348,11 +348,11 @@ defineExpose({
           controls
           ref="googleDriveVideo"
           class="video-container video-js"
-          @play="onPlay()"
-          @playing="onPlaying()"
-          @pause="onPause()"
-          @seeked="onSeek()"
-          @ratechange="onRateChange()"
+          @play="onPlay"
+          @playing="onPlaying"
+          @pause="onPause"
+          @seeked="onSeek"
+          @ratechange="onRateChange"
         >
           <source v-for="source of sources" :key="source.description" :src="source.url" :type="source.mediaType" />
         </video>

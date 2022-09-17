@@ -5,13 +5,15 @@ import router from "@/router";
 import Chat from "./Chat.vue";
 import ToastChat from "./ToastChat.vue";
 import Player from "./Player.vue";
+import Dialog from "@/components/common/Dialog.vue";
 import RoomControls from "./RoomControls.vue";
+import AdminPanel from "@/components/admin/AdminPanel.vue";
 
 import { RoomSettingsService } from "@/services/room-settings";
 import { RoomAdminService } from "@/services/room-admin";
 import { RoomAuthService } from "@/services/room-auth";
 
-import type { Content, Emote, RoomInfo } from "@/models";
+import type { Content, Emote } from "@/models";
 import { RoomService } from "@/services/room";
 import { AriaWebSocket, AriaWsListener } from "@/services/websocket";
 
@@ -31,24 +33,24 @@ const props = defineProps<{
 
 const { name } = toRefs(props);
 
-const roomInfo: RoomInfo = { name: name.value, emotes: {} };
-const roomService = new RoomService(roomInfo);
-const auth = new RoomAuthService(roomInfo);
-const settings = new RoomSettingsService(roomInfo);
-const admin = new RoomAdminService(roomInfo, auth);
+const roomService = new RoomService(name.value);
+const auth = new RoomAuthService(roomService);
+const settings = new RoomSettingsService(roomService);
+const admin = new RoomAdminService(roomService, auth);
 
 const ws_protocol = window.location.protocol === "https:" ? "wss" : "ws";
 
 const ws_url = `${ws_protocol}://${window.location.host}/aria-ws`;
 const ws = new AriaWebSocket(ws_url, name.value);
 
-provide("room", roomInfo);
+provide("room", roomService);
 provide("auth", auth);
 provide("settings", settings);
 provide("admin", admin);
 provide("ws", ws);
 
-const showRoomControls = ref(false);
+const roomControlsDialog = ref<typeof Dialog>();
+const adminPanelDialog = ref<typeof Dialog>();
 
 const room = ref<HTMLDivElement | null>(null);
 const toastChat = ref<typeof ToastChat | null>(null);
@@ -78,16 +80,16 @@ onMounted(async () => {
 
   ws_listener.on("emotes", async (emotes: Emote[]) => {
     for (const e of emotes) {
-      roomInfo.emotes[e.name] = e;
+      roomService.emotes.value[e.name] = e;
     }
   });
 
   ws_listener.on("emote", async (emote: Emote) => {
-    roomInfo.emotes[emote.name] = emote;
+    roomService.emotes.value[emote.name] = emote;
   });
 
   ws_listener.on("delete-emote", async (name: string) => {
-    delete roomInfo.emotes[name];
+    delete roomService.emotes.value[name];
   });
 
   ws_listener.on("content", async (_content: Content) => {
@@ -158,8 +160,12 @@ const toggleTheaterMode = () => {
   theaterMode.value = !theaterMode.value;
 };
 
-const toggleRoomControls = () => {
-  showRoomControls.value = !showRoomControls.value;
+const showRoomControls = () => {
+  roomControlsDialog.value?.show();
+};
+
+const showAdminPanel = () => {
+  adminPanelDialog.value?.show();
 };
 
 let isPlayerStateCooldown = false;
@@ -363,7 +369,7 @@ const toggleRightSideChat = () => {
   <div ref="room" class="room" :class="settings.isRightSideChat.value ? 'right-side-chat' : ''">
     <div class="usercontrols-activationzone">
       <div class="usercontrols">
-        <a href="#" class="usercontrol" title="Reload" @click="reloadContent()"
+        <a href="#" class="usercontrol" title="Reload" @click="reloadContent"
           ><i class="fa-solid fa-arrows-rotate"></i
         ></a>
         <div class="spacer"></div>
@@ -372,15 +378,16 @@ const toggleRightSideChat = () => {
           class="usercontrol"
           :class="theaterMode ? '' : 'usercontrol-off'"
           title="Theater mode"
-          @click="toggleTheaterMode()"
+          @click="toggleTheaterMode"
           ><i class="fa-solid fa-film"></i
         ></a>
         <a href="#" class="usercontrol" title="Switch chat side" @click="toggleRightSideChat"
           ><i class="fa-solid fa-arrow-right-arrow-left"></i
         ></a>
         <div class="spacer"></div>
-        <a href="#" class="usercontrol" title="Room Admin" @click="toggleRoomControls()"
-          ><i class="fa-solid fa-wrench"></i
+        <a href="#" class="usercontrol" title="Admin Panel" @click="showAdminPanel"><i class="fa-solid fa-gear"></i></a>
+        <a href="#" class="usercontrol" title="Set content" @click="showRoomControls"
+          ><i class="fa-solid fa-video"></i
         ></a>
         <a
           v-if="auth.isAuthorized.value"
@@ -420,10 +427,12 @@ const toggleRightSideChat = () => {
         @ratechange="onRateChange"
       />
     </div>
-    <div v-if="showRoomControls" class="roomcontrols-container">
-      <div class="overlay" @click="toggleRoomControls()"></div>
-      <RoomControls class="dialog" />
-    </div>
+    <Dialog ref="roomControlsDialog" title="Room Controls">
+      <RoomControls />
+    </Dialog>
+    <Dialog ref="adminPanelDialog" title="Admin Panel">
+      <AdminPanel />
+    </Dialog>
   </div>
 </template>
 
