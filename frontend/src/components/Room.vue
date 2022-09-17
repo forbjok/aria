@@ -2,8 +2,8 @@
 import { onBeforeMount, onMounted, onUnmounted, provide, ref, toRefs } from "vue";
 import router from "@/router";
 
-import Chat from "./Chat.vue";
-import ToastChat from "./ToastChat.vue";
+import Chat from "@/components/chat/Chat.vue";
+import ToastChat from "@/components/chat/ToastChat.vue";
 import Player from "./Player.vue";
 import Dialog from "@/components/common/Dialog.vue";
 import LogIn from "@/components/admin/LogIn.vue";
