@@ -6,6 +6,7 @@ import Chat from "./Chat.vue";
 import ToastChat from "./ToastChat.vue";
 import Player from "./Player.vue";
 import Dialog from "@/components/common/Dialog.vue";
+import LogIn from "@/components/admin/LogIn.vue";
 import RoomControls from "./RoomControls.vue";
 import AdminPanel from "@/components/admin/AdminPanel.vue";
 
@@ -49,6 +50,7 @@ provide("settings", settings);
 provide("admin", admin);
 provide("ws", ws);
 
+const logInDialog = ref<typeof Dialog>();
 const roomControlsDialog = ref<typeof Dialog>();
 const adminPanelDialog = ref<typeof Dialog>();
 
@@ -158,6 +160,10 @@ const reloadContent = async () => {
 
 const toggleTheaterMode = () => {
   theaterMode.value = !theaterMode.value;
+};
+
+const showLogIn = () => {
+  logInDialog.value?.show();
 };
 
 const showRoomControls = () => {
@@ -384,21 +390,6 @@ const toggleRightSideChat = () => {
         <a href="#" class="usercontrol" title="Switch chat side" @click="toggleRightSideChat"
           ><i class="fa-solid fa-arrow-right-arrow-left"></i
         ></a>
-        <div class="spacer"></div>
-        <a href="#" class="usercontrol" title="Admin Panel" @click="showAdminPanel"><i class="fa-solid fa-gear"></i></a>
-        <a href="#" class="usercontrol" title="Set content" @click="showRoomControls"
-          ><i class="fa-solid fa-video"></i
-        ></a>
-        <a
-          v-if="auth.isAuthorized.value"
-          href="#"
-          class="usercontrol"
-          :class="isMaster ? '' : 'usercontrol-off'"
-          title="Toggle master"
-          @click="toggleMaster"
-        >
-          <i class="fa-solid fa-star"></i>
-        </a>
         <a
           href="#"
           class="usercontrol"
@@ -408,6 +399,27 @@ const toggleRightSideChat = () => {
         >
           <i class="fa-solid fa-plug"></i>
         </a>
+        <div class="spacer"></div>
+        <a href="#" v-if="!auth.isAuthorized.value" class="usercontrol" title="Log In" @click="showLogIn"
+          ><i class="fa-solid fa-right-to-bracket"></i
+        ></a>
+        <div v-if="auth.isAuthorized.value" class="admin-controls usercontrol-group">
+          <a href="#" class="usercontrol" title="Admin Panel" @click="showAdminPanel"
+            ><i class="fa-solid fa-gear"></i
+          ></a>
+          <a href="#" class="usercontrol" title="Set Content" @click="showRoomControls"
+            ><i class="fa-solid fa-video"></i
+          ></a>
+          <a
+            href="#"
+            class="usercontrol"
+            :class="isMaster ? '' : 'usercontrol-off'"
+            title="Toggle master"
+            @click="toggleMaster"
+          >
+            <i class="fa-solid fa-star"></i>
+          </a>
+        </div>
       </div>
     </div>
     <div v-show="!theaterMode" ref="chatContainer" class="chat-container">
@@ -427,6 +439,11 @@ const toggleRightSideChat = () => {
         @ratechange="onRateChange"
       />
     </div>
+
+    <!-- Dialogs -->
+    <Dialog ref="logInDialog" title="Log In">
+      <LogIn />
+    </Dialog>
     <Dialog ref="roomControlsDialog" title="Room Controls">
       <RoomControls />
     </Dialog>

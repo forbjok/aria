@@ -72,6 +72,12 @@
 
       transition: opacity 0.2s ease-out, transform 0.2s ease-in;
 
+      .usercontrol-group {
+        display: flex;
+        flex-direction: row;
+        gap: 5px;
+      }
+
       .usercontrol {
         color: #7a38e4;
         text-decoration: none;
