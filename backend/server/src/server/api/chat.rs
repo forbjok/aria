@@ -134,6 +134,11 @@ async fn create_emote(
     }
 
     if let (Some(name), Some(image)) = (name, image) {
+        // Don't allow blank name
+        if name.is_empty() {
+            return Err(ApiError::BadRequest);
+        }
+
         let new_emote = lm::NewEmote {
             name: name.into(),
             image,
