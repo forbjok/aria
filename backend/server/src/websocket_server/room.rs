@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use anyhow::Context;
 use chrono::{DateTime, Utc};
 use tracing::error;
@@ -8,6 +10,8 @@ use aria_models::local as lm;
 
 use super::{send, ConnectionId, Tx};
 
+const MAX_POSTS: usize = 50;
+
 struct Member {
     id: ConnectionId,
     tx: Tx,
@@ -15,7 +19,7 @@ struct Member {
 
 pub(super) struct Room {
     members: Vec<Member>,
-    posts: Vec<am::Post>,
+    posts: VecDeque<am::Post>,
     emotes: Vec<am::Emote>,
     master: ConnectionId,
     content: Option<am::Content>,
@@ -78,11 +82,7 @@ impl Room {
     }
 
     pub fn send_recent_posts(&self, tx: &Tx) -> Result<(), anyhow::Error> {
-        let posts_len = self.posts.len();
-
-        let posts = &self.posts[posts_len - 50.min(posts_len)..];
-
-        send(tx, "oldposts", posts)?;
+        send(tx, "oldposts", &self.posts)?;
 
         Ok(())
     }
@@ -90,7 +90,12 @@ impl Room {
     pub fn post(&mut self, post: &lm::Post) -> Result<(), anyhow::Error> {
         let post = am::Post::from(post);
 
-        self.posts.push(post.clone());
+        // If the maximum number of posts is reached, remove the oldest one.
+        if self.posts.len() >= MAX_POSTS {
+            self.posts.pop_front();
+        }
+
+        self.posts.push_back(post.clone());
 
         for m in self.members.iter() {
             send(&m.tx, "post", &post).map_err(|err| error!("{err:?}")).ok();
