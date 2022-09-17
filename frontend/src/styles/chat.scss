@@ -79,7 +79,7 @@
   }
 
   .overlay {
-    position: fixed;
+    position: absolute;
     left: 0;
     top: 0;
     right: 0;
@@ -88,9 +88,9 @@
   }
 
   .emote-selector {
-    position: fixed;
+    position: absolute;
     left: 100px;
-    bottom: 50px;
+    bottom: 30px;
 
     max-width: 665px; // Just enough for 6 emotes horizontally
     max-height: 400px;

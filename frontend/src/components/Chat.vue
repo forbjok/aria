@@ -390,7 +390,7 @@ onUnmounted(() => {
       </div>
     </div>
     <div v-if="showEmoteSelector" class="overlay" @click="showEmoteSelector = false">
-      <EmoteSelector class="emote-selector dialog" @selectemote="selectEmote" />
+      <EmoteSelector class="emote-selector" @selectemote="selectEmote" />
     </div>
   </div>
 </template>
