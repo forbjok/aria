@@ -7,6 +7,11 @@ import { LocalStorageService } from "@/services/localstorage";
 // CSS reset
 import "ress";
 
+// Font-awesome
+import "@fortawesome/fontawesome-free/js/fontawesome";
+import "@fortawesome/fontawesome-free/js/regular";
+import "@fortawesome/fontawesome-free/js/solid";
+
 // Import third-party stylesheets
 import "video.js/src/css/video-js.scss";
 

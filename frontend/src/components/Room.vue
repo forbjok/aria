@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeMount, onMounted, onUnmounted, provide, ref, toRefs } from "vue";
+import { defineAsyncComponent, onBeforeMount, onMounted, onUnmounted, provide, ref, toRefs } from "vue";
 import router from "@/router";
 
 import Chat from "@/components/chat/Chat.vue";
@@ -8,7 +8,6 @@ import Player from "./Player.vue";
 import Dialog from "@/components/common/Dialog.vue";
 import LogIn from "@/components/admin/LogIn.vue";
 import RoomControls from "./RoomControls.vue";
-import AdminPanel from "@/components/admin/AdminPanel.vue";
 
 import { RoomSettingsService } from "@/services/room-settings";
 import { RoomAdminService } from "@/services/room-admin";
@@ -17,6 +16,8 @@ import { RoomAuthService } from "@/services/room-auth";
 import type { Content, Emote } from "@/models";
 import { RoomService } from "@/services/room";
 import { AriaWebSocket, AriaWsListener } from "@/services/websocket";
+
+const AdminPanel = defineAsyncComponent(() => import("@/components/admin/AdminPanel.vue"));
 
 interface PlaybackState {
   time: number;
