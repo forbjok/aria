@@ -422,7 +422,7 @@ onUnmounted(() => {
 
     <!-- Dialogs -->
     <div v-if="showEmoteSelector" class="overlay" @click="showEmoteSelector = false">
-      <EmoteSelector class="emote-selector" @selectemote="selectEmote" />
+      <EmoteSelector @selectemote="selectEmote" />
     </div>
     <Teleport to="#overlay">
       <ConfirmDialog ref="confirmDeleteDialog" title="Confirm delete" @confirm="deletePost(actionTargetPost)">

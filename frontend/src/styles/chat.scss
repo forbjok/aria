@@ -92,8 +92,15 @@
     left: 100px;
     bottom: 30px;
 
-    max-width: 665px; // Just enough for 6 emotes horizontally
-    max-height: 400px;
+    max-width: 36vw;
+    height: 33vh;
+
+    @media screen and (orientation: portrait) {
+      left: 3vw;
+
+      max-width: 94vw;
+      height: 46vh;
+    }
   }
 
   &.right-side-chat {

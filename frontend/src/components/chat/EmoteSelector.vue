@@ -27,10 +27,12 @@ const selectEmote = (emote: Emote) => {
 
 <template>
   <div class="emote-selector">
-    <div class="emotes">
-      <div v-for="e of emotes" :key="e.name" :value="e.name" class="emote">
-        <div class="emote">
-          <img :src="e.url" :title="e.name" @click.stop="selectEmote(e)" />
+    <div class="emotes-container">
+      <div class="emotes">
+        <div v-for="e of emotes" :key="e.name" :value="e.name" class="emote">
+          <div class="emote">
+            <img :src="e.url" :title="e.name" @click.stop="selectEmote(e)" />
+          </div>
         </div>
       </div>
     </div>
