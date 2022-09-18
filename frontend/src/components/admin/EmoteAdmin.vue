@@ -187,7 +187,15 @@ const submitEmote = async () => {
 
     <Dialog ref="addEmoteDialog" title="Add emote">
       <form class="add-form dialog-content" @submit.prevent="submitEmote">
-        <input name="name" type="text" v-model="newEmote.name" placeholder="Emote name" :disabled="adding" />
+        <input
+          name="name"
+          type="text"
+          pattern="^[\d\w]+$"
+          v-model="newEmote.name"
+          placeholder="Emote name"
+          title="Emote name. Only alphanumeric characters allowed."
+          :disabled="adding"
+        />
         <input name="image" type="file" accept="image/*" @change="imageSelected" :disabled="adding" />
         <img v-show="newEmoteImage" class="image-preview" :src="newEmoteImage" alt="Preview" />
         <button class="add-button" type="submit" :disabled="!canSubmitEmote">

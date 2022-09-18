@@ -1,12 +1,16 @@
 use std::path::Path;
 
 use anyhow::Context;
+use once_cell::sync::Lazy;
+use regex::Regex;
 
 use aria_models::local as lm;
 use aria_store::{models as dbm, AriaStore};
 
 use super::AriaCore;
 use crate::{image::ProcessImageResult, transform::dbm_emote_to_lm, util::thumbnail::ThumbnailGenerator, Notification};
+
+static RE_VALID_EMOTE_NAME: Lazy<Regex> = Lazy::new(|| Regex::new(r#"^[\d\w]+$"#).unwrap());
 
 impl AriaCore {
     pub async fn get_emotes(&self, name: &str) -> Result<Vec<lm::Emote>, anyhow::Error> {
@@ -16,6 +20,10 @@ impl AriaCore {
     }
 
     pub async fn create_emote(&self, room: &str, emote: lm::NewEmote<'_>) -> Result<lm::Emote, anyhow::Error> {
+        if !RE_VALID_EMOTE_NAME.is_match(&emote.name) {
+            return Err(anyhow::anyhow!("Emote name must contain only alphanumeric characters"));
+        }
+
         let i = emote.image;
 
         // Process image
