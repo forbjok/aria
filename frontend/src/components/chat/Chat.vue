@@ -10,11 +10,13 @@ import type { Post } from "@/models";
 import type { RoomService } from "@/services/room";
 import type { RoomSettingsService } from "@/services/room-settings";
 import type { AriaWebSocket, AriaWsListener } from "@/services/websocket";
+import type { RoomAuthService } from "@/services/room-auth";
 
 const emit = defineEmits<{
   (e: "post", post: Post): void;
 }>();
 
+const auth: RoomAuthService | undefined = inject("auth");
 const room: RoomService | undefined = inject("room");
 
 const maxPosts = 200;
@@ -107,10 +109,6 @@ const canSubmitPost = (): boolean => {
   return true;
 };
 
-const postUrl = () => {
-  return `/api/chat/${room?.name}/post`;
-};
-
 const activatePostingCooldown = () => {
   postingCooldown.value = 5;
   const cooldownInterval = setInterval(() => {
@@ -158,7 +156,7 @@ const submitPost = async () => {
   }
 
   try {
-    await axios.post(postUrl(), formData, {
+    await axios.post(`/api/chat/${room?.name}/post`, formData, {
       onUploadProgress: (e) => {
         if (e.lengthComputable) {
           const percentComplete = Math.round((e.loaded / e.total) * 100);
@@ -244,6 +242,14 @@ const highlightPost = (id: number) => {
   highlightedPost.value = id;
 };
 
+const deletePost = async (id: number) => {
+  await axios.delete(`/api/chat/${room?.name}/post/${id}`, {
+    headers: {
+      Authorization: `Bearer ${auth?.getToken()}`,
+    },
+  });
+};
+
 let ws_listener: AriaWsListener | undefined;
 
 onMounted(() => {
@@ -257,6 +263,16 @@ onMounted(() => {
 
       _posts.push(post);
       emit("post", post);
+    });
+
+    ws_listener.on("delete-post", (postId: number) => {
+      const _posts = posts.value;
+      const postIndex = _posts.findIndex((p) => p.id === postId);
+      if (!postIndex) {
+        return;
+      }
+
+      _posts.splice(postIndex, 1);
     });
 
     ws_listener.on("oldposts", (__posts: Post[]) => {
@@ -294,6 +310,7 @@ onUnmounted(() => {
           :highlight="highlightedPost === post.id"
           @quotepost="quotePost"
           @clickquotelink="highlightPost"
+          @delete="deletePost(post.id)"
         />
       </div>
     </div>

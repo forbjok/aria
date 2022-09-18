@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { toRefs } from "vue";
+import { inject, toRefs } from "vue";
 import { format, isSameDay, isSameYear, parseJSON } from "date-fns";
 
 import PostComment from "./PostComment.vue";
 
 import type { Post } from "@/models";
+import type { RoomAuthService } from "@/services/room-auth";
 
 const props = defineProps<{
   post: Post;
@@ -14,9 +15,12 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "quotepost", id: number): void;
   (e: "clickquotelink", id: number): void;
+  (e: "delete"): void;
 }>();
 
 const { post, highlight } = toRefs(props);
+
+const auth: RoomAuthService | undefined = inject("auth");
 
 const toggleImage = (_post: Post): void => {
   _post.showFullImage = !_post.showFullImage;
@@ -28,6 +32,10 @@ const quotePost = (id: number) => {
 
 const clickQuoteLink = (id: number) => {
   emit("clickquotelink", id);
+};
+
+const deletePost = () => {
+  emit("delete");
 };
 
 const formatTime = (value: string): string => {
@@ -50,10 +58,16 @@ const formatTime = (value: string): string => {
 <template>
   <div :id="`p${post.id}`" class="post" :class="highlight ? 'highlight' : ''">
     <div class="post-header">
-      <span class="time">{{ formatTime(post.posted) }}</span>
-      <span class="name">{{ post.name || "Anonymous" }}</span>
-      <div class="id">
-        <a @click="clickQuoteLink(post.id)">No.</a> <a @click="quotePost(post.id)">{{ post.id }}</a>
+      <div class="post-info">
+        <span class="time">{{ formatTime(post.posted) }}</span>
+        <span class="name">{{ post.name || "Anonymous" }}</span>
+        <button @click="clickQuoteLink(post.id)">No.</button>
+        <button @click="quotePost(post.id)">{{ post.id }}</button>
+      </div>
+      <div class="admin-actions">
+        <button v-if="auth?.isAuthorized" class="action-button" title="Delete post" @click="deletePost">
+          <i class="fa-solid fa-trash"></i>
+        </button>
       </div>
     </div>
     <div class="post-body">

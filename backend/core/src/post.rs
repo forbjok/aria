@@ -61,6 +61,15 @@ impl AriaCore {
         Ok(post)
     }
 
+    pub async fn delete_post(&self, room: &str, post_id: u64) -> Result<(), anyhow::Error> {
+        self.store.delete_post(room, post_id as i64).await?;
+
+        self.notify_tx
+            .unbounded_send(Notification::DeletePost(room.to_owned(), post_id))?;
+
+        Ok(())
+    }
+
     pub async fn update_post_images(&self, hash: &str, ext: &str, tn_ext: &str) -> Result<(), anyhow::Error> {
         self.store.update_post_images(hash, ext, tn_ext).await?;
 

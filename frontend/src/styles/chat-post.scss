@@ -1,35 +1,57 @@
+button {
+  background: none;
+  border: none;
+  padding: 0;
+
+  cursor: pointer !important;
+}
+
 .post-header {
+  display: flex;
+  flex-direction: row;
+
   padding-bottom: 1px;
 
-  span {
-    margin-right: 3px;
-  }
+  .post-info {
+    flex-grow: 1;
 
-  .time {
-    vertical-align: top;
-    text-align: right;
-    color: gray;
-  }
+    display: flex;
+    flex-direction: row;
+    gap: 3px;
 
-  .name {
-    vertical-align: top;
-    text-align: right;
-    padding-right: 2px;
-    color: #117743;
-    font-weight: bold;
-  }
-
-  .id {
-    display: inline;
-
-    text-decoration: none;
-    vertical-align: top;
-    text-align: right;
-    color: gray;
-
-    a {
-      cursor: pointer;
+    .time {
+      vertical-align: top;
+      text-align: right;
+      color: gray;
     }
+
+    .name {
+      vertical-align: top;
+      text-align: right;
+      padding-right: 2px;
+      color: #117743;
+      font-weight: bold;
+    }
+
+    button {
+      color: gray;
+    }
+  }
+
+  .admin-actions {
+    flex-shrink: 0;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: right;
+    gap: 2px;
+  }
+
+  .action-button {
+    color: rgb(78, 78, 78);
+    font-size: 0.8rem;
+
+    visibility: hidden;
   }
 }
 
@@ -78,4 +100,10 @@
 .post {
   overflow: hidden;
   padding: 5px;
+
+  &:hover {
+    .action-button {
+      visibility: visible;
+    }
+  }
 }

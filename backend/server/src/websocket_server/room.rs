@@ -87,6 +87,7 @@ impl Room {
         Ok(())
     }
 
+    /// Add post
     pub fn post(&mut self, post: &lm::Post) -> Result<(), anyhow::Error> {
         let post = am::Post::from(post);
 
@@ -99,6 +100,19 @@ impl Room {
 
         for m in self.members.iter() {
             send(&m.tx, "post", &post).map_err(|err| error!("{err:?}")).ok();
+        }
+
+        Ok(())
+    }
+
+    /// Delete post
+    pub fn delete_post(&mut self, post_id: u64) -> Result<(), anyhow::Error> {
+        self.posts.retain(|p| p.id != post_id);
+
+        for m in self.members.iter() {
+            send(&m.tx, "delete-post", post_id)
+                .map_err(|err| error!("{err:?}"))
+                .ok();
         }
 
         Ok(())

@@ -32,6 +32,12 @@ pub(super) async fn handle_notifications(
                                 room.add_emote(&emote)?;
                             }
                         }
+                        Notification::DeletePost(room, post_id) => {
+                            let mut rooms = state.rooms.lock().await;
+                            if let Some(room) = rooms.get_mut(&room) {
+                                room.delete_post(post_id)?;
+                            }
+                        }
                         Notification::DeleteEmote(room, emote_name) => {
                             let mut rooms = state.rooms.lock().await;
                             if let Some(room) = rooms.get_mut(&room) {

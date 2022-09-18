@@ -19,6 +19,7 @@ const MAX_IMAGE_SIZE: u64 = 2 * 1024 * 1024; // 2MB
 pub fn router(server: Arc<AriaServer>) -> Router<Arc<AriaServer>> {
     Router::with_state(server)
         .route("/:room/post", post(create_post))
+        .route("/:room/post/:post_id", delete(delete_post))
         .route("/:room/emote", post(create_emote))
         .route("/:room/emote/:name", delete(delete_emote))
 }
@@ -83,6 +84,21 @@ async fn create_post(
     let post = server.core.create_post(&room, new_post).await?;
 
     Ok(Json(post.id))
+}
+
+#[axum::debug_handler(state = Arc<AriaServer>)]
+async fn delete_post(
+    auth: Authorized,
+    State(server): State<Arc<AriaServer>>,
+    Path((room, post_id)): Path<(String, u64)>,
+) -> Result<(), ApiError> {
+    if auth.claims.name != room {
+        return Err(ApiError::Unauthorized);
+    }
+
+    server.core.delete_post(&room, post_id).await?;
+
+    Ok(())
 }
 
 #[axum::debug_handler(state = Arc<AriaServer>)]

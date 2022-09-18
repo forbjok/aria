@@ -217,6 +217,27 @@
     },
     "query": "SELECT set_room_content($1, $2::json);"
   },
+  "56e75134fbcc526d69764dd2e005b3505547dd483258d068a1ab723f8507e7be": {
+    "describe": {
+      "columns": [
+        {
+          "name": "delete_post",
+          "ordinal": 0,
+          "type_info": "Void"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Int8"
+        ]
+      }
+    },
+    "query": "SELECT delete_post($1, $2);"
+  },
   "5f0887343c6ea22aab9b26f659a6ed4f4c0ac4885d0502a09c295e470cc6b17a": {
     "describe": {
       "columns": [
@@ -297,6 +318,10 @@
                   [
                     "ip",
                     "Inet"
+                  ],
+                  [
+                    "is_deleted",
+                    "Bool"
                   ]
                 ]
               },
@@ -399,6 +424,10 @@
                   [
                     "ip",
                     "Inet"
+                  ],
+                  [
+                    "is_deleted",
+                    "Bool"
                   ]
                 ]
               },
