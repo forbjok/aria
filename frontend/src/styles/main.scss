@@ -1,4 +1,12 @@
+@import url(https://fonts.googleapis.com/css?family=Roboto);
+
 body {
+  background: black;
+  color: white;
+
+  font-family: "Roboto", sans-serif;
+  font-size: 0.8rem;
+
   overflow: auto;
   background-color: black;
 }

@@ -103,3 +103,16 @@
     }
   }
 }
+
+.confirm-delete-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  .post-preview {
+    max-width: 350px;
+    max-height: 500px;
+
+    overflow-y: auto;
+  }
+}

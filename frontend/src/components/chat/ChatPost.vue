@@ -9,7 +9,8 @@ import type { RoomAuthService } from "@/services/room-auth";
 
 const props = defineProps<{
   post: Post;
-  highlight: boolean;
+  highlight?: boolean;
+  actions?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -18,7 +19,7 @@ const emit = defineEmits<{
   (e: "delete"): void;
 }>();
 
-const { post, highlight } = toRefs(props);
+const { post, highlight, actions } = toRefs(props);
 
 const auth: RoomAuthService | undefined = inject("auth");
 
@@ -65,7 +66,7 @@ const formatTime = (value: string): string => {
         <button @click="quotePost(post.id)">{{ post.id }}</button>
         <i v-if="post.isDeleted" class="fa-solid fa-skull-crossbones" title="Deleted"></i>
       </div>
-      <div class="admin-actions">
+      <div v-if="actions" class="admin-actions">
         <button
           v-if="!post.isDeleted && auth?.isAuthorized"
           class="action-button"

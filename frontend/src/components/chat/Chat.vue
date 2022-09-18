@@ -5,6 +5,7 @@ import filesize from "filesize";
 
 import ChatPost from "./ChatPost.vue";
 import EmoteSelector from "./EmoteSelector.vue";
+import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
 
 import type { Post } from "@/models";
 import type { RoomService } from "@/services/room";
@@ -31,11 +32,13 @@ interface NewPost {
 const settings: RoomSettingsService | undefined = inject("settings");
 const ws: AriaWebSocket | undefined = inject("ws");
 
-const postContainer = ref<HTMLDivElement | null>(null);
-const postForm = ref<HTMLFormElement | null>(null);
-const commentField = ref<HTMLTextAreaElement | null>(null);
+const postContainer = ref<HTMLDivElement>();
+const postForm = ref<HTMLFormElement>();
+const commentField = ref<HTMLTextAreaElement>();
+const confirmDeleteDialog = ref<typeof ConfirmDialog>();
 
 const posts = ref<Post[]>([]);
+const actionTargetPost = ref<Post>();
 
 const themes = [
   { name: "dark", description: "Dark" },
@@ -242,12 +245,21 @@ const highlightPost = (id: number) => {
   highlightedPost.value = id;
 };
 
-const deletePost = async (id: number) => {
-  await axios.delete(`/api/chat/${room?.name}/post/${id}`, {
+const deletePost = async (post?: Post) => {
+  if (!post) {
+    return;
+  }
+
+  await axios.delete(`/api/chat/${room?.name}/post/${post.id}`, {
     headers: {
       Authorization: `Bearer ${auth?.getToken()}`,
     },
   });
+};
+
+const confirmDeletePost = async (post: Post) => {
+  actionTargetPost.value = post;
+  confirmDeleteDialog.value?.show();
 };
 
 let ws_listener: AriaWsListener | undefined;
@@ -308,9 +320,10 @@ onUnmounted(() => {
           v-for="post of posts"
           :key="post.id"
           :highlight="highlightedPost === post.id"
+          :actions="true"
           @quotepost="quotePost"
           @clickquotelink="highlightPost"
-          @delete="deletePost(post.id)"
+          @delete="confirmDeletePost(post)"
         />
       </div>
     </div>
@@ -406,9 +419,24 @@ onUnmounted(() => {
         </button>
       </div>
     </div>
+
+    <!-- Dialogs -->
     <div v-if="showEmoteSelector" class="overlay" @click="showEmoteSelector = false">
       <EmoteSelector class="emote-selector" @selectemote="selectEmote" />
     </div>
+    <Teleport to="#overlay">
+      <ConfirmDialog ref="confirmDeleteDialog" title="Confirm delete" @confirm="deletePost(actionTargetPost)">
+        <template v-slot:confirm><i class="fa-solid fa-trash"></i> Delete</template>
+        <div v-if="!!actionTargetPost" class="confirm-delete-dialog">
+          <span>Are you sure you want to delete this post?</span>
+          <div class="post-preview" :class="`theme-${settings?.theme.value}`">
+            <div class="post-container">
+              <ChatPost :post="actionTargetPost" />
+            </div>
+          </div>
+        </div>
+      </ConfirmDialog>
+    </Teleport>
   </div>
 </template>
 
