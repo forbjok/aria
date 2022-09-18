@@ -66,13 +66,8 @@ const formatTime = (value: string): string => {
         <button @click="quotePost(post.id)">{{ post.id }}</button>
         <i v-if="post.isDeleted" class="fa-solid fa-skull-crossbones" title="Deleted"></i>
       </div>
-      <div v-if="actions" class="admin-actions">
-        <button
-          v-if="!post.isDeleted && auth?.isAuthorized"
-          class="action-button"
-          title="Delete post"
-          @click="deletePost"
-        >
+      <div v-if="actions && auth?.isAuthorized.value" class="admin-actions">
+        <button v-if="!post.isDeleted" class="action-button" title="Delete post" @click="deletePost">
           <i class="fa-solid fa-trash"></i>
         </button>
       </div>
