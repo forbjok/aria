@@ -117,8 +117,10 @@
   gap: 10px;
 
   .post-preview {
-    max-width: 350px;
-    max-height: 500px;
+    width: 350px;
+
+    max-width: 94vw;
+    max-height: 80vh;
 
     overflow-y: auto;
   }
