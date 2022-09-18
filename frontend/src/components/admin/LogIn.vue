@@ -3,6 +3,10 @@ import { inject, ref } from "vue";
 
 import type { RoomAuthService } from "@/services/room-auth";
 
+const emit = defineEmits<{
+  (e: "logged-in"): void;
+}>();
+
 const auth: RoomAuthService | undefined = inject("auth");
 
 const password = ref("");
@@ -10,12 +14,13 @@ const errorText = ref<string>();
 
 const logIn = async () => {
   const success = await auth?.login(password.value);
-  if (!success) {
+  password.value = "";
+
+  if (success) {
+    emit("logged-in");
+  } else {
     errorText.value = "Nope, that's not it.";
   }
-
-  password.value = "";
-  return success;
 };
 </script>
 

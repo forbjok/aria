@@ -441,7 +441,7 @@ const toggleRightSideChat = () => {
 
     <!-- Dialogs -->
     <Dialog ref="logInDialog" :darken="true" title="Log In">
-      <LogIn />
+      <LogIn @logged-in="logInDialog?.close()" />
     </Dialog>
     <Dialog ref="roomControlsDialog" :darken="true" title="Room Controls">
       <RoomControls />
