@@ -47,7 +47,7 @@ impl IntoResponse for ApiError {
         match self {
             Self::Anyhow(err) => {
                 error!("{err:#}");
-                (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response()
+                (StatusCode::INTERNAL_SERVER_ERROR, format!("{err:#}")).into_response()
             }
             Self::BadRequest => (StatusCode::BAD_REQUEST, ()).into_response(),
             Self::NotFound => (StatusCode::NOT_FOUND, ()).into_response(),
