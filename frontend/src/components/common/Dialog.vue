@@ -1,10 +1,18 @@
+<script lang="ts">
+export default {
+  inheritAttrs: false,
+};
+</script>
+
 <script setup lang="ts">
 import { ref, toRefs } from "vue";
 
 import Modal from "./Modal.vue";
+import Button from "./Button.vue";
 
 const props = defineProps<{
   title: string;
+  darken?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -35,10 +43,13 @@ defineExpose({
 </script>
 
 <template>
-  <Modal :show="isOpen" @clickoutside="close">
+  <Modal :show="isOpen" :darken="darken" v-bind="$attrs" @clickoutside="close">
     <div class="dialog">
-      <div class="title">{{ title }}</div>
-      <div class="content">
+      <div class="title">
+        <span class="caption">{{ title }}</span
+        ><Button class="close-button" @click="close"><i class="fa-solid fa-xmark"></i></Button>
+      </div>
+      <div class="content" v-bind="$attrs">
         <slot></slot>
       </div>
     </div>
@@ -63,11 +74,26 @@ defineExpose({
   .title {
     flex-shrink: 0;
 
+    display: flex;
+    flex-direction: row;
+
     background-color: var(--color-title-background);
 
-    padding: 4px 10px;
-
     cursor: default;
+
+    .caption {
+      flex-grow: 1;
+
+      padding: 4px 10px;
+    }
+
+    .close-button {
+      flex-shrink: 0;
+
+      font-size: 1.1rem;
+
+      padding: 0 6px;
+    }
   }
 
   .content {

@@ -67,6 +67,14 @@
 
       transition: opacity 0.2s ease-out, transform 0.2s ease-in;
 
+      button {
+        background: none;
+        border: none;
+        padding: 0;
+
+        cursor: pointer !important;
+      }
+
       .usercontrol-group {
         display: flex;
         flex-direction: row;
@@ -129,11 +137,6 @@
     opacity: 0.8;
   }
 
-  .admin-panel {
-    width: 665px; // Just enough for 6 emotes horizontally
-    height: 500px;
-  }
-
   &.right-side-chat {
     flex-direction: row-reverse;
 
@@ -142,4 +145,9 @@
       right: 10px;
     }
   }
+}
+
+.admin-panel {
+  width: min(665px, 100vw);
+  height: min(500px, 100vh);
 }

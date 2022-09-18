@@ -376,50 +376,48 @@ const toggleRightSideChat = () => {
   <div ref="room" class="room" :class="settings.isRightSideChat.value ? 'right-side-chat' : ''">
     <div class="usercontrols-activationzone">
       <div class="usercontrols">
-        <a href="#" class="usercontrol" title="Reload" @click="reloadContent"
-          ><i class="fa-solid fa-arrows-rotate"></i
-        ></a>
+        <button class="usercontrol" title="Reload" @click="reloadContent">
+          <i class="fa-solid fa-arrows-rotate"></i>
+        </button>
         <div class="spacer"></div>
-        <a
-          href="#"
+        <button
           class="usercontrol"
           :class="theaterMode ? '' : 'usercontrol-off'"
           title="Theater mode"
           @click="toggleTheaterMode"
-          ><i class="fa-solid fa-film"></i
-        ></a>
-        <a href="#" class="usercontrol" title="Switch chat side" @click="toggleRightSideChat"
-          ><i class="fa-solid fa-arrow-right-arrow-left"></i
-        ></a>
-        <a
-          href="#"
+        >
+          <i class="fa-solid fa-film"></i>
+        </button>
+        <button class="usercontrol" title="Switch chat side" @click="toggleRightSideChat">
+          <i class="fa-solid fa-arrow-right-arrow-left"></i>
+        </button>
+        <button
           class="usercontrol"
           :class="isDetached ? 'usercontrol-off' : ''"
           :title="isDetached ? 'Attach' : 'Detach'"
           @click="toggleDetached"
         >
           <i class="fa-solid fa-plug"></i>
-        </a>
+        </button>
         <div class="spacer"></div>
-        <a href="#" v-if="!auth.isAuthorized.value" class="usercontrol" title="Log In" @click="showLogIn"
-          ><i class="fa-solid fa-right-to-bracket"></i
-        ></a>
+        <button v-if="!auth.isAuthorized.value" class="usercontrol" title="Log In" @click="showLogIn">
+          <i class="fa-solid fa-right-to-bracket"></i>
+        </button>
         <div v-if="auth.isAuthorized.value" class="admin-controls usercontrol-group">
-          <a href="#" class="usercontrol" title="Admin Panel" @click="showAdminPanel"
-            ><i class="fa-solid fa-gear"></i
-          ></a>
-          <a href="#" class="usercontrol" title="Set Content" @click="showRoomControls"
-            ><i class="fa-solid fa-video"></i
-          ></a>
-          <a
-            href="#"
+          <button class="usercontrol" title="Admin Panel" @click="showAdminPanel">
+            <i class="fa-solid fa-gear"></i>
+          </button>
+          <button class="usercontrol" title="Set Content" @click="showRoomControls">
+            <i class="fa-solid fa-video"></i>
+          </button>
+          <button
             class="usercontrol"
             :class="isMaster ? '' : 'usercontrol-off'"
             title="Toggle master"
             @click="toggleMaster"
           >
             <i class="fa-solid fa-star"></i>
-          </a>
+          </button>
         </div>
       </div>
     </div>
@@ -442,13 +440,13 @@ const toggleRightSideChat = () => {
     </div>
 
     <!-- Dialogs -->
-    <Dialog ref="logInDialog" title="Log In">
+    <Dialog ref="logInDialog" :darken="true" title="Log In">
       <LogIn />
     </Dialog>
-    <Dialog ref="roomControlsDialog" title="Room Controls">
+    <Dialog ref="roomControlsDialog" :darken="true" title="Room Controls">
       <RoomControls />
     </Dialog>
-    <Dialog ref="adminPanelDialog" title="Admin Panel">
+    <Dialog ref="adminPanelDialog" :darken="true" title="Admin Panel">
       <AdminPanel />
     </Dialog>
   </div>

@@ -9,6 +9,7 @@ import { toRefs } from "vue";
 
 const props = defineProps<{
   show: boolean;
+  darken?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -23,17 +24,17 @@ const clickOutside = () => {
 </script>
 
 <template>
-  <div class="modal" v-if="show" @click.stop="clickOutside">
-    <div class="content" @click.stop>
-      <slot></slot>
+  <Teleport to="#overlay">
+    <div class="modal" :class="darken ? 'darken' : ''" v-if="show" @click.stop="clickOutside">
+      <div class="content" v-bind="$attrs" @click.stop>
+        <slot></slot>
+      </div>
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <style scoped lang="scss">
 .modal {
-  background-color: rgba(0, 0, 0, 0.2);
-
   position: fixed;
   top: 0;
   left: 0;
@@ -41,6 +42,10 @@ const clickOutside = () => {
   right: 0;
 
   z-index: 999;
+
+  &.darken {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
 }
 
 .content {
