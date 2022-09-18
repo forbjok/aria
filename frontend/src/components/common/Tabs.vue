@@ -92,5 +92,7 @@ const TabContent = () => {
 
 .tab-content {
   flex-grow: 1;
+
+  overflow: hidden;
 }
 </style>
