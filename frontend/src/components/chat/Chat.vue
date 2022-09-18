@@ -267,12 +267,12 @@ onMounted(() => {
 
     ws_listener.on("delete-post", (postId: number) => {
       const _posts = posts.value;
-      const postIndex = _posts.findIndex((p) => p.id === postId);
-      if (!postIndex) {
+      const post = _posts.find((p) => p.id === postId);
+      if (!post) {
         return;
       }
 
-      _posts.splice(postIndex, 1);
+      post.isDeleted = true;
     });
 
     ws_listener.on("oldposts", (__posts: Post[]) => {

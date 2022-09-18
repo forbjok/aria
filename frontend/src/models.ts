@@ -19,6 +19,7 @@ export interface Post {
   image?: Image;
   posted: string;
   showFullImage: boolean;
+  isDeleted: boolean;
 }
 
 export interface Emote {

@@ -10,6 +10,8 @@ button {
   display: flex;
   flex-direction: row;
 
+  color: gray;
+
   padding-bottom: 1px;
 
   .post-info {
@@ -22,7 +24,6 @@ button {
     .time {
       vertical-align: top;
       text-align: right;
-      color: gray;
     }
 
     .name {

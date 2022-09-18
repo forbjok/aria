@@ -63,14 +63,20 @@ const formatTime = (value: string): string => {
         <span class="name">{{ post.name || "Anonymous" }}</span>
         <button @click="clickQuoteLink(post.id)">No.</button>
         <button @click="quotePost(post.id)">{{ post.id }}</button>
+        <i v-if="post.isDeleted" class="fa-solid fa-skull-crossbones" title="Deleted"></i>
       </div>
       <div class="admin-actions">
-        <button v-if="auth?.isAuthorized" class="action-button" title="Delete post" @click="deletePost">
+        <button
+          v-if="!post.isDeleted && auth?.isAuthorized"
+          class="action-button"
+          title="Delete post"
+          @click="deletePost"
+        >
           <i class="fa-solid fa-trash"></i>
         </button>
       </div>
     </div>
-    <div class="post-body">
+    <div v-if="!post.isDeleted" class="post-body">
       <div v-if="post.image" class="post-image" :class="post.showFullImage ? 'expanded' : ''">
         <a :href="post.image.url" @click.prevent="toggleImage(post)" target="_blank">
           <img class="thumbnail" :src="post.image.tn_url" :title="post.image.filename" />
