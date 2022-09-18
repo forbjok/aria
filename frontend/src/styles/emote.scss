@@ -3,6 +3,10 @@
 
   &:not(.expanded) {
     max-height: 100px;
+
+    @media screen and (orientation: portrait) {
+      max-height: 50px;
+    }
   }
 
   &.expanded {
