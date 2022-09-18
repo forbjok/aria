@@ -1,10 +1,16 @@
 <script setup lang="ts">
 import EmoteAdmin from "./EmoteAdmin.vue";
+import Tabs from "../common/Tabs.vue";
+import Tab from "../common/Tab.vue";
 </script>
 
 <template>
   <div class="admin-panel">
-    <EmoteAdmin />
+    <Tabs>
+      <Tab title="Emotes">
+        <EmoteAdmin />
+      </Tab>
+    </Tabs>
   </div>
 </template>
 
@@ -13,5 +19,10 @@ import EmoteAdmin from "./EmoteAdmin.vue";
   border: 1px solid black;
 
   overflow: hidden;
+
+  .tabs {
+    width: 100%;
+    height: 100%;
+  }
 }
 </style>
