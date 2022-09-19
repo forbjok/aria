@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use aria_core::AriaCore;
 use clap::Parser;
-use tracing::debug;
+use tracing::{debug, info};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
 use crate::{auth::AriaAuth, server::AriaServer};
@@ -14,13 +14,13 @@ mod websocket_server;
 #[derive(Debug, Parser)]
 #[clap(name = "Aria Server", version = env!("CARGO_PKG_VERSION"), author = env!("CARGO_PKG_AUTHORS"))]
 struct Opt {
-    #[clap(long = "generate-config", help = "Generate default configuration")]
-    generate_config: bool,
+    #[clap(long = "migrate", help = "Run database migration on startup")]
+    migrate: bool,
 }
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
-    let _opt = Opt::parse();
+    let opt = Opt::parse();
 
     // Initialize logging
     initialize_logging();
@@ -31,6 +31,11 @@ async fn main() -> Result<(), anyhow::Error> {
 
     let auth = Arc::new(AriaAuth::new(b"sekrit"));
     let core = Arc::new(AriaCore::new(notify_tx)?);
+
+    if opt.migrate {
+        info!("Running database migrations...");
+        core.migrate().await?;
+    }
 
     let server = AriaServer::new(auth.clone(), core.clone());
 

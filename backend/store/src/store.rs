@@ -11,6 +11,8 @@ pub enum StoreError {
 
 #[async_trait]
 pub trait AriaStore: Send + Sync {
+    async fn migrate(&self) -> Result<(), anyhow::Error>;
+
     async fn get_recent_posts(&self, room_id: i32, count: i32) -> Result<Vec<dbm::PostAndImage>, anyhow::Error>;
 
     async fn get_room(&self, room_id: i32) -> Result<Option<dbm::Room>, anyhow::Error>;
@@ -55,6 +57,12 @@ impl PgStore {
 
 #[async_trait]
 impl AriaStore for PgStore {
+    async fn migrate(&self) -> Result<(), anyhow::Error> {
+        sqlx::migrate!().run(&self.pool).await?;
+
+        Ok(())
+    }
+
     async fn get_recent_posts(&self, room_id: i32, count: i32) -> Result<Vec<dbm::PostAndImage>, anyhow::Error> {
         let mut posts = sqlx::query_as_unchecked!(
             dbm::PostAndImage,

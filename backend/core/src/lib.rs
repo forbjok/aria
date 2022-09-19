@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use std::{env, fs};
 
 use aria_models::local as lm;
-use aria_store::PgStore;
+use aria_store::{AriaStore, PgStore};
 use futures_channel::mpsc::UnboundedSender;
 
 mod emote;
@@ -88,5 +88,9 @@ impl AriaCore {
             store,
             notify_tx,
         })
+    }
+
+    pub async fn migrate(&self) -> Result<(), anyhow::Error> {
+        self.store.migrate().await
     }
 }
