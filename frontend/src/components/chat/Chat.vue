@@ -159,7 +159,7 @@ const submitPost = async () => {
   }
 
   try {
-    await axios.post(`/api/chat/${room?.name}/post`, formData, {
+    await axios.post(`/api/chat/${room?.id}/post`, formData, {
       onUploadProgress: (e) => {
         if (e.lengthComputable) {
           const percentComplete = Math.round((e.loaded / e.total) * 100);
@@ -250,7 +250,7 @@ const deletePost = async (post?: Post) => {
     return;
   }
 
-  await axios.delete(`/api/chat/${room?.name}/post/${post.id}`, {
+  await axios.delete(`/api/chat/${room?.id}/post/${post.id}`, {
     headers: {
       Authorization: `Bearer ${auth?.getToken()}`,
     },

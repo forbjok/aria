@@ -5,6 +5,7 @@ use crate::local as lm;
 
 #[derive(Debug, Serialize)]
 pub struct Room {
+    pub id: i32,
     pub name: String,
     pub content: Option<Content>,
 }
@@ -56,6 +57,7 @@ pub struct PlaybackState {
 
 #[derive(Clone, Debug, Serialize)]
 pub struct Emote {
+    pub id: i32,
     pub name: String,
     pub url: String,
 }
@@ -89,6 +91,7 @@ impl From<&lm::Post> for Post {
 impl From<&lm::Emote> for Emote {
     fn from(e: &lm::Emote) -> Self {
         Self {
+            id: e.id,
             name: e.name.clone(),
             url: format!("/f/e/{}.{}", e.hash, e.ext),
         }

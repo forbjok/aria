@@ -13,13 +13,13 @@ use crate::{image::ProcessImageResult, transform::dbm_emote_to_lm, util::thumbna
 static RE_VALID_EMOTE_NAME: Lazy<Regex> = Lazy::new(|| Regex::new(r#"^[\d\w]+$"#).unwrap());
 
 impl AriaCore {
-    pub async fn get_emotes(&self, name: &str) -> Result<Vec<lm::Emote>, anyhow::Error> {
-        let emotes = self.store.get_emotes(name).await?;
+    pub async fn get_emotes(&self, room_id: i32) -> Result<Vec<lm::Emote>, anyhow::Error> {
+        let emotes = self.store.get_emotes(room_id).await?;
 
         Ok(emotes.into_iter().map(dbm_emote_to_lm).collect())
     }
 
-    pub async fn create_emote(&self, room: &str, emote: lm::NewEmote<'_>) -> Result<lm::Emote, anyhow::Error> {
+    pub async fn create_emote(&self, room_id: i32, emote: lm::NewEmote<'_>) -> Result<lm::Emote, anyhow::Error> {
         if !RE_VALID_EMOTE_NAME.is_match(&emote.name) {
             return Err(anyhow::anyhow!("Emote name must contain only alphanumeric characters"));
         }
@@ -45,20 +45,20 @@ impl AriaCore {
             ext: Some(ext.into()),
         };
 
-        let emote = self.store.create_emote(room, &new_emote).await?;
+        let emote = self.store.create_emote(room_id, &new_emote).await?;
         let emote = dbm_emote_to_lm(emote);
 
         self.notify_tx
-            .unbounded_send(Notification::NewEmote(room.to_owned(), emote.clone()))?;
+            .unbounded_send(Notification::NewEmote(room_id, emote.clone()))?;
 
         Ok(emote)
     }
 
-    pub async fn delete_emote(&self, room: &str, emote_name: &str) -> Result<(), anyhow::Error> {
-        self.store.delete_emote(room, emote_name).await?;
+    pub async fn delete_emote(&self, room_id: i32, emote_id: i32) -> Result<(), anyhow::Error> {
+        self.store.delete_emote(room_id, emote_id).await?;
 
         self.notify_tx
-            .unbounded_send(Notification::DeleteEmote(room.to_owned(), emote_name.to_owned()))?;
+            .unbounded_send(Notification::DeleteEmote(room_id, emote_id))?;
 
         Ok(())
     }

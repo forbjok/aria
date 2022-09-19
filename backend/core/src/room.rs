@@ -12,14 +12,20 @@ static RE_YOUTUBE_URL: Lazy<Regex> = Lazy::new(|| Regex::new(r#"https?://www.you
 static RE_GDRIVE_URL: Lazy<Regex> = Lazy::new(|| Regex::new(r#"https?://drive.google.com/file/d/(.+)/view"#).unwrap());
 
 impl AriaCore {
-    pub async fn get_room(&self, name: &str) -> Result<Option<lm::Room>, anyhow::Error> {
-        let room = self.store.get_room(name).await?;
+    pub async fn get_room(&self, room_id: i32) -> Result<Option<lm::Room>, anyhow::Error> {
+        let room = self.store.get_room(room_id).await?;
 
         Ok(room.as_ref().map(dbm_room_to_lm))
     }
 
-    pub async fn login(&self, room: &str, password: &str) -> Result<bool, anyhow::Error> {
-        let room = self.store.get_room(room).await?;
+    pub async fn get_room_by_name(&self, name: &str) -> Result<Option<lm::Room>, anyhow::Error> {
+        let room = self.store.get_room_by_name(name).await?;
+
+        Ok(room.as_ref().map(dbm_room_to_lm))
+    }
+
+    pub async fn login(&self, room_id: i32, password: &str) -> Result<bool, anyhow::Error> {
+        let room = self.store.get_room(room_id).await?;
 
         Ok(room.map(|r| r.password.unwrap() == password).unwrap_or(false))
     }
@@ -30,12 +36,13 @@ impl AriaCore {
         let room = self.store.create_room(name, &password).await?;
 
         Ok(lm::ClaimedRoom {
+            id: room.id.unwrap(),
             name: room.name.unwrap(),
             password,
         })
     }
 
-    pub async fn set_room_content(&self, room: &str, content_url: &str) -> Result<(), anyhow::Error> {
+    pub async fn set_room_content(&self, room_id: i32, content_url: &str) -> Result<(), anyhow::Error> {
         let meta = if let Some(m) = RE_YOUTUBE_URL.captures(content_url) {
             lm::ContentMetadata::YouTube {
                 id: m.get(1).unwrap().as_str().to_owned(),
@@ -55,9 +62,8 @@ impl AriaCore {
 
         let content_json = serde_json::to_string(&content)?;
 
-        self.store.set_room_content(room, &content_json).await?;
-        self.notify_tx
-            .unbounded_send(Notification::Content(room.to_owned(), content))?;
+        self.store.set_room_content(room_id, &content_json).await?;
+        self.notify_tx.unbounded_send(Notification::Content(room_id, content))?;
 
         Ok(())
     }

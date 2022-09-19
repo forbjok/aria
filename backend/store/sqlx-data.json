@@ -50,7 +50,7 @@
       ],
       "parameters": {
         "Left": [
-          "Text",
+          "Int4",
           {
             "Custom": {
               "kind": {
@@ -190,7 +190,7 @@
       ],
       "parameters": {
         "Left": [
-          "Text"
+          "Int4"
         ]
       }
     },
@@ -210,7 +210,7 @@
       ],
       "parameters": {
         "Left": [
-          "Text",
+          "Int4",
           "Json"
         ]
       }
@@ -231,7 +231,7 @@
       ],
       "parameters": {
         "Left": [
-          "Text",
+          "Int4",
           "Int8"
         ]
       }
@@ -360,7 +360,7 @@
       ],
       "parameters": {
         "Left": [
-          "Text",
+          "Int4",
           "Int4"
         ]
       }
@@ -381,8 +381,8 @@
       ],
       "parameters": {
         "Left": [
-          "Text",
-          "Text"
+          "Int4",
+          "Int4"
         ]
       }
     },
@@ -488,7 +488,7 @@
       ],
       "parameters": {
         "Left": [
-          "Text",
+          "Int4",
           {
             "Custom": {
               "kind": {
@@ -622,5 +622,67 @@
       }
     },
     "query": "SELECT update_emote_images($1, $2);"
+  },
+  "d543ff9c3ef40f3b731d5ff0786f39ea8c380091b39e1a59488acb955ae9065d": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 1,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "updated_at",
+          "ordinal": 2,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "name",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "claimed_at",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "expires_at",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "password",
+          "ordinal": 6,
+          "type_info": "Text"
+        },
+        {
+          "name": "content",
+          "ordinal": 7,
+          "type_info": "Json"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      }
+    },
+    "query": "SELECT * FROM room WHERE id = $1;"
   }
 }

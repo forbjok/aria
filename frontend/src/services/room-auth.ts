@@ -31,12 +31,12 @@ export class RoomAuthService {
   }
 
   public async verifyToken(): Promise<boolean> {
-    if (!this.token) {
+    if (!this.token || !this.room.exists()) {
       return false;
     }
 
     try {
-      await axios.post(`/api/r/${this.room.name}/loggedin`, null, {
+      await axios.post(`/api/r/i/${this.room.id}/loggedin`, null, {
         headers: {
           Authorization: `Bearer ${this.token}`,
         },
@@ -59,7 +59,7 @@ export class RoomAuthService {
     let response: AxiosResponse;
 
     try {
-      response = await axios.post(`/api/r/${this.room.name}/login`, data);
+      response = await axios.post(`/api/r/i/${this.room.id}/login`, data);
     } catch {
       return false;
     }

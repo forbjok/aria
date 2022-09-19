@@ -16,6 +16,7 @@ pub struct HashedFile {
 
 #[derive(Debug)]
 pub struct ClaimedRoom {
+    pub id: i32,
     pub name: String,
     pub password: String,
 }
@@ -39,6 +40,7 @@ pub struct Post {
 
 #[derive(Clone, Debug)]
 pub struct Emote {
+    pub id: i32,
     pub name: String,
     pub hash: String,
     pub ext: String,

@@ -1,3 +1,9 @@
+export interface Room {
+  id: number;
+  name: string;
+  content?: Content;
+}
+
 export interface Content {
   type: string;
   url: string;
@@ -23,6 +29,7 @@ export interface Post {
 }
 
 export interface Emote {
+  id: number;
   name: string;
   url: string;
 }

@@ -18,17 +18,17 @@ const MAX_IMAGE_SIZE: u64 = 2 * 1024 * 1024; // 2MB
 
 pub fn router(server: Arc<AriaServer>) -> Router<Arc<AriaServer>> {
     Router::with_state(server)
-        .route("/:room/post", post(create_post))
-        .route("/:room/post/:post_id", delete(delete_post))
-        .route("/:room/emote", post(create_emote))
-        .route("/:room/emote/:name", delete(delete_emote))
+        .route("/:room_id/post", post(create_post))
+        .route("/:room_id/post/:post_id", delete(delete_post))
+        .route("/:room_id/emote", post(create_emote))
+        .route("/:room_id/emote/:emote_id", delete(delete_emote))
 }
 
 #[axum::debug_handler(state = Arc<AriaServer>)]
 async fn create_post(
     State(server): State<Arc<AriaServer>>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    Path(room): Path<String>,
+    Path(room_id): Path<i32>,
     ContentLengthLimit(mut multipart): ContentLengthLimit<Multipart, { MAX_IMAGE_SIZE }>,
 ) -> Result<Json<u64>, ApiError> {
     let mut name: Option<String> = None;
@@ -81,7 +81,7 @@ async fn create_post(
         ip: addr.ip(),
     };
 
-    let post = server.core.create_post(&room, new_post).await?;
+    let post = server.core.create_post(room_id, new_post).await?;
 
     Ok(Json(post.id))
 }
@@ -90,13 +90,13 @@ async fn create_post(
 async fn delete_post(
     auth: Authorized,
     State(server): State<Arc<AriaServer>>,
-    Path((room, post_id)): Path<(String, u64)>,
+    Path((room_id, post_id)): Path<(i32, u64)>,
 ) -> Result<(), ApiError> {
-    if auth.claims.name != room {
+    if auth.claims.room_id != room_id {
         return Err(ApiError::Unauthorized);
     }
 
-    server.core.delete_post(&room, post_id).await?;
+    server.core.delete_post(room_id, post_id).await?;
 
     Ok(())
 }
@@ -105,10 +105,10 @@ async fn delete_post(
 async fn create_emote(
     auth: Authorized,
     State(server): State<Arc<AriaServer>>,
-    Path(room): Path<String>,
+    Path(room_id): Path<i32>,
     ContentLengthLimit(mut multipart): ContentLengthLimit<Multipart, { MAX_IMAGE_SIZE }>,
 ) -> Result<(StatusCode, ()), ApiError> {
-    if auth.claims.name != room {
+    if auth.claims.room_id != room_id {
         return Err(ApiError::Unauthorized);
     }
 
@@ -160,7 +160,7 @@ async fn create_emote(
             image,
         };
 
-        server.core.create_emote(&room, new_emote).await?;
+        server.core.create_emote(room_id, new_emote).await?;
         Ok((StatusCode::CREATED, ()))
     } else {
         Err(ApiError::BadRequest)
@@ -171,13 +171,13 @@ async fn create_emote(
 async fn delete_emote(
     auth: Authorized,
     State(server): State<Arc<AriaServer>>,
-    Path((room, name)): Path<(String, String)>,
+    Path((room_id, emote_id)): Path<(i32, i32)>,
 ) -> Result<(), ApiError> {
-    if auth.claims.name != room {
+    if auth.claims.room_id != room_id {
         return Err(ApiError::Unauthorized);
     }
 
-    server.core.delete_emote(&room, &name).await?;
+    server.core.delete_emote(room_id, emote_id).await?;
 
     Ok(())
 }

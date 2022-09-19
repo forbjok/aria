@@ -16,7 +16,7 @@ export class RoomAdminService {
       action: action,
     };
 
-    return axios.post(`/api/r/${this.room.name}/control`, data, {
+    return axios.post(`/api/r/i/${this.room.id}/control`, data, {
       headers: {
         Authorization: `Bearer ${this.auth.getToken()}`,
       },

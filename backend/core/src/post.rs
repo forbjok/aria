@@ -12,13 +12,13 @@ pub struct GeneratePostImageResult<'a> {
 }
 
 impl AriaCore {
-    pub async fn get_recent_posts(&self, name: &str, count: i32) -> Result<Vec<lm::Post>, anyhow::Error> {
-        let posts = self.store.get_recent_posts(name, count).await?;
+    pub async fn get_recent_posts(&self, room_id: i32, count: i32) -> Result<Vec<lm::Post>, anyhow::Error> {
+        let posts = self.store.get_recent_posts(room_id, count).await?;
 
         Ok(posts.into_iter().map(dbm_post_to_lm).collect())
     }
 
-    pub async fn create_post(&self, room: &str, post: lm::NewPost<'_>) -> Result<lm::Post, anyhow::Error> {
+    pub async fn create_post(&self, room_id: i32, post: lm::NewPost<'_>) -> Result<lm::Post, anyhow::Error> {
         let image = if let Some(i) = post.image {
             // Process image
             let ProcessImageResult {
@@ -51,21 +51,21 @@ impl AriaCore {
             ip: Some(post.ip),
         };
 
-        let p = self.store.create_post(room, &post, image.as_ref()).await?;
+        let p = self.store.create_post(room_id, &post, image.as_ref()).await?;
 
         let post = dbm_post_to_lm(p);
 
         self.notify_tx
-            .unbounded_send(Notification::NewPost(room.to_string(), post.clone()))?;
+            .unbounded_send(Notification::NewPost(room_id, post.clone()))?;
 
         Ok(post)
     }
 
-    pub async fn delete_post(&self, room: &str, post_id: u64) -> Result<(), anyhow::Error> {
-        self.store.delete_post(room, post_id as i64).await?;
+    pub async fn delete_post(&self, room_id: i32, post_id: u64) -> Result<(), anyhow::Error> {
+        self.store.delete_post(room_id, post_id as i64).await?;
 
         self.notify_tx
-            .unbounded_send(Notification::DeletePost(room.to_owned(), post_id))?;
+            .unbounded_send(Notification::DeletePost(room_id, post_id))?;
 
         Ok(())
     }

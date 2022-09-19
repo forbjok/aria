@@ -21,8 +21,8 @@ interface NewEmote {
 const MAX_IMAGE_SIZE = 2097152;
 const UPLOADING_TEXT = "Uploading...";
 
-const auth: RoomAuthService | undefined = inject("auth");
-const room: RoomService | undefined = inject("room");
+const auth = inject<RoomAuthService>("auth");
+const room = inject<RoomService>("room");
 
 const addEmoteDialog = ref<typeof Dialog>();
 const confirmDelete = ref<typeof ConfirmDialog>();
@@ -69,7 +69,7 @@ const deleteEmote = async (emote?: Emote) => {
   }
 
   try {
-    await axios.delete(`/api/chat/${room?.name}/emote/${emote.name}`, {
+    await axios.delete(`/api/chat/${room?.id}/emote/${emote.id}`, {
       headers: {
         Authorization: `Bearer ${auth?.getToken()}`,
       },
@@ -127,7 +127,7 @@ const submitEmote = async () => {
   progressText.value = UPLOADING_TEXT;
 
   try {
-    await axios.post(`/api/chat/${room?.name}/emote`, formData, {
+    await axios.post(`/api/chat/${room?.id}/emote`, formData, {
       headers: {
         Authorization: `Bearer ${auth?.getToken()}`,
       },

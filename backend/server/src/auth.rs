@@ -9,7 +9,7 @@ pub struct AriaAuth {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Claims {
-    pub name: String,
+    pub room_id: i32,
 }
 
 impl AriaAuth {
@@ -19,9 +19,7 @@ impl AriaAuth {
         Self { key }
     }
 
-    pub fn generate_room_token(&self, name: &str) -> Result<String, anyhow::Error> {
-        let claims = Claims { name: name.to_owned() };
-
+    pub fn generate_token(&self, claims: &Claims) -> Result<String, anyhow::Error> {
         let token = claims.sign_with_key(&self.key)?;
 
         Ok(token)

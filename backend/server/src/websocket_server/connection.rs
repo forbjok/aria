@@ -17,7 +17,7 @@ use super::{room::Room, send_raw, ConnectionId, ServerState, Tx};
 
 struct ConnectionState {
     tx: Tx,
-    room: Mutex<Option<String>>,
+    room: Mutex<Option<i32>>,
 }
 
 pub(super) async fn handle_connection(
@@ -66,62 +66,67 @@ pub(super) async fn handle_connection(
 
                                 let mut rooms = sv_state.rooms.lock().await;
 
-                                // If connection is already joined to another room...
-                                if let Some(old_room) = cn_state.room.lock().await.as_ref() {
-                                    // If connection is already joined to the same room, return immediately.
-                                    if &room_name == old_room {
-                                        return Ok(());
+                                let room = {
+                                    let mut room_ids_by_name = sv_state.room_ids_by_name.lock().await;
+
+                                    if let Some(room_id) = room_ids_by_name.get(&room_name) {
+                                        rooms.get_mut(room_id)
+                                    } else if let Some(room) = sv_state.core.get_room_by_name(&room_name).await? {
+                                        room_ids_by_name.insert(room_name, room.id);
+
+                                        let new_room = Room::load(room.id, &sv_state.core).await?;
+                                        rooms.insert(room.id, new_room);
+
+                                        rooms.get_mut(&room.id)
+                                    } else {
+                                        None
                                     }
-
-                                    // ... otherwise, leave the previous room.
-                                    if let Some(old_room) = rooms.get_mut(old_room) {
-                                        old_room.leave(id).context("Error leaving old room")?;
-                                    }
-                                }
-
-                                let mut room = rooms.get_mut(&room_name);
-
-                                // If room is not loaded, load it...
-                                if room.is_none() {
-                                    let new_room = Room::load(&room_name, &sv_state.core).await?;
-                                    rooms.insert(room_name.clone(), new_room);
-
-                                    room = rooms.get_mut(&room_name);
-                                }
+                                };
 
                                 if let Some(room) = room {
+                                    // If connection is already joined to another room...
+                                    if let Some(&old_room_id) = cn_state.room.lock().await.as_ref() {
+                                        // If connection is already joined to the same room, return immediately.
+                                        if room.id == old_room_id {
+                                            return Ok(());
+                                        }
+
+                                        return Err(anyhow::anyhow!("Already in a different room."));
+                                    }
+
                                     room.join(id, tx.clone())?;
-                                    *cn_state.room.lock().await = Some(room_name);
+                                    *cn_state.room.lock().await = Some(room.id);
                                 }
                             }
                             "leave" => {
-                                let room_name: String =
-                                    serde_json::from_str(data).context("Error deserializing room name")?;
+                                if let Some(&room_id) = cn_state.room.lock().await.as_ref() {
+                                    info!("[{id}] Leaving room {room_id}...");
 
-                                info!("[{id}] Leaving room '{room_name}'...");
+                                    let mut rooms = sv_state.rooms.lock().await;
+                                    let room = rooms.get_mut(&room_id);
 
-                                let mut rooms = sv_state.rooms.lock().await;
-                                let room = rooms.get_mut(&room_name);
-
-                                if let Some(room) = room {
-                                    room.leave(id).context("leaving room")?;
+                                    if let Some(room) = room {
+                                        room.leave(id).context("leaving room")?;
+                                    }
+                                } else {
+                                    warn!("[{id}] Tried to leave the room, but was not in a room.");
                                 }
                             }
                             "set-master" => {
                                 let token: String =
                                     serde_json::from_str(data).context("Error deserializing authorization token")?;
 
-                                if let Some(room) = cn_state.room.lock().await.as_ref() {
+                                if let Some(&room_id) = cn_state.room.lock().await.as_ref() {
                                     let mut is_authorized = false;
                                     if let Some(claims) = sv_state.auth.verify(&token) {
-                                        if &claims.name == room {
+                                        if claims.room_id == room_id {
                                             is_authorized = true;
                                         }
                                     }
 
                                     if is_authorized {
                                         let mut rooms = sv_state.rooms.lock().await;
-                                        if let Some(room) = rooms.get_mut(room) {
+                                        if let Some(room) = rooms.get_mut(&room_id) {
                                             room.set_master(id).context("setting master")?;
                                         }
                                     } else {

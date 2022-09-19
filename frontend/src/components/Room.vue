@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineAsyncComponent, onBeforeMount, onMounted, onUnmounted, provide, ref, toRefs } from "vue";
+import { defineAsyncComponent, onMounted, onUnmounted, provide, ref, toRefs } from "vue";
 import router from "@/router";
 
 import Chat from "@/components/chat/Chat.vue";
@@ -34,6 +34,8 @@ const props = defineProps<{
 }>();
 
 const { name } = toRefs(props);
+
+const isRoomLoaded = ref(false);
 
 const roomService = new RoomService(name.value);
 const auth = new RoomAuthService(roomService);
@@ -77,6 +79,15 @@ let serverPlaybackState: PlaybackState = {
 
 let ws_listener: AriaWsListener | undefined;
 onMounted(async () => {
+  await roomService.setup();
+
+  if (!roomService.exists()) {
+    router.push({ name: "claim", params: { room: name.value } });
+    return;
+  }
+
+  isRoomLoaded.value = true;
+
   await auth.setup();
 
   ws_listener = ws.create_listener();
@@ -116,14 +127,6 @@ onMounted(async () => {
   });
 
   ws.connect();
-});
-
-onBeforeMount(async () => {
-  const roomExists = await roomService.exists();
-
-  if (!roomExists) {
-    router.push({ name: "claim", params: { room: name.value } });
-  }
 });
 
 onUnmounted(() => {
@@ -373,7 +376,7 @@ const toggleRightSideChat = () => {
 </script>
 
 <template>
-  <div ref="room" class="room" :class="settings.isRightSideChat.value ? 'right-side-chat' : ''">
+  <div v-if="isRoomLoaded" ref="room" class="room" :class="settings.isRightSideChat.value ? 'right-side-chat' : ''">
     <div class="usercontrols-activationzone">
       <div class="usercontrols">
         <button class="usercontrol" title="Reload" @click="reloadContent">

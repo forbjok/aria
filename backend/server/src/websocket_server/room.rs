@@ -18,6 +18,7 @@ struct Member {
 }
 
 pub(super) struct Room {
+    pub id: i32,
     members: Vec<Member>,
     posts: VecDeque<am::Post>,
     emotes: Vec<am::Emote>,
@@ -28,17 +29,17 @@ pub(super) struct Room {
 }
 
 impl Room {
-    pub async fn load(name: &str, core: &AriaCore) -> Result<Self, anyhow::Error> {
+    pub async fn load(room_id: i32, core: &AriaCore) -> Result<Self, anyhow::Error> {
         let room = core
-            .get_room(name)
+            .get_room(room_id)
             .await
             .context("Getting room")?
-            .with_context(|| format!("Room not found: {name}"))?;
+            .with_context(|| format!("Room not found: {room_id}"))?;
 
-        let emotes = core.get_emotes(name).await.context("Error getting emotes")?;
+        let emotes = core.get_emotes(room_id).await.context("Error getting emotes")?;
 
         let recent_posts = core
-            .get_recent_posts(name, MAX_POSTS as i32)
+            .get_recent_posts(room_id, MAX_POSTS as i32)
             .await
             .context("Error getting recent posts")?;
 
@@ -46,6 +47,7 @@ impl Room {
         let emotes = emotes.iter().map(am::Emote::from).collect();
 
         Ok(Self {
+            id: room_id,
             members: Vec::new(),
             posts: recent_posts.iter().map(am::Post::from).collect(),
             emotes,
@@ -213,13 +215,15 @@ impl Room {
     }
 
     /// Delete emote
-    pub fn delete_emote(&mut self, emote_name: &str) -> Result<(), anyhow::Error> {
-        self.emotes.retain(|e| e.name != emote_name);
+    pub fn delete_emote(&mut self, emote_id: i32) -> Result<(), anyhow::Error> {
+        if let Some(index) = self.emotes.iter().position(|e| e.id == emote_id) {
+            let emote = self.emotes.remove(index);
 
-        for m in self.members.iter() {
-            send(&m.tx, "delete-emote", emote_name)
-                .map_err(|err| error!("{err:?}"))
-                .ok();
+            for m in self.members.iter() {
+                send(&m.tx, "delete-emote", &emote.name)
+                    .map_err(|err| error!("{err:?}"))
+                    .ok();
+            }
         }
 
         Ok(())

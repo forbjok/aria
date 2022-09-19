@@ -11,28 +11,30 @@ pub enum StoreError {
 
 #[async_trait]
 pub trait AriaStore: Send + Sync {
-    async fn get_recent_posts(&self, room: &str, count: i32) -> Result<Vec<dbm::PostAndImage>, anyhow::Error>;
+    async fn get_recent_posts(&self, room_id: i32, count: i32) -> Result<Vec<dbm::PostAndImage>, anyhow::Error>;
 
-    async fn get_room(&self, name: &str) -> Result<Option<dbm::Room>, anyhow::Error>;
+    async fn get_room(&self, room_id: i32) -> Result<Option<dbm::Room>, anyhow::Error>;
+
+    async fn get_room_by_name(&self, name: &str) -> Result<Option<dbm::Room>, anyhow::Error>;
 
     async fn create_room(&self, name: &str, password: &str) -> Result<dbm::Room, anyhow::Error>;
 
     async fn create_post(
         &self,
-        room: &str,
+        room_id: i32,
         post: &dbm::NewPost,
         image: Option<&dbm::NewImage>,
     ) -> Result<dbm::PostAndImage, anyhow::Error>;
 
-    async fn delete_post(&self, room: &str, post_id: i64) -> Result<(), anyhow::Error>;
+    async fn delete_post(&self, room_id: i32, post_id: i64) -> Result<(), anyhow::Error>;
 
-    async fn get_emotes(&self, room: &str) -> Result<Vec<dbm::Emote>, anyhow::Error>;
+    async fn get_emotes(&self, room_id: i32) -> Result<Vec<dbm::Emote>, anyhow::Error>;
 
-    async fn create_emote(&self, room: &str, emote: &dbm::NewEmote) -> Result<dbm::Emote, anyhow::Error>;
+    async fn create_emote(&self, room_id: i32, emote: &dbm::NewEmote) -> Result<dbm::Emote, anyhow::Error>;
 
-    async fn delete_emote(&self, room: &str, emote_name: &str) -> Result<(), anyhow::Error>;
+    async fn delete_emote(&self, room_id: i32, emote_id: i32) -> Result<(), anyhow::Error>;
 
-    async fn set_room_content(&self, room: &str, content: &str) -> Result<(), anyhow::Error>;
+    async fn set_room_content(&self, room_id: i32, content: &str) -> Result<(), anyhow::Error>;
 
     async fn update_post_images(&self, hash: &str, ext: &str, tn_ext: &str) -> Result<(), anyhow::Error>;
 
@@ -53,11 +55,11 @@ impl PgStore {
 
 #[async_trait]
 impl AriaStore for PgStore {
-    async fn get_recent_posts(&self, room: &str, count: i32) -> Result<Vec<dbm::PostAndImage>, anyhow::Error> {
+    async fn get_recent_posts(&self, room_id: i32, count: i32) -> Result<Vec<dbm::PostAndImage>, anyhow::Error> {
         let mut posts = sqlx::query_as_unchecked!(
             dbm::PostAndImage,
             r#"SELECT post, image FROM get_recent_posts($1, $2) ORDER BY (post).id DESC LIMIT 50;"#,
-            room,
+            room_id,
             count,
         )
         .fetch_all(&self.pool)
@@ -70,7 +72,16 @@ impl AriaStore for PgStore {
         Ok(posts)
     }
 
-    async fn get_room(&self, name: &str) -> Result<Option<dbm::Room>, anyhow::Error> {
+    async fn get_room(&self, room_id: i32) -> Result<Option<dbm::Room>, anyhow::Error> {
+        let room = sqlx::query_as_unchecked!(dbm::Room, r#"SELECT * FROM room WHERE id = $1;"#, room_id)
+            .fetch_optional(&self.pool)
+            .await
+            .context("Error getting room")?;
+
+        Ok(room)
+    }
+
+    async fn get_room_by_name(&self, name: &str) -> Result<Option<dbm::Room>, anyhow::Error> {
         let room = sqlx::query_as_unchecked!(dbm::Room, r#"SELECT * FROM get_room_by_name($1);"#, name)
             .fetch_optional(&self.pool)
             .await
@@ -90,14 +101,14 @@ impl AriaStore for PgStore {
 
     async fn create_post(
         &self,
-        room: &str,
+        room_id: i32,
         post: &dbm::NewPost,
         image: Option<&dbm::NewImage>,
     ) -> Result<dbm::PostAndImage, anyhow::Error> {
         let post = sqlx::query_as_unchecked!(
             dbm::PostAndImage,
             r#"SELECT * FROM create_post($1, $2, $3);"#,
-            room,
+            room_id,
             post,
             image,
         )
@@ -107,16 +118,16 @@ impl AriaStore for PgStore {
         Ok(post)
     }
 
-    async fn delete_post(&self, room: &str, post_id: i64) -> Result<(), anyhow::Error> {
-        sqlx::query_unchecked!(r#"SELECT delete_post($1, $2);"#, room, post_id)
+    async fn delete_post(&self, room_id: i32, post_id: i64) -> Result<(), anyhow::Error> {
+        sqlx::query_unchecked!(r#"SELECT delete_post($1, $2);"#, room_id, post_id)
             .execute(&self.pool)
             .await?;
 
         Ok(())
     }
 
-    async fn get_emotes(&self, room: &str) -> Result<Vec<dbm::Emote>, anyhow::Error> {
-        let emotes = sqlx::query_as_unchecked!(dbm::Emote, r#"SELECT * FROM get_emotes($1);"#, room,)
+    async fn get_emotes(&self, room_id: i32) -> Result<Vec<dbm::Emote>, anyhow::Error> {
+        let emotes = sqlx::query_as_unchecked!(dbm::Emote, r#"SELECT * FROM get_emotes($1);"#, room_id)
             .fetch_all(&self.pool)
             .await
             .context("Error getting emotes")?;
@@ -124,24 +135,24 @@ impl AriaStore for PgStore {
         Ok(emotes)
     }
 
-    async fn create_emote(&self, room: &str, emote: &dbm::NewEmote) -> Result<dbm::Emote, anyhow::Error> {
-        let emote = sqlx::query_as_unchecked!(dbm::Emote, r#"SELECT * FROM create_emote($1, $2);"#, room, emote)
+    async fn create_emote(&self, room_id: i32, emote: &dbm::NewEmote) -> Result<dbm::Emote, anyhow::Error> {
+        let emote = sqlx::query_as_unchecked!(dbm::Emote, r#"SELECT * FROM create_emote($1, $2);"#, room_id, emote)
             .fetch_one(&self.pool)
             .await?;
 
         Ok(emote)
     }
 
-    async fn delete_emote(&self, room: &str, emote_name: &str) -> Result<(), anyhow::Error> {
-        sqlx::query_unchecked!(r#"SELECT delete_emote($1, $2);"#, room, emote_name)
+    async fn delete_emote(&self, room_id: i32, emote_id: i32) -> Result<(), anyhow::Error> {
+        sqlx::query_unchecked!(r#"SELECT delete_emote($1, $2);"#, room_id, emote_id)
             .execute(&self.pool)
             .await?;
 
         Ok(())
     }
 
-    async fn set_room_content(&self, room: &str, content: &str) -> Result<(), anyhow::Error> {
-        sqlx::query_unchecked!(r#"SELECT set_room_content($1, $2::json);"#, room, content)
+    async fn set_room_content(&self, room_id: i32, content: &str) -> Result<(), anyhow::Error> {
+        sqlx::query_unchecked!(r#"SELECT set_room_content($1, $2::json);"#, room_id, content)
             .execute(&self.pool)
             .await?;
 

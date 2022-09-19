@@ -27,7 +27,8 @@ type Tx = UnboundedSender<Message>;
 struct ServerState {
     auth: Arc<AriaAuth>,
     core: Arc<AriaCore>,
-    rooms: Mutex<HashMap<String, Room>>,
+    rooms: Mutex<HashMap<i32, Room>>,
+    room_ids_by_name: Mutex<HashMap<String, i32>>,
 }
 
 pub async fn run_server(
@@ -37,8 +38,14 @@ pub async fn run_server(
     shutdown: impl Future,
 ) -> Result<(), anyhow::Error> {
     let rooms = Mutex::new(HashMap::new());
+    let room_ids_by_name = Mutex::new(HashMap::new());
 
-    let state = Arc::new(ServerState { auth, core, rooms });
+    let state = Arc::new(ServerState {
+        auth,
+        core,
+        rooms,
+        room_ids_by_name,
+    });
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3001));
 

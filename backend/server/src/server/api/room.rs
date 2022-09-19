@@ -6,6 +6,7 @@ use axum::routing::{get, post};
 use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
 
+use crate::auth::Claims;
 use crate::server::api::{ApiError, Authorized};
 use crate::server::AriaServer;
 
@@ -16,12 +17,17 @@ struct LoginRequest {
 
 #[derive(Debug, Serialize)]
 struct LoginResponse {
-    pub name: String,
     pub token: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct ClaimRequest {
+    pub name: String,
 }
 
 #[derive(Debug, Serialize)]
 struct ClaimResponse {
+    pub id: i32,
     pub name: String,
     pub password: String,
     pub token: String,
@@ -40,16 +46,16 @@ struct RoomControlRequest {
 
 pub fn router(server: Arc<AriaServer>) -> Router<Arc<AriaServer>> {
     Router::with_state(server)
-        .route("/:name", get(get_room))
-        .route("/:name/login", post(login))
-        .route("/:name/loggedin", post(logged_in))
-        .route("/:name/claim", post(claim))
-        .route("/:name/control", post(control))
+        .route("/room/:name", get(get_room))
+        .route("/claim", post(claim))
+        .route("/i/:room_id/login", post(login))
+        .route("/i/:room_id/loggedin", post(logged_in))
+        .route("/i/:room_id/control", post(control))
 }
 
 #[axum::debug_handler(state = Arc<AriaServer>)]
 async fn get_room(State(server): State<Arc<AriaServer>>, Path(name): Path<String>) -> Result<Json<am::Room>, ApiError> {
-    let room = server.core.get_room(&name).await?;
+    let room = server.core.get_room_by_name(&name).await?;
     if let Some(room) = room {
         Ok(Json(room))
     } else {
@@ -58,38 +64,17 @@ async fn get_room(State(server): State<Arc<AriaServer>>, Path(name): Path<String
 }
 
 #[axum::debug_handler(state = Arc<AriaServer>)]
-async fn login(
-    State(server): State<Arc<AriaServer>>,
-    Path(name): Path<String>,
-    Json(req): Json<LoginRequest>,
-) -> Result<Json<LoginResponse>, ApiError> {
-    if !server.core.login(&name, &req.password).await? {
-        return Err(ApiError::Unauthorized);
-    }
-
-    let token = server.auth.generate_room_token(&name)?;
-
-    Ok(Json(LoginResponse { name, token }))
-}
-
-#[axum::debug_handler(state = Arc<AriaServer>)]
-async fn logged_in(auth: Authorized, Path(name): Path<String>) -> Result<(), ApiError> {
-    if auth.claims.name != name {
-        return Err(ApiError::Unauthorized);
-    }
-
-    Ok(())
-}
-
-#[axum::debug_handler(state = Arc<AriaServer>)]
 async fn claim(
     State(server): State<Arc<AriaServer>>,
-    Path(name): Path<String>,
+    Json(req): Json<ClaimRequest>,
 ) -> Result<Json<ClaimResponse>, ApiError> {
-    let room = server.core.claim_room(&name).await?;
-    let token = server.auth.generate_room_token(&name)?;
+    let room = server.core.claim_room(&req.name).await?;
+
+    let claims = Claims { room_id: room.id };
+    let token = server.auth.generate_token(&claims)?;
 
     Ok(Json(ClaimResponse {
+        id: room.id,
         name: room.name,
         password: room.password,
         token,
@@ -97,18 +82,43 @@ async fn claim(
 }
 
 #[axum::debug_handler(state = Arc<AriaServer>)]
+async fn login(
+    State(server): State<Arc<AriaServer>>,
+    Path(room_id): Path<i32>,
+    Json(req): Json<LoginRequest>,
+) -> Result<Json<LoginResponse>, ApiError> {
+    if !server.core.login(room_id, &req.password).await? {
+        return Err(ApiError::Unauthorized);
+    }
+
+    let claims = Claims { room_id };
+    let token = server.auth.generate_token(&claims)?;
+
+    Ok(Json(LoginResponse { token }))
+}
+
+#[axum::debug_handler(state = Arc<AriaServer>)]
+async fn logged_in(auth: Authorized, Path(room_id): Path<i32>) -> Result<(), ApiError> {
+    if auth.claims.room_id != room_id {
+        return Err(ApiError::Unauthorized);
+    }
+
+    Ok(())
+}
+
+#[axum::debug_handler(state = Arc<AriaServer>)]
 async fn control(
     auth: Authorized,
     State(server): State<Arc<AriaServer>>,
-    Path(name): Path<String>,
+    Path(room_id): Path<i32>,
     Json(req): Json<RoomControlRequest>,
 ) -> Result<(), ApiError> {
-    if auth.claims.name != name {
+    if auth.claims.room_id != room_id {
         return Err(ApiError::Unauthorized);
     }
 
     if req.action.action == "set content url" {
-        server.core.set_room_content(&name, &req.action.url).await?;
+        server.core.set_room_content(room_id, &req.action.url).await?;
     }
 
     Ok(())

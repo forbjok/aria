@@ -19,11 +19,11 @@ pub use self::room::*;
 
 #[derive(Debug)]
 pub enum Notification {
-    NewPost(String, lm::Post),
-    NewEmote(String, lm::Emote),
-    DeletePost(String, u64),
-    DeleteEmote(String, String),
-    Content(String, lm::Content),
+    NewPost(i32, lm::Post),
+    NewEmote(i32, lm::Emote),
+    DeletePost(i32, u64),
+    DeleteEmote(i32, i32),
+    Content(i32, lm::Content),
 }
 
 pub struct AriaCore {
