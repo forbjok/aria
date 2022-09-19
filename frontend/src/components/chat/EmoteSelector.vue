@@ -8,7 +8,7 @@ const emit = defineEmits<{
   (e: "selectemote", name: string): void;
 }>();
 
-const room: RoomService | undefined = inject("room");
+const room = inject<RoomService>("room");
 
 const emotes = computed((): Emote[] => {
   if (!room) {

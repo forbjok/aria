@@ -3,7 +3,7 @@ import { inject, ref } from "vue";
 
 import type { RoomAdminService } from "@/services/room-admin";
 
-const admin: RoomAdminService | undefined = inject("admin");
+const admin = inject<RoomAdminService>("admin");
 
 const contentUrl = ref("");
 

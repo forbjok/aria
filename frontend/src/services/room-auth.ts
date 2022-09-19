@@ -8,7 +8,7 @@ export class RoomAuthService {
   public readonly isAuthorized = ref(false);
 
   private token?: string;
-  private localStorageService: LocalStorageService | undefined = inject("storage");
+  private localStorageService = inject<LocalStorageService>("storage");
 
   constructor(private room: RoomService) {}
 

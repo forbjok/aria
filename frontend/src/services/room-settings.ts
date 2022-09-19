@@ -19,7 +19,7 @@ export class RoomSettingsService {
   public readonly theme = ref("");
   public readonly isRightSideChat = ref(false);
 
-  private localStorageService: LocalStorageService | undefined = inject("storage");
+  private localStorageService = inject<LocalStorageService>("storage");
 
   constructor(private room: RoomService) {
     this.load();

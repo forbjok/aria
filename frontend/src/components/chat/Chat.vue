@@ -17,8 +17,8 @@ const emit = defineEmits<{
   (e: "post", post: Post): void;
 }>();
 
-const auth: RoomAuthService | undefined = inject("auth");
-const room: RoomService | undefined = inject("room");
+const auth = inject<RoomAuthService>("auth");
+const room = inject<RoomService>("room");
 
 const maxPosts = 200;
 const maxImageSize = 2097152;
@@ -29,8 +29,8 @@ interface NewPost {
   image?: File;
 }
 
-const settings: RoomSettingsService | undefined = inject("settings");
-const ws: AriaWebSocket | undefined = inject("ws");
+const settings = inject<RoomSettingsService>("settings");
+const ws = inject<AriaWebSocket>("ws");
 
 const postContainer = ref<HTMLDivElement>();
 const postForm = ref<HTMLFormElement>();

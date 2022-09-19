@@ -6,7 +6,7 @@ import ChatPost from "./ChatPost.vue";
 import type { Post } from "@/models";
 import type { RoomSettingsService } from "@/services/room-settings";
 
-const settings: RoomSettingsService | undefined = inject("settings");
+const settings = inject<RoomSettingsService>("settings");
 
 const posts = reactive<Post[]>([]);
 

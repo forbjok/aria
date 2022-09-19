@@ -11,7 +11,7 @@ export default defineComponent({
   },
   emits: ["clickquotelink"],
   setup(props, ctx) {
-    const room: RoomService | undefined = inject("room");
+    const room = inject<RoomService>("room");
 
     return () => {
       if (!props.text) {

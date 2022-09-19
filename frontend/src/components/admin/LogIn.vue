@@ -7,7 +7,7 @@ const emit = defineEmits<{
   (e: "logged-in"): void;
 }>();
 
-const auth: RoomAuthService | undefined = inject("auth");
+const auth = inject<RoomAuthService>("auth");
 
 const password = ref("");
 const errorText = ref<string>();

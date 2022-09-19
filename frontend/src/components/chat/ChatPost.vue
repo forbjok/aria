@@ -21,7 +21,7 @@ const emit = defineEmits<{
 
 const { post, highlight, actions } = toRefs(props);
 
-const auth: RoomAuthService | undefined = inject("auth");
+const auth = inject<RoomAuthService>("auth");
 
 const toggleImage = (_post: Post): void => {
   _post.showFullImage = !_post.showFullImage;
