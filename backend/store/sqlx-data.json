@@ -260,28 +260,7 @@
     },
     "query": "SELECT update_post_images($1, $2, $3);"
   },
-  "91b0c635260da818106323d8a960a0ef88667d9cf0e0d200d7795fcd4ff45ec5": {
-    "describe": {
-      "columns": [
-        {
-          "name": "delete_emote",
-          "ordinal": 0,
-          "type_info": "Void"
-        }
-      ],
-      "nullable": [
-        null
-      ],
-      "parameters": {
-        "Left": [
-          "Text",
-          "Text"
-        ]
-      }
-    },
-    "query": "SELECT delete_emote($1, $2);"
-  },
-  "b07d2eb0ce0e30d9bd61bd2eb659f89d473270fcb15fc11df2be642d661b9b7a": {
+  "5fd5f8bade63d1e18cb2b23700da7828707c2ebb2637a59af9c9a806b79638d6": {
     "describe": {
       "columns": [
         {
@@ -381,11 +360,33 @@
       ],
       "parameters": {
         "Left": [
+          "Text",
+          "Int4"
+        ]
+      }
+    },
+    "query": "SELECT post, image FROM get_recent_posts($1, $2) ORDER BY (post).id DESC LIMIT 50;"
+  },
+  "91b0c635260da818106323d8a960a0ef88667d9cf0e0d200d7795fcd4ff45ec5": {
+    "describe": {
+      "columns": [
+        {
+          "name": "delete_emote",
+          "ordinal": 0,
+          "type_info": "Void"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
           "Text"
         ]
       }
     },
-    "query": "SELECT post, image FROM get_posts($1) ORDER BY (post).id DESC LIMIT 50;"
+    "query": "SELECT delete_emote($1, $2);"
   },
   "b97575fe6c9b82d4f2d222c8649a51f6be5c1f3b88f4298d48517ee4ba11f7b1": {
     "describe": {

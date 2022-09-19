@@ -38,7 +38,7 @@ impl Room {
         let emotes = core.get_emotes(name).await.context("Error getting emotes")?;
 
         let recent_posts = core
-            .get_recent_posts(name)
+            .get_recent_posts(name, MAX_POSTS as i32)
             .await
             .context("Error getting recent posts")?;
 

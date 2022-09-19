@@ -12,8 +12,8 @@ pub struct GeneratePostImageResult<'a> {
 }
 
 impl AriaCore {
-    pub async fn get_recent_posts(&self, name: &str) -> Result<Vec<lm::Post>, anyhow::Error> {
-        let posts = self.store.get_recent_posts(name).await?;
+    pub async fn get_recent_posts(&self, name: &str, count: i32) -> Result<Vec<lm::Post>, anyhow::Error> {
+        let posts = self.store.get_recent_posts(name, count).await?;
 
         Ok(posts.into_iter().map(dbm_post_to_lm).collect())
     }
