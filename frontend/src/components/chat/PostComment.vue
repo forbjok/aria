@@ -113,7 +113,7 @@ export default defineComponent({
           ).many(),
         spoilerOpen: () => P.string("[spoiler]").map(beginSpoiler),
         spoilerClose: () => P.string("[/spoiler]").map(endSpoiler),
-        emote: () => P.regexp(/!([\d\w]+)/).map(addEmote),
+        emote: () => P.regexp(/!([\d\w-]+)/).map(addEmote),
         quotelink: () => P.regexp(/>>(\d+)/).map(addQuoteLink),
         quote: () => P.regexp(/>([^\n]+)/).map(addQuote),
         link: () => P.regexp(/(https?:\/\/[^\s]*)/).map(addLink),

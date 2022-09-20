@@ -190,7 +190,7 @@ const submitEmote = async () => {
         <input
           name="name"
           type="text"
-          pattern="^[\d\w]+$"
+          pattern="^[\d\w-]+$"
           v-model="newEmote.name"
           placeholder="Emote name"
           title="Emote name. Only alphanumeric characters allowed."
