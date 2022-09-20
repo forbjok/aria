@@ -49,6 +49,7 @@ impl AriaCore {
             name: post.name.map(|v| v.into()),
             comment: post.comment.map(|v| v.into()),
             ip: Some(post.ip),
+            password: post.password.map(|v| v.into()),
         };
 
         let p = self.store.create_post(room_id, &post, image.as_ref()).await?;
@@ -61,13 +62,24 @@ impl AriaCore {
         Ok(post)
     }
 
-    pub async fn delete_post(&self, room_id: i32, post_id: u64) -> Result<(), anyhow::Error> {
-        self.store.delete_post(room_id, post_id as i64).await?;
+    pub async fn delete_post(
+        &self,
+        room_id: i32,
+        post_id: i64,
+        is_admin: bool,
+        password: Option<&str>,
+    ) -> Result<bool, anyhow::Error> {
+        let success = self
+            .store
+            .delete_post(room_id, post_id as i64, is_admin, password)
+            .await?;
 
-        self.notify_tx
-            .unbounded_send(Notification::DeletePost(room_id, post_id))?;
+        if success {
+            self.notify_tx
+                .unbounded_send(Notification::DeletePost(room_id, post_id))?;
+        }
 
-        Ok(())
+        Ok(success)
     }
 
     pub async fn update_post_images(&self, hash: &str, ext: &str, tn_ext: &str) -> Result<(), anyhow::Error> {

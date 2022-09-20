@@ -14,13 +14,14 @@ const MAX_POSTS: usize = 50;
 
 struct Member {
     id: ConnectionId,
+    password: String,
     tx: Tx,
 }
 
 pub(super) struct Room {
     pub id: i32,
     members: Vec<Member>,
-    posts: VecDeque<am::Post>,
+    posts: VecDeque<lm::Post>,
     emotes: Vec<am::Emote>,
     master: ConnectionId,
     content: Option<am::Content>,
@@ -49,7 +50,7 @@ impl Room {
         Ok(Self {
             id: room_id,
             members: Vec::new(),
-            posts: recent_posts.iter().map(am::Post::from).collect(),
+            posts: recent_posts.into_iter().collect(),
             emotes,
             master: 0,
             content: room.content,
@@ -58,15 +59,19 @@ impl Room {
         })
     }
 
-    pub fn join(&mut self, id: ConnectionId, tx: Tx) -> Result<(), anyhow::Error> {
-        let member = Member { id, tx: tx.clone() };
+    pub fn join(&mut self, id: ConnectionId, tx: Tx, password: &str) -> Result<(), anyhow::Error> {
+        let member = Member {
+            id,
+            password: password.to_string(),
+            tx: tx.clone(),
+        };
         self.members.push(member);
 
         send(&tx, "content", &self.content)?;
         send(&tx, "playbackstate", &self.get_playback_state())?;
 
         self.send_emotes(&tx)?;
-        self.send_recent_posts(&tx)?;
+        self.send_recent_posts(&tx, password)?;
         send(&tx, "joined", ())?;
 
         Ok(())
@@ -83,32 +88,46 @@ impl Room {
         Ok(())
     }
 
-    pub fn send_recent_posts(&self, tx: &Tx) -> Result<(), anyhow::Error> {
-        send(tx, "oldposts", &self.posts)?;
+    pub fn send_recent_posts(&self, tx: &Tx, password: &str) -> Result<(), anyhow::Error> {
+        let posts: Vec<_> = self
+            .posts
+            .iter()
+            .map(|p| {
+                let mut post = am::Post::from(p);
+                post.you = p.password.as_deref() == Some(password);
+
+                post
+            })
+            .collect();
+
+        send(tx, "oldposts", &posts)?;
 
         Ok(())
     }
 
     /// Add post
-    pub fn post(&mut self, post: &lm::Post) -> Result<(), anyhow::Error> {
-        let post = am::Post::from(post);
-
+    pub fn post(&mut self, post: lm::Post) -> Result<(), anyhow::Error> {
         // If the maximum number of posts is reached, remove the oldest one.
         if self.posts.len() >= MAX_POSTS {
             self.posts.pop_front();
         }
 
-        self.posts.push_back(post.clone());
+        let mut post_am = am::Post::from(&post);
+        let password = post.password.clone();
+
+        self.posts.push_back(post);
 
         for m in self.members.iter() {
-            send(&m.tx, "post", &post).map_err(|err| error!("{err:?}")).ok();
+            post_am.you = password.as_ref().map(|pw| pw == &m.password).unwrap_or(false);
+
+            send(&m.tx, "post", &post_am).map_err(|err| error!("{err:?}")).ok();
         }
 
         Ok(())
     }
 
     /// Delete post
-    pub fn delete_post(&mut self, post_id: u64) -> Result<(), anyhow::Error> {
+    pub fn delete_post(&mut self, post_id: i64) -> Result<(), anyhow::Error> {
         self.posts.retain(|p| p.id != post_id);
 
         for m in self.members.iter() {

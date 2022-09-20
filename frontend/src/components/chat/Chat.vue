@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { inject, onMounted, onUnmounted, ref } from "vue";
-import axios from "axios";
+import axios, { type AxiosRequestHeaders } from "axios";
 import filesize from "filesize";
 
 import ChatPost from "./ChatPost.vue";
@@ -12,6 +12,7 @@ import type { RoomService } from "@/services/room";
 import type { RoomSettingsService } from "@/services/room-settings";
 import type { AriaWebSocket, AriaWsListener } from "@/services/websocket";
 import type { RoomAuthService } from "@/services/room-auth";
+import type { UserService } from "@/services/user";
 
 const emit = defineEmits<{
   (e: "post", post: Post): void;
@@ -30,6 +31,7 @@ interface NewPost {
 }
 
 const settings = inject<RoomSettingsService>("settings");
+const user = inject<UserService>("user");
 const ws = inject<AriaWebSocket>("ws");
 
 const postContainer = ref<HTMLDivElement>();
@@ -139,11 +141,24 @@ const submitPost = async () => {
     return;
   }
 
-  const image = post.value.image;
+  const _post = post.value;
+
+  const image = _post.image;
 
   const formData = new FormData();
-  formData.append("name", post.value.name);
-  formData.append("comment", post.value.comment);
+
+  if (_post.name) {
+    formData.append("name", _post.name);
+  }
+
+  if (_post.comment) {
+    formData.append("comment", _post.comment);
+  }
+
+  const password = user?.password;
+  if (password) {
+    formData.append("password", password);
+  }
 
   if (image) {
     formData.append("image", image, image.name);
@@ -250,10 +265,19 @@ const deletePost = async (post?: Post) => {
     return;
   }
 
-  await axios.delete(`/api/chat/${room?.id}/post/${post.id}`, {
-    headers: {
+  let headers: AxiosRequestHeaders = {
+    "X-Password": user?.password || "",
+  };
+
+  if (auth?.isAuthorized.value) {
+    headers = {
+      ...headers,
       Authorization: `Bearer ${auth?.getToken()}`,
-    },
+    };
+  }
+
+  await axios.delete(`/api/chat/${room?.id}/post/${post.id}`, {
+    headers,
   });
 };
 
@@ -367,7 +391,7 @@ onUnmounted(() => {
             </tr>
             <tr>
               <td>
-                <button class="post-button" type="submit" :disabled="!canSubmitPost">
+                <button class="post-button" type="submit" :disabled="!canSubmitPost()">
                   {{ postingCooldownText() || "Post" }}
                 </button>
                 <span class="progress">{{ postingProgress }}</span>

@@ -28,7 +28,13 @@ pub trait AriaStore: Send + Sync {
         image: Option<&dbm::NewImage>,
     ) -> Result<dbm::PostAndImage, anyhow::Error>;
 
-    async fn delete_post(&self, room_id: i32, post_id: i64) -> Result<(), anyhow::Error>;
+    async fn delete_post(
+        &self,
+        room_id: i32,
+        post_id: i64,
+        is_admin: bool,
+        password: Option<&str>,
+    ) -> Result<bool, anyhow::Error>;
 
     async fn get_emotes(&self, room_id: i32) -> Result<Vec<dbm::Emote>, anyhow::Error>;
 
@@ -126,12 +132,24 @@ impl AriaStore for PgStore {
         Ok(post)
     }
 
-    async fn delete_post(&self, room_id: i32, post_id: i64) -> Result<(), anyhow::Error> {
-        sqlx::query_unchecked!(r#"SELECT delete_post($1, $2);"#, room_id, post_id)
-            .execute(&self.pool)
-            .await?;
+    async fn delete_post(
+        &self,
+        room_id: i32,
+        post_id: i64,
+        is_admin: bool,
+        password: Option<&str>,
+    ) -> Result<bool, anyhow::Error> {
+        let res = sqlx::query_unchecked!(
+            r#"SELECT delete_post($1, $2, $3, $4);"#,
+            room_id,
+            post_id,
+            is_admin,
+            password,
+        )
+        .execute(&self.pool)
+        .await?;
 
-        Ok(())
+        Ok(res.rows_affected() > 0)
     }
 
     async fn get_emotes(&self, room_id: i32) -> Result<Vec<dbm::Emote>, anyhow::Error> {

@@ -3,6 +3,7 @@ use std::{net::SocketAddr, sync::Arc};
 use anyhow::Context;
 use futures::{pin_mut, StreamExt, TryStreamExt};
 use futures_channel::mpsc::unbounded;
+use serde::Deserialize;
 use tokio::{
     net::TcpStream,
     sync::{broadcast, mpsc::Sender, Mutex},
@@ -18,6 +19,12 @@ use super::{room::Room, send_raw, ConnectionId, ServerState, Tx};
 struct ConnectionState {
     tx: Tx,
     room: Mutex<Option<i32>>,
+}
+
+#[derive(Debug, Deserialize)]
+struct JoinRequest {
+    room: String,
+    password: String,
 }
 
 pub(super) async fn handle_connection(
@@ -59,8 +66,10 @@ pub(super) async fn handle_connection(
                                 send_raw(tx, "pong", data)?;
                             }
                             "join" => {
-                                let room_name: String =
+                                let req: JoinRequest =
                                     serde_json::from_str(data).context("Error deserializing room name")?;
+
+                                let room_name = req.room;
 
                                 info!("[{id}] Joining room '{room_name}'...");
 
@@ -94,7 +103,7 @@ pub(super) async fn handle_connection(
                                         return Err(anyhow::anyhow!("Already in a different room."));
                                     }
 
-                                    room.join(id, tx.clone())?;
+                                    room.join(id, tx.clone(), &req.password)?;
                                     *cn_state.room.lock().await = Some(room.id);
                                 }
                             }

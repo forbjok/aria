@@ -23,7 +23,7 @@ pub(super) async fn handle_notifications(
                         Notification::NewPost(room, post) => {
                             let mut rooms = state.rooms.lock().await;
                             if let Some(room) = rooms.get_mut(&room) {
-                                room.post(&post)?;
+                                room.post(post)?;
                             }
                         }
                         Notification::NewEmote(room, emote) => {

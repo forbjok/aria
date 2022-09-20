@@ -31,6 +31,7 @@ impl From<anyhow::Error> for ApiError {
     }
 }
 
+#[derive(Debug)]
 struct Authorized {
     claims: Claims,
 }

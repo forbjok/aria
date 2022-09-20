@@ -41,11 +41,18 @@ pub struct Image {
 
 #[derive(Clone, Debug, Serialize)]
 pub struct Post {
-    pub id: u64,
+    pub id: i64,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
     pub posted: DateTime<Utc>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub image: Option<Image>,
+
+    #[serde(skip_serializing_if = "is_false")]
+    pub you: bool,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
@@ -84,6 +91,7 @@ impl From<&lm::Post> for Post {
                 tn_url: format!("/f/t/{}.{}", i.hash, i.tn_ext),
             }),
             posted: p.posted_at,
+            you: false,
         }
     }
 }
@@ -96,4 +104,8 @@ impl From<&lm::Emote> for Emote {
             url: format!("/f/e/{}.{}", e.hash, e.ext),
         }
     }
+}
+
+fn is_false(v: &bool) -> bool {
+    !v
 }

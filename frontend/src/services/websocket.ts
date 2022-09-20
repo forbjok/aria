@@ -1,3 +1,6 @@
+import type { RoomService } from "./room";
+import type { UserService } from "./user";
+
 export interface Message<T> {
   msg: string;
   data: T;
@@ -11,7 +14,7 @@ export class AriaWebSocket {
   private ping_interval?: number;
   private listeners: AriaWsListener[] = [];
 
-  constructor(private url: string, private room: string) {}
+  constructor(private url: string, private room: RoomService, private user: UserService) {}
 
   public send<T>(msg: string, data?: T) {
     const _data = data ? JSON.stringify(data) : "";
@@ -57,7 +60,7 @@ export class AriaWebSocket {
 
     ws.onopen = () => {
       console.log("Connected to server.");
-      this.send("join", this.room);
+      this.send("join", { room: this.room.name, password: this.user.password });
       this.ping_interval = setInterval(() => {
         this.send("ping", getTimestamp());
       }, 30000);

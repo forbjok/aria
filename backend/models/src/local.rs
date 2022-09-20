@@ -31,11 +31,12 @@ pub struct PostImage {
 
 #[derive(Clone, Debug)]
 pub struct Post {
-    pub id: u64,
+    pub id: i64,
     pub name: Option<String>,
     pub comment: Option<String>,
     pub image: Option<PostImage>,
     pub posted_at: DateTime<Utc>,
+    pub password: Option<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -59,6 +60,7 @@ pub struct NewPost<'a> {
     pub comment: Option<Cow<'a, str>>,
     pub image: Option<NewPostImage<'a>>,
     pub ip: IpAddr,
+    pub password: Option<Cow<'a, str>>,
 }
 
 #[derive(Debug)]

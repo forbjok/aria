@@ -217,27 +217,6 @@
     },
     "query": "SELECT set_room_content($1, $2::json);"
   },
-  "56e75134fbcc526d69764dd2e005b3505547dd483258d068a1ab723f8507e7be": {
-    "describe": {
-      "columns": [
-        {
-          "name": "delete_post",
-          "ordinal": 0,
-          "type_info": "Void"
-        }
-      ],
-      "nullable": [
-        null
-      ],
-      "parameters": {
-        "Left": [
-          "Int4",
-          "Int8"
-        ]
-      }
-    },
-    "query": "SELECT delete_post($1, $2);"
-  },
   "5f0887343c6ea22aab9b26f659a6ed4f4c0ac4885d0502a09c295e470cc6b17a": {
     "describe": {
       "columns": [
@@ -301,6 +280,10 @@
                   [
                     "is_deleted",
                     "Bool"
+                  ],
+                  [
+                    "password",
+                    "Text"
                   ]
                 ]
               },
@@ -429,6 +412,10 @@
                   [
                     "is_deleted",
                     "Bool"
+                  ],
+                  [
+                    "password",
+                    "Text"
                   ]
                 ]
               },
@@ -504,6 +491,10 @@
                   [
                     "ip",
                     "Inet"
+                  ],
+                  [
+                    "password",
+                    "Text"
                   ]
                 ]
               },
@@ -684,5 +675,28 @@
       }
     },
     "query": "SELECT * FROM room WHERE id = $1;"
+  },
+  "ee5765add022d0f86fcedd3a196fa8bd10310eb3c5172f5a5df14e1fb01bc8f0": {
+    "describe": {
+      "columns": [
+        {
+          "name": "delete_post",
+          "ordinal": 0,
+          "type_info": "Void"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int8",
+          "Bool",
+          "Text"
+        ]
+      }
+    },
+    "query": "SELECT delete_post($1, $2, $3, $4);"
   }
 }

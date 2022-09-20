@@ -32,6 +32,15 @@
       border-top: none;
     }
 
+    .post-header {
+      .post-info {
+        .you {
+          color: #da1c1c;
+          font-weight: bold;
+        }
+      }
+    }
+
     .comment {
       :deep(a) {
         color: #34345c;

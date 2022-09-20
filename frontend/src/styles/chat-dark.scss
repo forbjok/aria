@@ -27,10 +27,24 @@
         filter: drop-shadow(0px 0px 3px #fff);
       }
 
+      .post-header {
+        .post-info {
+          .you {
+            color: #e3ee81;
+          }
+        }
+      }
+
       .comment {
         :deep(a) {
           color: #898ed6;
           text-decoration: none;
+        }
+      }
+
+      &.you {
+        .post-header .post-info .name {
+          color: #20a560;
         }
       }
     }

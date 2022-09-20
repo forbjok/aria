@@ -21,7 +21,7 @@ pub use self::room::*;
 pub enum Notification {
     NewPost(i32, lm::Post),
     NewEmote(i32, lm::Emote),
-    DeletePost(i32, u64),
+    DeletePost(i32, i64),
     DeleteEmote(i32, i32),
     Content(i32, lm::Content),
 }

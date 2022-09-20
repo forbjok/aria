@@ -57,17 +57,23 @@ const formatTime = (value: string): string => {
 </script>
 
 <template>
-  <div :id="`p${post.id}`" class="post" :class="highlight ? 'highlight' : ''">
+  <div :id="`p${post.id}`" class="post" :class="[highlight ? 'highlight' : '', post.you ? 'you' : '']">
     <div class="post-header">
       <div class="post-info">
         <span class="time">{{ formatTime(post.posted) }}</span>
         <span class="name">{{ post.name || "Anonymous" }}</span>
+        <span v-if="post.you" class="you">(You)</span>
         <button @click="clickQuoteLink(post.id)">No.</button>
         <button @click="quotePost(post.id)">{{ post.id }}</button>
         <i v-if="post.isDeleted" class="fa-solid fa-skull-crossbones" title="Deleted"></i>
       </div>
-      <div v-if="actions && auth?.isAuthorized.value" class="admin-actions">
-        <button v-if="!post.isDeleted" class="action-button" title="Delete post" @click="deletePost">
+      <div v-if="actions" class="admin-actions">
+        <button
+          v-if="!post.isDeleted && (post.you || auth?.isAuthorized.value)"
+          class="action-button"
+          title="Delete post"
+          @click="deletePost"
+        >
           <i class="fa-solid fa-trash"></i>
         </button>
       </div>

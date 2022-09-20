@@ -16,6 +16,7 @@ import { RoomAuthService } from "@/services/room-auth";
 import type { Content, Emote } from "@/models";
 import { RoomService } from "@/services/room";
 import { AriaWebSocket, AriaWsListener } from "@/services/websocket";
+import { UserService } from "@/services/user";
 
 const AdminPanel = defineAsyncComponent(() => import("@/components/admin/AdminPanel.vue"));
 
@@ -41,16 +42,18 @@ const roomService = new RoomService(name.value);
 const auth = new RoomAuthService(roomService);
 const settings = new RoomSettingsService(roomService);
 const admin = new RoomAdminService(roomService, auth);
+const user = new UserService();
 
 const ws_protocol = window.location.protocol === "https:" ? "wss" : "ws";
 
 const ws_url = `${ws_protocol}://${window.location.host}/aria-ws`;
-const ws = new AriaWebSocket(ws_url, name.value);
+const ws = new AriaWebSocket(ws_url, roomService, user);
 
 provide("room", roomService);
 provide("auth", auth);
 provide("settings", settings);
 provide("admin", admin);
+provide("user", user);
 provide("ws", ws);
 
 const logInDialog = ref<typeof Dialog>();

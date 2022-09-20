@@ -24,6 +24,7 @@ export interface Post {
   comment: string;
   image?: Image;
   posted: string;
+  you: boolean;
   showFullImage: boolean;
   isDeleted: boolean;
 }
