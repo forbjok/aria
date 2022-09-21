@@ -82,6 +82,7 @@ let serverPlaybackState: PlaybackState = {
 
 let ws_listener: AriaWsListener | undefined;
 onMounted(async () => {
+  await user.setup();
   await roomService.setup();
 
   if (!roomService.exists()) {

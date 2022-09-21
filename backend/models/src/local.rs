@@ -36,7 +36,7 @@ pub struct Post {
     pub comment: Option<String>,
     pub image: Option<PostImage>,
     pub posted_at: DateTime<Utc>,
-    pub password: Option<String>,
+    pub user_id: i64,
 }
 
 #[derive(Clone, Debug)]
@@ -60,7 +60,7 @@ pub struct NewPost<'a> {
     pub comment: Option<Cow<'a, str>>,
     pub image: Option<NewPostImage<'a>>,
     pub ip: IpAddr,
-    pub password: Option<Cow<'a, str>>,
+    pub user_id: i64,
 }
 
 #[derive(Debug)]

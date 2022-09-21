@@ -12,7 +12,10 @@ use tracing::{error, info, warn};
 
 use aria_models::api as am;
 
-use crate::websocket_server::send;
+use crate::{
+    auth::{RoomClaims, UserClaims},
+    websocket_server::send,
+};
 
 use super::{room::Room, send_raw, ConnectionId, ServerState, Tx};
 
@@ -24,7 +27,7 @@ struct ConnectionState {
 #[derive(Debug, Deserialize)]
 struct JoinRequest {
     room: String,
-    password: String,
+    user: String,
 }
 
 pub(super) async fn handle_connection(
@@ -69,6 +72,12 @@ pub(super) async fn handle_connection(
                                 let req: JoinRequest =
                                     serde_json::from_str(data).context("Error deserializing room name")?;
 
+                                let user_claims = sv_state
+                                    .auth
+                                    .verify::<UserClaims>(&req.user)
+                                    .map_err(|_| anyhow::anyhow!("Error verifying user token"))?;
+                                let user_id = user_claims.user_id;
+
                                 let room_name = req.room;
 
                                 info!("[{id}] Joining room '{room_name}'...");
@@ -103,7 +112,7 @@ pub(super) async fn handle_connection(
                                         return Err(anyhow::anyhow!("Already in a different room."));
                                     }
 
-                                    room.join(id, tx.clone(), &req.password)?;
+                                    room.join(id, user_id, tx.clone())?;
                                     *cn_state.room.lock().await = Some(room.id);
                                 }
                             }
@@ -127,7 +136,7 @@ pub(super) async fn handle_connection(
 
                                 if let Some(&room_id) = cn_state.room.lock().await.as_ref() {
                                     let mut is_authorized = false;
-                                    if let Ok(claims) = sv_state.auth.verify(&token) {
+                                    if let Ok(claims) = sv_state.auth.verify::<RoomClaims>(&token) {
                                         if claims.room_id == room_id {
                                             is_authorized = true;
                                         }

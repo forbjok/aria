@@ -49,7 +49,7 @@ impl AriaCore {
             name: post.name.map(|v| v.into()),
             comment: post.comment.map(|v| v.into()),
             ip: Some(post.ip),
-            password: post.password.map(|v| v.into()),
+            user_id: post.user_id,
         };
 
         let p = self.store.create_post(room_id, &post, image.as_ref()).await?;
@@ -66,13 +66,10 @@ impl AriaCore {
         &self,
         room_id: i32,
         post_id: i64,
+        user_id: i64,
         is_admin: bool,
-        password: Option<&str>,
     ) -> Result<bool, anyhow::Error> {
-        let success = self
-            .store
-            .delete_post(room_id, post_id as i64, is_admin, password)
-            .await?;
+        let success = self.store.delete_post(room_id, post_id, user_id, is_admin).await?;
 
         if success {
             self.notify_tx

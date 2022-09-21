@@ -1,5 +1,5 @@
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 pub struct AriaAuth {
     keys: Keys,
@@ -12,9 +12,15 @@ pub enum AuthError {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Claims {
+pub struct RoomClaims {
     pub exp: usize,
     pub room_id: i32,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct UserClaims {
+    pub exp: usize,
+    pub user_id: i64,
 }
 
 struct Keys {
@@ -29,15 +35,15 @@ impl AriaAuth {
         Self { keys }
     }
 
-    pub fn generate_token(&self, claims: &Claims) -> Result<String, AuthError> {
+    pub fn generate_token<T: Serialize>(&self, claims: &T) -> Result<String, AuthError> {
         let token = jsonwebtoken::encode(&Header::default(), &claims, &self.keys.encoding)
             .map_err(|_| AuthError::TokenCreation)?;
 
         Ok(token)
     }
 
-    pub fn verify(&self, token: &str) -> Result<Claims, AuthError> {
-        let token_data = jsonwebtoken::decode::<Claims>(token, &self.keys.decoding, &Validation::default())
+    pub fn verify<T: DeserializeOwned>(&self, token: &str) -> Result<T, AuthError> {
+        let token_data = jsonwebtoken::decode::<T>(token, &self.keys.decoding, &Validation::default())
             .map_err(|_| AuthError::InvalidToken)?;
 
         Ok(token_data.claims)
@@ -53,11 +59,20 @@ impl Keys {
     }
 }
 
-impl Claims {
+impl RoomClaims {
     pub fn new(room_id: i32) -> Self {
         Self {
             exp: usize::MAX,
             room_id,
+        }
+    }
+}
+
+impl UserClaims {
+    pub fn new(user_id: i64) -> Self {
+        Self {
+            exp: usize::MAX,
+            user_id,
         }
     }
 }

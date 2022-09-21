@@ -1,29 +1,43 @@
-import { nanoid } from "nanoid";
+import axios from "axios";
 import { inject } from "vue";
 
 import type { LocalStorageService } from "./localstorage";
 
-interface UserSettings {
-  password: string;
+interface NewUserResponse {
+  user_id: number;
+  token: string;
 }
 
 export class UserService {
-  public readonly password: string;
+  public userToken?: string;
 
   private localStorageService = inject<LocalStorageService>("storage");
 
-  constructor() {
-    let user_settings = this.localStorageService?.get<UserSettings>("aria_user");
-    if (!user_settings) {
-      const password = nanoid(6);
+  public async setup() {
+    const userToken = this.localStorageService?.get<string>("user");
+    if (userToken) {
+      try {
+        await axios.post<number>(`/api/user/verify`, null, {
+          headers: {
+            "X-User": userToken,
+          },
+        });
 
-      user_settings = {
-        password,
-      };
-
-      this.localStorageService?.set("aria_user", user_settings);
+        this.userToken = userToken;
+      } catch {
+        this.userToken = undefined;
+      }
     }
 
-    this.password = user_settings.password;
+    if (!this.userToken) {
+      try {
+        const res = await axios.post<NewUserResponse>(`/api/user/new`);
+
+        this.userToken = res.data.token;
+        this.localStorageService?.set("user", this.userToken);
+      } catch {
+        this.userToken = undefined;
+      }
+    }
   }
 }

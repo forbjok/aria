@@ -14,7 +14,7 @@ const MAX_POSTS: usize = 50;
 
 struct Member {
     id: ConnectionId,
-    password: String,
+    user_id: i64,
     tx: Tx,
 }
 
@@ -59,10 +59,10 @@ impl Room {
         })
     }
 
-    pub fn join(&mut self, id: ConnectionId, tx: Tx, password: &str) -> Result<(), anyhow::Error> {
+    pub fn join(&mut self, id: ConnectionId, user_id: i64, tx: Tx) -> Result<(), anyhow::Error> {
         let member = Member {
             id,
-            password: password.to_string(),
+            user_id,
             tx: tx.clone(),
         };
         self.members.push(member);
@@ -71,7 +71,7 @@ impl Room {
         send(&tx, "playbackstate", &self.get_playback_state())?;
 
         self.send_emotes(&tx)?;
-        self.send_recent_posts(&tx, password)?;
+        self.send_recent_posts(&tx, user_id)?;
         send(&tx, "joined", ())?;
 
         Ok(())
@@ -88,13 +88,13 @@ impl Room {
         Ok(())
     }
 
-    pub fn send_recent_posts(&self, tx: &Tx, password: &str) -> Result<(), anyhow::Error> {
+    pub fn send_recent_posts(&self, tx: &Tx, user_id: i64) -> Result<(), anyhow::Error> {
         let posts: Vec<_> = self
             .posts
             .iter()
             .map(|p| {
                 let mut post = am::Post::from(p);
-                post.you = p.password.as_deref() == Some(password);
+                post.you = p.user_id == user_id;
 
                 post
             })
@@ -113,12 +113,12 @@ impl Room {
         }
 
         let mut post_am = am::Post::from(&post);
-        let password = post.password.clone();
+        let post_user_id = post.user_id;
 
         self.posts.push_back(post);
 
         for m in self.members.iter() {
-            post_am.you = password.as_ref().map(|pw| pw == &m.password).unwrap_or(false);
+            post_am.you = post_user_id == m.user_id;
 
             send(&m.tx, "post", &post_am).map_err(|err| error!("{err:?}")).ok();
         }

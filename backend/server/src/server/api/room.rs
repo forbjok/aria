@@ -6,7 +6,7 @@ use axum::routing::{get, post};
 use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
 
-use crate::auth::Claims;
+use crate::auth::RoomClaims;
 use crate::server::api::{ApiError, Authorized};
 use crate::server::AriaServer;
 
@@ -70,7 +70,7 @@ async fn claim(
 ) -> Result<Json<ClaimResponse>, ApiError> {
     let room = server.core.claim_room(&req.name).await?;
 
-    let claims = Claims::new(room.id);
+    let claims = RoomClaims::new(room.id);
     let token = server.auth.generate_token(&claims)?;
 
     Ok(Json(ClaimResponse {
@@ -91,7 +91,7 @@ async fn login(
         return Err(ApiError::Unauthorized);
     }
 
-    let claims = Claims::new(room_id);
+    let claims = RoomClaims::new(room_id);
     let token = server.auth.generate_token(&claims)?;
 
     Ok(Json(LoginResponse { token }))

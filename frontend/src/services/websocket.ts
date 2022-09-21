@@ -60,7 +60,7 @@ export class AriaWebSocket {
 
     ws.onopen = () => {
       console.log("Connected to server.");
-      this.send("join", { room: this.room.name, password: this.user.password });
+      this.send("join", { room: this.room.name, user: this.user.userToken });
       this.ping_interval = setInterval(() => {
         this.send("ping", getTimestamp());
       }, 30000);

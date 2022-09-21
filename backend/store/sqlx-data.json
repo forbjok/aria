@@ -1,5 +1,23 @@
 {
   "db": "PostgreSQL",
+  "03b2ac0a8de4addf77242f07c87f2f6cfffe7cb3ce1874e2a9ed54aec1fca4d0": {
+    "describe": {
+      "columns": [
+        {
+          "name": "nextval",
+          "ordinal": 0,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "SELECT nextval('user_id_seq');"
+  },
   "1d2943d25677b362f3e7109c65bc0965e58823a80f82607dc5584645539135a6": {
     "describe": {
       "columns": [
@@ -282,8 +300,8 @@
                     "Bool"
                   ],
                   [
-                    "password",
-                    "Text"
+                    "user_id",
+                    "Int8"
                   ]
                 ]
               },
@@ -414,8 +432,8 @@
                     "Bool"
                   ],
                   [
-                    "password",
-                    "Text"
+                    "user_id",
+                    "Int8"
                   ]
                 ]
               },
@@ -493,8 +511,8 @@
                     "Inet"
                   ],
                   [
-                    "password",
-                    "Text"
+                    "user_id",
+                    "Int8"
                   ]
                 ]
               },
@@ -692,8 +710,8 @@
         "Left": [
           "Int4",
           "Int8",
-          "Bool",
-          "Text"
+          "Int8",
+          "Bool"
         ]
       }
     },

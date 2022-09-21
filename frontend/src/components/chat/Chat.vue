@@ -155,11 +155,6 @@ const submitPost = async () => {
     formData.append("comment", _post.comment);
   }
 
-  const password = user?.password;
-  if (password) {
-    formData.append("password", password);
-  }
-
   if (image) {
     formData.append("image", image, image.name);
   }
@@ -175,6 +170,9 @@ const submitPost = async () => {
 
   try {
     await axios.post(`/api/chat/${room?.id}/post`, formData, {
+      headers: {
+        "X-User": user?.userToken || "",
+      },
       onUploadProgress: (e) => {
         if (e.lengthComputable) {
           const percentComplete = Math.round((e.loaded / e.total) * 100);
@@ -266,7 +264,7 @@ const deletePost = async (post?: Post) => {
   }
 
   let headers: AxiosRequestHeaders = {
-    "X-Password": user?.password || "",
+    "X-User": user?.userToken || "",
   };
 
   if (auth?.isAuthorized.value) {

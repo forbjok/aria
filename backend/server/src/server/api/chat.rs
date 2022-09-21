@@ -3,20 +3,16 @@ use std::{net::SocketAddr, sync::Arc};
 use anyhow::Context;
 use aria_models::local as lm;
 use axum::{
-    async_trait,
-    extract::{ConnectInfo, ContentLengthLimit, FromRequestParts, Multipart, Path, State},
-    http::{request::Parts, StatusCode},
+    extract::{ConnectInfo, ContentLengthLimit, Multipart, Path, State},
+    http::StatusCode,
     routing::{delete, post},
     Json, Router,
 };
 
 use crate::server::{
-    api::{ApiError, Authorized},
+    api::{ApiError, Authorized, User},
     AriaServer,
 };
-
-#[derive(Debug)]
-struct Password(pub String);
 
 const MAX_IMAGE_SIZE: u64 = 2 * 1024 * 1024; // 2MB
 
@@ -30,6 +26,7 @@ pub fn router(server: Arc<AriaServer>) -> Router<Arc<AriaServer>> {
 
 #[axum::debug_handler(state = Arc<AriaServer>)]
 async fn create_post(
+    user: User,
     State(server): State<Arc<AriaServer>>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Path(room_id): Path<i32>,
@@ -38,7 +35,6 @@ async fn create_post(
     let mut name: Option<String> = None;
     let mut comment: Option<String> = None;
     let mut image: Option<lm::NewPostImage> = None;
-    let mut password: Option<String> = None;
 
     while let Some(mut field) = multipart
         .next_field()
@@ -53,9 +49,6 @@ async fn create_post(
             }
             "comment" => {
                 comment = Some(field.text().await.map_err(|err| ApiError::Anyhow(err.into()))?);
-            }
-            "password" => {
-                password = Some(field.text().await.map_err(|err| ApiError::Anyhow(err.into()))?);
             }
             "image" => {
                 let filename = field
@@ -87,7 +80,7 @@ async fn create_post(
         comment: comment.map(|v| v.into()),
         image,
         ip: addr.ip(),
-        password: password.map(|v| v.into()),
+        user_id: user.id,
     };
 
     let post = server.core.create_post(room_id, new_post).await?;
@@ -97,17 +90,14 @@ async fn create_post(
 
 #[axum::debug_handler(state = Arc<AriaServer>)]
 async fn delete_post(
+    user: User,
     auth: Option<Authorized>,
-    password: Option<Password>,
     State(server): State<Arc<AriaServer>>,
     Path((room_id, post_id)): Path<(i32, i64)>,
 ) -> Result<(), ApiError> {
     let is_admin = auth.map(|a| a.claims.room_id == room_id).unwrap_or(false);
 
-    let success = server
-        .core
-        .delete_post(room_id, post_id, is_admin, password.as_ref().map(|s| s.0.as_str()))
-        .await?;
+    let success = server.core.delete_post(room_id, post_id, user.id, is_admin).await?;
 
     if !success {
         return Err(ApiError::NotFound);
@@ -195,20 +185,4 @@ async fn delete_emote(
     server.core.delete_emote(room_id, emote_id).await?;
 
     Ok(())
-}
-
-#[async_trait]
-impl FromRequestParts<Arc<AriaServer>> for Password {
-    type Rejection = ApiError;
-
-    async fn from_request_parts(parts: &mut Parts, _state: &Arc<AriaServer>) -> Result<Self, Self::Rejection> {
-        let password = parts
-            .headers
-            .get("X-Password")
-            .and_then(|v| v.to_str().ok())
-            .map(|s| s.to_owned())
-            .ok_or(ApiError::Unauthorized)?;
-
-        Ok(Password(password))
-    }
 }

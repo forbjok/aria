@@ -32,8 +32,8 @@ pub trait AriaStore: Send + Sync {
         &self,
         room_id: i32,
         post_id: i64,
+        user_id: i64,
         is_admin: bool,
-        password: Option<&str>,
     ) -> Result<bool, anyhow::Error>;
 
     async fn get_emotes(&self, room_id: i32) -> Result<Vec<dbm::Emote>, anyhow::Error>;
@@ -47,6 +47,8 @@ pub trait AriaStore: Send + Sync {
     async fn update_post_images(&self, hash: &str, ext: &str, tn_ext: &str) -> Result<(), anyhow::Error>;
 
     async fn update_emote_images(&self, hash: &str, ext: &str) -> Result<(), anyhow::Error>;
+
+    async fn generate_user_id(&self) -> Result<i64, anyhow::Error>;
 }
 
 pub struct PgStore {
@@ -136,15 +138,15 @@ impl AriaStore for PgStore {
         &self,
         room_id: i32,
         post_id: i64,
+        user_id: i64,
         is_admin: bool,
-        password: Option<&str>,
     ) -> Result<bool, anyhow::Error> {
         let res = sqlx::query_unchecked!(
             r#"SELECT delete_post($1, $2, $3, $4);"#,
             room_id,
             post_id,
+            user_id,
             is_admin,
-            password,
         )
         .execute(&self.pool)
         .await?;
@@ -199,5 +201,14 @@ impl AriaStore for PgStore {
             .await?;
 
         Ok(())
+    }
+
+    async fn generate_user_id(&self) -> Result<i64, anyhow::Error> {
+        let new_user_id = sqlx::query_scalar!(r#"SELECT nextval('user_id_seq');"#)
+            .fetch_one(&self.pool)
+            .await?
+            .context("Error generating user id")?;
+
+        Ok(new_user_id)
     }
 }

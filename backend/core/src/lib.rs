@@ -10,6 +10,7 @@ mod image;
 mod post;
 mod room;
 mod transform;
+mod user;
 mod util;
 
 pub use self::emote::*;

@@ -1,5 +1,6 @@
 mod chat;
 mod room;
+mod user;
 
 use std::sync::Arc;
 
@@ -13,7 +14,7 @@ use axum::{
 };
 use tracing::error;
 
-use crate::auth::{AuthError, Claims};
+use crate::auth::{AuthError, RoomClaims, UserClaims};
 
 use super::AriaServer;
 
@@ -39,14 +40,20 @@ impl From<anyhow::Error> for ApiError {
 
 #[derive(Debug)]
 struct Authorized {
-    claims: Claims,
+    claims: RoomClaims,
+}
+
+#[derive(Debug)]
+struct User {
+    id: i64,
 }
 
 pub fn router(server: Arc<AriaServer>) -> Router {
     let room = room::router(server.clone());
-    let chat = chat::router(server);
+    let chat = chat::router(server.clone());
+    let user = user::router(server);
 
-    Router::new().nest("/r", room).nest("/chat", chat)
+    Router::new().nest("/r", room).nest("/chat", chat).nest("/user", user)
 }
 
 impl IntoResponse for AuthError {
@@ -89,5 +96,26 @@ impl FromRequestParts<Arc<AriaServer>> for Authorized {
         let claims = state.auth.verify(token)?;
 
         Ok(Authorized { claims })
+    }
+}
+
+#[async_trait]
+impl FromRequestParts<Arc<AriaServer>> for User {
+    type Rejection = StatusCode;
+
+    async fn from_request_parts(parts: &mut Parts, state: &Arc<AriaServer>) -> Result<Self, Self::Rejection> {
+        let token = parts
+            .headers
+            .get("X-User")
+            .and_then(|v| v.to_str().ok())
+            .map(|s| s.to_owned())
+            .ok_or(StatusCode::UNAUTHORIZED)?;
+
+        let claims = state
+            .auth
+            .verify::<UserClaims>(&token)
+            .map_err(|_| StatusCode::UNAUTHORIZED)?;
+
+        Ok(User { id: claims.user_id })
     }
 }

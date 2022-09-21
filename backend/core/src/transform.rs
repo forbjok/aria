@@ -24,7 +24,7 @@ pub fn dbm_post_to_lm(p: dbm::PostAndImage) -> lm::Post {
             tn_ext: i.tn_ext.unwrap(),
         }),
         posted_at: p.post.created_at.unwrap(),
-        password: p.post.password,
+        user_id: p.post.user_id.unwrap(),
     }
 }
 
