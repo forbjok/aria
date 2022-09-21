@@ -34,8 +34,13 @@
 
     .post-header {
       .post-info {
+        .admin {
+          color: #ff0000;
+          font-weight: bold;
+        }
+
         .you {
-          color: #da1c1c;
+          color: #215fbd;
           font-weight: bold;
         }
       }

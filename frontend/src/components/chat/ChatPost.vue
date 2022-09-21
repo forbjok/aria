@@ -57,11 +57,16 @@ const formatTime = (value: string): string => {
 </script>
 
 <template>
-  <div :id="`p${post.id}`" class="post" :class="[highlight ? 'highlight' : '', post.you ? 'you' : '']">
+  <div
+    :id="`p${post.id}`"
+    class="post"
+    :class="[highlight ? 'highlight' : '', post.admin ? 'admin' : '', post.you ? 'you' : '']"
+  >
     <div class="post-header">
       <div class="post-info">
         <span class="time">{{ formatTime(post.posted) }}</span>
         <span class="name">{{ post.name || "Anonymous" }}</span>
+        <span v-if="post.admin" class="admin">(Admin)</span>
         <span v-if="post.you" class="you">(You)</span>
         <button @click="clickQuoteLink(post.id)">No.</button>
         <button @click="quotePost(post.id)">{{ post.id }}</button>

@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::collections::VecDeque;
 
 use anyhow::Context;
@@ -13,14 +14,14 @@ use super::{send, ConnectionId, Tx};
 const MAX_POSTS: usize = 50;
 
 struct Member {
-    id: ConnectionId,
     user_id: i64,
+    is_admin: bool,
     tx: Tx,
 }
 
 pub(super) struct Room {
     pub id: i32,
-    members: Vec<Member>,
+    members: HashMap<ConnectionId, Member>,
     posts: VecDeque<lm::Post>,
     emotes: Vec<am::Emote>,
     master: ConnectionId,
@@ -49,7 +50,7 @@ impl Room {
 
         Ok(Self {
             id: room_id,
-            members: Vec::new(),
+            members: HashMap::new(),
             posts: recent_posts.into_iter().collect(),
             emotes,
             master: 0,
@@ -61,11 +62,11 @@ impl Room {
 
     pub fn join(&mut self, id: ConnectionId, user_id: i64, tx: Tx) -> Result<(), anyhow::Error> {
         let member = Member {
-            id,
             user_id,
+            is_admin: false,
             tx: tx.clone(),
         };
-        self.members.push(member);
+        self.members.insert(id, member);
 
         send(&tx, "content", &self.content)?;
         send(&tx, "playbackstate", &self.get_playback_state())?;
@@ -78,7 +79,7 @@ impl Room {
     }
 
     pub fn leave(&mut self, id: ConnectionId) -> Result<(), anyhow::Error> {
-        self.members.retain(|m| m.id != id);
+        self.members.remove(&id);
         Ok(())
     }
 
@@ -95,6 +96,7 @@ impl Room {
             .map(|p| {
                 let mut post = am::Post::from(p);
                 post.you = p.user_id == user_id;
+                post.admin = self.members.values().any(|m| m.user_id == p.user_id && m.is_admin);
 
                 post
             })
@@ -115,9 +117,11 @@ impl Room {
         let mut post_am = am::Post::from(&post);
         let post_user_id = post.user_id;
 
+        post_am.admin = self.members.values().any(|m| m.user_id == post_user_id && m.is_admin);
+
         self.posts.push_back(post);
 
-        for m in self.members.iter() {
+        for m in self.members.values() {
             post_am.you = post_user_id == m.user_id;
 
             send(&m.tx, "post", &post_am).map_err(|err| error!("{err:?}")).ok();
@@ -130,7 +134,7 @@ impl Room {
     pub fn delete_post(&mut self, post_id: i64) -> Result<(), anyhow::Error> {
         self.posts.retain(|p| p.id != post_id);
 
-        for m in self.members.iter() {
+        for m in self.members.values() {
             send(&m.tx, "delete-post", post_id)
                 .map_err(|err| error!("{err:?}"))
                 .ok();
@@ -142,9 +146,17 @@ impl Room {
     pub fn content(&mut self, content: &am::Content) -> Result<(), anyhow::Error> {
         self.content = Some(content.clone());
 
-        for m in self.members.iter() {
+        for m in self.members.values() {
             send(&m.tx, "content", content).map_err(|err| error!("{err:?}")).ok();
         }
+
+        Ok(())
+    }
+
+    pub fn set_admin(&mut self, id: ConnectionId) -> Result<(), anyhow::Error> {
+        let me = self.members.get_mut(&id).context("Error getting member")?;
+
+        me.is_admin = true;
 
         Ok(())
     }
@@ -155,8 +167,13 @@ impl Room {
             return Ok(());
         }
 
+        let me = self.members.get(&id).context("Error getting member")?;
+        if !me.is_admin {
+            return Err(anyhow::anyhow!("User is not an admin. Master denied."));
+        }
+
         // Notify the previous master that it is no longer mater.
-        if let Some(old_master) = self.members.iter().find(|m| m.id == self.master) {
+        if let Some(old_master) = self.members.get(&self.master) {
             send(&old_master.tx, "not-master", ())?;
         }
 
@@ -194,7 +211,7 @@ impl Room {
     pub fn broadcast_playback_state(&self) -> Result<(), anyhow::Error> {
         let ps = self.get_playback_state();
 
-        for m in self.members.iter() {
+        for m in self.members.values() {
             send(&m.tx, "playbackstate", &ps).map_err(|err| error!("{err:?}")).ok();
         }
 
@@ -226,7 +243,7 @@ impl Room {
         self.emotes.retain(|e| e.name != emote.name);
         self.emotes.push(emote.clone());
 
-        for m in self.members.iter() {
+        for m in self.members.values() {
             send(&m.tx, "emote", &emote).map_err(|err| error!("{err:?}")).ok();
         }
 
@@ -238,7 +255,7 @@ impl Room {
         if let Some(index) = self.emotes.iter().position(|e| e.id == emote_id) {
             let emote = self.emotes.remove(index);
 
-            for m in self.members.iter() {
+            for m in self.members.values() {
                 send(&m.tx, "delete-emote", &emote.name)
                     .map_err(|err| error!("{err:?}"))
                     .ok();

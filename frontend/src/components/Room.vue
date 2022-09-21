@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineAsyncComponent, onMounted, onUnmounted, provide, ref, toRefs } from "vue";
+import { defineAsyncComponent, onMounted, onUnmounted, provide, ref, toRefs, watch } from "vue";
 import router from "@/router";
 
 import Chat from "@/components/chat/Chat.vue";
@@ -94,7 +94,15 @@ onMounted(async () => {
 
   await auth.setup();
 
+  const authorizeWebsocket = () => {
+    ws.send("auth", auth.getToken());
+  };
+
   ws_listener = ws.create_listener();
+
+  ws_listener.on("joined", () => {
+    authorizeWebsocket();
+  });
 
   ws_listener.on("emotes", async (emotes: Emote[]) => {
     for (const e of emotes) {
@@ -131,6 +139,13 @@ onMounted(async () => {
   });
 
   ws.connect();
+
+  if (!auth.isAuthorized.value) {
+    const unwatch = watch(auth.isAuthorized, () => {
+      authorizeWebsocket();
+      unwatch();
+    });
+  }
 });
 
 onUnmounted(() => {
@@ -349,7 +364,7 @@ const setMaster = (v: boolean) => {
   }
 
   if (isMaster.value) {
-    ws.send("set-master", auth.getToken());
+    ws.send("set-master");
   } else {
     ws.send("not-master");
   }

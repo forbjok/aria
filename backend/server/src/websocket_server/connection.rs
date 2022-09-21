@@ -12,10 +12,7 @@ use tracing::{error, info, warn};
 
 use aria_models::api as am;
 
-use crate::{
-    auth::{RoomClaims, UserClaims},
-    websocket_server::send,
-};
+use crate::auth::{RoomClaims, UserClaims};
 
 use super::{room::Room, send_raw, ConnectionId, ServerState, Tx};
 
@@ -130,7 +127,7 @@ pub(super) async fn handle_connection(
                                     warn!("[{id}] Tried to leave the room, but was not in a room.");
                                 }
                             }
-                            "set-master" => {
+                            "auth" => {
                                 let token: String =
                                     serde_json::from_str(data).context("Error deserializing authorization token")?;
 
@@ -145,10 +142,16 @@ pub(super) async fn handle_connection(
                                     if is_authorized {
                                         let mut rooms = sv_state.rooms.lock().await;
                                         if let Some(room) = rooms.get_mut(&room_id) {
-                                            room.set_master(id).context("setting master")?;
+                                            room.set_admin(id).context("setting admin")?;
                                         }
-                                    } else {
-                                        send(tx, "not-master", ())?;
+                                    }
+                                }
+                            }
+                            "set-master" => {
+                                if let Some(&room_id) = cn_state.room.lock().await.as_ref() {
+                                    let mut rooms = sv_state.rooms.lock().await;
+                                    if let Some(room) = rooms.get_mut(&room_id) {
+                                        room.set_master(id).context("setting master")?;
                                     }
                                 }
                             }

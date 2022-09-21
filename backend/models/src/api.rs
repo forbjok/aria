@@ -53,6 +53,8 @@ pub struct Post {
 
     #[serde(skip_serializing_if = "is_false")]
     pub you: bool,
+    #[serde(skip_serializing_if = "is_false")]
+    pub admin: bool,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
@@ -92,6 +94,7 @@ impl From<&lm::Post> for Post {
             }),
             posted: p.posted_at,
             you: false,
+            admin: false,
         }
     }
 }
