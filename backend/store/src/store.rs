@@ -40,7 +40,7 @@ pub trait AriaStore: Send + Sync {
 
     async fn create_emote(&self, room_id: i32, emote: &dbm::NewEmote) -> Result<dbm::Emote, anyhow::Error>;
 
-    async fn delete_emote(&self, room_id: i32, emote_id: i32) -> Result<(), anyhow::Error>;
+    async fn delete_emote(&self, room_id: i32, emote_id: i32) -> Result<bool, anyhow::Error>;
 
     async fn set_room_content(&self, room_id: i32, content: &str) -> Result<(), anyhow::Error>;
 
@@ -141,17 +141,17 @@ impl AriaStore for PgStore {
         user_id: i64,
         is_admin: bool,
     ) -> Result<bool, anyhow::Error> {
-        let res = sqlx::query_unchecked!(
+        let success = sqlx::query_scalar!(
             r#"SELECT delete_post($1, $2, $3, $4);"#,
             room_id,
             post_id,
             user_id,
             is_admin,
         )
-        .execute(&self.pool)
+        .fetch_one(&self.pool)
         .await?;
 
-        Ok(res.rows_affected() > 0)
+        Ok(success.unwrap())
     }
 
     async fn get_emotes(&self, room_id: i32) -> Result<Vec<dbm::Emote>, anyhow::Error> {
@@ -171,12 +171,12 @@ impl AriaStore for PgStore {
         Ok(emote)
     }
 
-    async fn delete_emote(&self, room_id: i32, emote_id: i32) -> Result<(), anyhow::Error> {
-        sqlx::query_unchecked!(r#"SELECT delete_emote($1, $2);"#, room_id, emote_id)
-            .execute(&self.pool)
+    async fn delete_emote(&self, room_id: i32, emote_id: i32) -> Result<bool, anyhow::Error> {
+        let success = sqlx::query_scalar!(r#"SELECT delete_emote($1, $2);"#, room_id, emote_id)
+            .fetch_one(&self.pool)
             .await?;
 
-        Ok(())
+        Ok(success.unwrap())
     }
 
     async fn set_room_content(&self, room_id: i32, content: &str) -> Result<(), anyhow::Error> {

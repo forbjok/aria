@@ -54,13 +54,15 @@ impl AriaCore {
         Ok(emote)
     }
 
-    pub async fn delete_emote(&self, room_id: i32, emote_id: i32) -> Result<(), anyhow::Error> {
-        self.store.delete_emote(room_id, emote_id).await?;
+    pub async fn delete_emote(&self, room_id: i32, emote_id: i32) -> Result<bool, anyhow::Error> {
+        let success = self.store.delete_emote(room_id, emote_id).await?;
 
-        self.notify_tx
-            .unbounded_send(Notification::DeleteEmote(room_id, emote_id))?;
+        if success {
+            self.notify_tx
+                .unbounded_send(Notification::DeleteEmote(room_id, emote_id))?;
+        }
 
-        Ok(())
+        Ok(success)
     }
 
     pub async fn update_emote_images(&self, hash: &str, ext: &str) -> Result<(), anyhow::Error> {

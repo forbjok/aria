@@ -182,7 +182,11 @@ async fn delete_emote(
         return Err(ApiError::Unauthorized);
     }
 
-    server.core.delete_emote(room_id, emote_id).await?;
+    let success = server.core.delete_emote(room_id, emote_id).await?;
+
+    if !success {
+        return Err(ApiError::NotFound);
+    }
 
     Ok(())
 }
