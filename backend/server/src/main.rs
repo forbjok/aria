@@ -1,3 +1,4 @@
+use std::env;
 use std::sync::Arc;
 
 use aria_core::AriaCore;
@@ -29,7 +30,9 @@ async fn main() -> Result<(), anyhow::Error> {
 
     let (notify_tx, notify_rx) = futures_channel::mpsc::unbounded();
 
-    let auth = Arc::new(AriaAuth::new(b"sekrit"));
+    let jwt_secret = env::var("JWT_SECRET").unwrap_or_else(|_| "sekrit".to_owned());
+
+    let auth = Arc::new(AriaAuth::new(jwt_secret.as_bytes()));
     let core = Arc::new(AriaCore::new(notify_tx)?);
 
     if opt.migrate {

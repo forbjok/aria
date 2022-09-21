@@ -8,12 +8,12 @@ use axum::{
     extract::{FromRequestParts, TypedHeader},
     headers::{authorization::Bearer, Authorization},
     http::{request::Parts, StatusCode},
-    response::IntoResponse,
+    response::{IntoResponse, Response},
     Router,
 };
 use tracing::error;
 
-use crate::auth::Claims;
+use crate::auth::{AuthError, Claims};
 
 use super::AriaServer;
 
@@ -23,6 +23,12 @@ enum ApiError {
     BadRequest,
     NotFound,
     Unauthorized,
+}
+
+impl From<AuthError> for ApiError {
+    fn from(_err: AuthError) -> Self {
+        Self::Unauthorized
+    }
 }
 
 impl From<anyhow::Error> for ApiError {
@@ -43,6 +49,17 @@ pub fn router(server: Arc<AriaServer>) -> Router {
     Router::new().nest("/r", room).nest("/chat", chat)
 }
 
+impl IntoResponse for AuthError {
+    fn into_response(self) -> Response {
+        let (status, error_message) = match self {
+            AuthError::TokenCreation => (StatusCode::INTERNAL_SERVER_ERROR, "Token creation error"),
+            AuthError::InvalidToken => (StatusCode::BAD_REQUEST, "Invalid token"),
+        };
+
+        (status, error_message).into_response()
+    }
+}
+
 impl IntoResponse for ApiError {
     fn into_response(self) -> axum::response::Response {
         match self {
@@ -59,16 +76,17 @@ impl IntoResponse for ApiError {
 
 #[async_trait]
 impl FromRequestParts<Arc<AriaServer>> for Authorized {
-    type Rejection = ApiError;
+    type Rejection = AuthError;
 
     async fn from_request_parts(parts: &mut Parts, state: &Arc<AriaServer>) -> Result<Self, Self::Rejection> {
         // Extract the token from the authorization header
         let TypedHeader(Authorization(bearer)) = TypedHeader::<Authorization<Bearer>>::from_request_parts(parts, state)
             .await
-            .map_err(|_| ApiError::Unauthorized)?;
+            .map_err(|_| AuthError::InvalidToken)?;
 
-        // Decode the user data
-        let claims: Claims = state.auth.verify(bearer.token()).ok_or(ApiError::Unauthorized)?;
+        let token = bearer.token();
+
+        let claims = state.auth.verify(token)?;
 
         Ok(Authorized { claims })
     }

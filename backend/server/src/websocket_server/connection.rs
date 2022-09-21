@@ -127,7 +127,7 @@ pub(super) async fn handle_connection(
 
                                 if let Some(&room_id) = cn_state.room.lock().await.as_ref() {
                                     let mut is_authorized = false;
-                                    if let Some(claims) = sv_state.auth.verify(&token) {
+                                    if let Ok(claims) = sv_state.auth.verify(&token) {
                                         if claims.room_id == room_id {
                                             is_authorized = true;
                                         }

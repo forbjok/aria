@@ -70,7 +70,7 @@ async fn claim(
 ) -> Result<Json<ClaimResponse>, ApiError> {
     let room = server.core.claim_room(&req.name).await?;
 
-    let claims = Claims { room_id: room.id };
+    let claims = Claims::new(room.id);
     let token = server.auth.generate_token(&claims)?;
 
     Ok(Json(ClaimResponse {
@@ -91,7 +91,7 @@ async fn login(
         return Err(ApiError::Unauthorized);
     }
 
-    let claims = Claims { room_id };
+    let claims = Claims::new(room_id);
     let token = server.auth.generate_token(&claims)?;
 
     Ok(Json(LoginResponse { token }))
