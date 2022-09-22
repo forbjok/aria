@@ -6,9 +6,14 @@ import type { RoomService } from "./room";
 export class RoomAdminService {
   constructor(private room: RoomService, private auth: RoomAuthService) {}
 
-  action(action: any) {
+  async action(action: any) {
     if (!this.auth.isAuthorized.value) {
       console.log("User not authorized to perform action.");
+      return;
+    }
+
+    const accessToken = await this.auth?.getAccessToken();
+    if (!accessToken) {
       return;
     }
 
@@ -16,15 +21,15 @@ export class RoomAdminService {
       action: action,
     };
 
-    return axios.post(`/api/r/i/${this.room.id}/control`, data, {
+    return await axios.post(`/api/r/i/${this.room.id}/control`, data, {
       headers: {
-        Authorization: `Bearer ${this.auth.getToken()}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     });
   }
 
-  setContentUrl(url: string) {
-    return this.action({
+  async setContentUrl(url: string) {
+    return await this.action({
       action: "set content url",
       url: url,
     });

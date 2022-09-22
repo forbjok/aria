@@ -1,7 +1,8 @@
 use anyhow::Context;
 use async_trait::async_trait;
+use uuid::Uuid;
 
-use crate::models as dbm;
+use crate::models::{self as dbm, RefreshRefreshTokenResult};
 
 #[derive(Debug)]
 pub enum StoreError {
@@ -49,6 +50,10 @@ pub trait AriaStore: Send + Sync {
     async fn update_emote_images(&self, hash: &str, ext: &str) -> Result<(), anyhow::Error>;
 
     async fn generate_user_id(&self) -> Result<i64, anyhow::Error>;
+
+    async fn create_refresh_token(&self, claims: &str) -> Result<Uuid, anyhow::Error>;
+
+    async fn refresh_refresh_token(&self, token: Uuid) -> Result<RefreshRefreshTokenResult, anyhow::Error>;
 }
 
 pub struct PgStore {
@@ -210,5 +215,27 @@ impl AriaStore for PgStore {
             .context("Error generating user id")?;
 
         Ok(new_user_id)
+    }
+
+    async fn create_refresh_token(&self, claims: &str) -> Result<Uuid, anyhow::Error> {
+        let token = sqlx::query_scalar!(r#"SELECT create_refresh_token($1);"#, claims)
+            .fetch_one(&self.pool)
+            .await?
+            .context("Error creating refresh token")?;
+
+        Ok(token)
+    }
+
+    async fn refresh_refresh_token(&self, token: Uuid) -> Result<RefreshRefreshTokenResult, anyhow::Error> {
+        let result = sqlx::query_as_unchecked!(
+            RefreshRefreshTokenResult,
+            r#"SELECT * FROM refresh_refresh_token($1);"#,
+            token
+        )
+        .fetch_optional(&self.pool)
+        .await?
+        .context("Error refreshing refresh token")?;
+
+        Ok(result)
     }
 }

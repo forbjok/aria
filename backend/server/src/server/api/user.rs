@@ -5,7 +5,7 @@ use axum::routing::post;
 use axum::{Json, Router};
 use serde::Serialize;
 
-use crate::auth::UserClaims;
+use crate::auth::{JwtClaims, UserClaims};
 use crate::server::api::{ApiError, User};
 use crate::server::AriaServer;
 
@@ -30,8 +30,8 @@ async fn verify_user(_user: User) -> Result<(), ApiError> {
 async fn new_user(State(server): State<Arc<AriaServer>>) -> Result<Json<NewUserResponse>, ApiError> {
     let user_id = server.core.generate_user_id().await?;
 
-    let user_claims = UserClaims::new(user_id);
-    let token = server.auth.generate_token(&user_claims)?;
+    let claims = JwtClaims::eternal(UserClaims { user_id });
+    let token = server.auth.generate_token(&claims)?;
 
     Ok(Json(NewUserResponse { user_id, token }))
 }

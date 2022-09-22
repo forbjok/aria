@@ -1,3 +1,4 @@
+use chrono::{Duration, Utc};
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
@@ -12,14 +13,22 @@ pub enum AuthError {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct RoomClaims {
+pub struct JwtClaims<C> {
     pub exp: usize,
-    pub room_id: i32,
+
+    #[serde(flatten)]
+    pub claims: C,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(tag = "level")]
+#[serde(rename_all = "lowercase")]
+pub enum AuthClaims {
+    Room { room_id: i32 },
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct UserClaims {
-    pub exp: usize,
     pub user_id: i64,
 }
 
@@ -35,7 +44,7 @@ impl AriaAuth {
         Self { keys }
     }
 
-    pub fn generate_token<T: Serialize>(&self, claims: &T) -> Result<String, AuthError> {
+    pub fn generate_token<T: Serialize>(&self, claims: &JwtClaims<T>) -> Result<String, AuthError> {
         let token = jsonwebtoken::encode(&Header::default(), &claims, &self.keys.encoding)
             .map_err(|_| AuthError::TokenCreation)?;
 
@@ -43,10 +52,12 @@ impl AriaAuth {
     }
 
     pub fn verify<T: DeserializeOwned>(&self, token: &str) -> Result<T, AuthError> {
-        let token_data = jsonwebtoken::decode::<T>(token, &self.keys.decoding, &Validation::default())
+        let token_data = jsonwebtoken::decode::<JwtClaims<T>>(token, &self.keys.decoding, &Validation::default())
             .map_err(|_| AuthError::InvalidToken)?;
 
-        Ok(token_data.claims)
+        let JwtClaims { claims, .. } = token_data.claims;
+
+        Ok(claims)
     }
 }
 
@@ -59,20 +70,26 @@ impl Keys {
     }
 }
 
-impl RoomClaims {
-    pub fn new(room_id: i32) -> Self {
+impl<C> JwtClaims<C> {
+    pub fn eternal(claims: C) -> Self {
         Self {
             exp: usize::MAX,
-            room_id,
+            claims,
+        }
+    }
+
+    pub fn short(claims: C) -> Self {
+        Self {
+            exp: (Utc::now() + Duration::hours(1)).timestamp() as usize,
+            claims,
         }
     }
 }
 
-impl UserClaims {
-    pub fn new(user_id: i64) -> Self {
-        Self {
-            exp: usize::MAX,
-            user_id,
-        }
+impl AuthClaims {
+    pub fn for_room(&self, p_room_id: i32) -> bool {
+        let AuthClaims::Room { room_id } = self;
+
+        *room_id == p_room_id
     }
 }

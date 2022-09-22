@@ -68,10 +68,15 @@ const deleteEmote = async (emote?: Emote) => {
     return;
   }
 
+  const accessToken = await auth?.getAccessToken();
+  if (!accessToken) {
+    return;
+  }
+
   try {
     await axios.delete(`/api/chat/${room?.id}/emote/${emote.id}`, {
       headers: {
-        Authorization: `Bearer ${auth?.getToken()}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     });
 
@@ -116,6 +121,11 @@ const submitEmote = async () => {
     return;
   }
 
+  const accessToken = await auth?.getAccessToken();
+  if (!accessToken) {
+    return;
+  }
+
   adding.value = true;
   errorText.value = undefined;
   progressText.value = undefined;
@@ -129,7 +139,7 @@ const submitEmote = async () => {
   try {
     await axios.post(`/api/chat/${room?.id}/emote`, formData, {
       headers: {
-        Authorization: `Bearer ${auth?.getToken()}`,
+        Authorization: `Bearer ${accessToken}`,
       },
       onUploadProgress: (e: ProgressEvent) => {
         if (e.lengthComputable) {

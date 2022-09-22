@@ -1,6 +1,7 @@
 use std::{borrow::Cow, net::IpAddr, path::PathBuf};
 
 use chrono::{DateTime, Utc};
+use uuid::Uuid;
 
 use crate::api as am;
 
@@ -75,4 +76,10 @@ pub struct NewEmote<'a> {
 pub struct NewRoom<'a> {
     pub name: Cow<'a, str>,
     pub password: Cow<'a, str>,
+}
+
+#[derive(Debug)]
+pub struct RefreshRefreshTokenResult<C> {
+    pub token: Uuid,
+    pub claims: C,
 }

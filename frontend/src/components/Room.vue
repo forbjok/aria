@@ -94,14 +94,14 @@ onMounted(async () => {
 
   await auth.setup();
 
-  const authorizeWebsocket = () => {
-    ws.send("auth", auth.getToken());
+  const authorizeWebsocket = async () => {
+    ws.send("auth", await auth.getAccessToken());
   };
 
   ws_listener = ws.create_listener();
 
-  ws_listener.on("joined", () => {
-    authorizeWebsocket();
+  ws_listener.on("joined", async () => {
+    await authorizeWebsocket();
   });
 
   ws_listener.on("emotes", async (emotes: Emote[]) => {
@@ -141,8 +141,8 @@ onMounted(async () => {
   ws.connect();
 
   if (!auth.isAuthorized.value) {
-    const unwatch = watch(auth.isAuthorized, () => {
-      authorizeWebsocket();
+    const unwatch = watch(auth.isAuthorized, async () => {
+      await authorizeWebsocket();
       unwatch();
     });
   }

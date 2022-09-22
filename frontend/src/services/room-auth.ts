@@ -1,13 +1,19 @@
-import axios, { type AxiosResponse } from "axios";
+import axios from "axios";
 import { inject, ref } from "vue";
 
 import type { LocalStorageService } from "@/services/localstorage";
 import type { RoomService } from "./room";
 
+interface LoginResponse {
+  access_token: string;
+  exp: number;
+  refresh_token: string;
+}
+
 export class RoomAuthService {
   public readonly isAuthorized = ref(false);
 
-  private token?: string;
+  private auth?: LoginResponse;
   private localStorageService = inject<LocalStorageService>("storage");
 
   constructor(private room: RoomService) {}
@@ -17,28 +23,32 @@ export class RoomAuthService {
   }
 
   public async setup() {
-    await this.loadToken();
+    await this.loadAuth();
   }
 
-  public getToken(): string | undefined {
-    return this.token;
+  public async getAccessToken(): Promise<string | undefined> {
+    if (!(await this.refreshIfNeeded())) {
+      return;
+    }
+
+    return this.auth?.access_token;
   }
 
-  public async setToken(token?: string) {
-    this.token = token;
-    this.saveToken();
+  public async setAuth(auth?: LoginResponse) {
+    this.auth = auth;
+    this.saveAuth();
     this.verifyToken();
   }
 
   public async verifyToken(): Promise<boolean> {
-    if (!this.token || !this.room.exists()) {
+    if (!this.auth?.access_token || !this.room.exists()) {
       return false;
     }
 
     try {
       await axios.post(`/api/r/i/${this.room.id}/loggedin`, null, {
         headers: {
-          Authorization: `Bearer ${this.token}`,
+          Authorization: `Bearer ${this.auth?.access_token}`,
         },
       });
 
@@ -53,32 +63,71 @@ export class RoomAuthService {
 
   public async login(password: string): Promise<boolean> {
     const data = {
+      level: "room",
+      room_id: this.room.id,
       password: password,
     };
 
-    let response: AxiosResponse;
+    try {
+      const response = await axios.post<LoginResponse>(`/api/auth/login`, data);
+      this.auth = response.data;
+      this.saveAuth();
+
+      this.isAuthorized.value = true;
+      return true;
+    } catch {
+      this.clearAuth();
+      return false;
+    }
+  }
+
+  private async refresh(): Promise<boolean> {
+    const data = {
+      refresh_token: this.auth?.refresh_token,
+    };
 
     try {
-      response = await axios.post(`/api/r/i/${this.room.id}/login`, data);
+      const response = await axios.post<LoginResponse>(`/api/auth/refresh`, data);
+      this.auth = response.data;
+      this.saveAuth();
+
+      this.isAuthorized.value = true;
+      return true;
     } catch {
+      this.clearAuth();
+      return false;
+    }
+  }
+
+  private async refreshIfNeeded(): Promise<boolean> {
+    if (!this.auth) {
       return false;
     }
 
-    const res = await response.data;
+    const now = Date.now() / 1000 - 60;
 
-    this.token = res.token;
-    this.saveToken();
+    // If token is within 1 minute of expiring, refresh
+    if (this.auth.exp < now) {
+      if (!(await this.refresh())) {
+        return false;
+      }
+    }
 
-    this.isAuthorized.value = true;
     return true;
   }
 
-  private async loadToken() {
-    this.token = this.localStorageService?.get(this.authKeyName);
+  private clearAuth() {
+    this.auth = undefined;
+    this.isAuthorized.value = false;
+    this.saveAuth();
+  }
+
+  private async loadAuth() {
+    this.auth = this.localStorageService?.get<LoginResponse>(this.authKeyName);
     await this.verifyToken();
   }
 
-  private saveToken() {
-    this.localStorageService?.set(this.authKeyName, this.token);
+  private saveAuth() {
+    this.localStorageService?.set(this.authKeyName, this.auth);
   }
 }

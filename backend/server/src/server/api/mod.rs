@@ -1,3 +1,4 @@
+mod auth;
 mod chat;
 mod room;
 mod user;
@@ -14,7 +15,7 @@ use axum::{
 };
 use tracing::error;
 
-use crate::auth::{AuthError, RoomClaims, UserClaims};
+use crate::auth::{AuthClaims, AuthError, UserClaims};
 
 use super::AriaServer;
 
@@ -40,7 +41,7 @@ impl From<anyhow::Error> for ApiError {
 
 #[derive(Debug)]
 struct Authorized {
-    claims: RoomClaims,
+    claims: AuthClaims,
 }
 
 #[derive(Debug)]
@@ -49,11 +50,16 @@ struct User {
 }
 
 pub fn router(server: Arc<AriaServer>) -> Router {
+    let auth = auth::router(server.clone());
     let room = room::router(server.clone());
     let chat = chat::router(server.clone());
     let user = user::router(server);
 
-    Router::new().nest("/r", room).nest("/chat", chat).nest("/user", user)
+    Router::new()
+        .nest("/auth", auth)
+        .nest("/r", room)
+        .nest("/chat", chat)
+        .nest("/user", user)
 }
 
 impl IntoResponse for AuthError {
@@ -93,7 +99,7 @@ impl FromRequestParts<Arc<AriaServer>> for Authorized {
 
         let token = bearer.token();
 
-        let claims = state.auth.verify(token)?;
+        let claims = state.auth.verify::<AuthClaims>(token)?;
 
         Ok(Authorized { claims })
     }
@@ -117,5 +123,11 @@ impl FromRequestParts<Arc<AriaServer>> for User {
             .map_err(|_| StatusCode::UNAUTHORIZED)?;
 
         Ok(User { id: claims.user_id })
+    }
+}
+
+impl Authorized {
+    pub fn for_room(&self, room_id: i32) -> bool {
+        self.claims.for_room(room_id)
     }
 }

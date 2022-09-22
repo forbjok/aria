@@ -131,15 +131,17 @@ const activatePostingCooldown = () => {
   }, 1000);
 };
 
-const buildHeaders = () => {
+const buildHeaders = async () => {
   let headers: AxiosRequestHeaders = {
     "X-User": user?.userToken || "",
   };
 
   if (auth?.isAuthorized.value) {
+    const accessToken = await auth?.getAccessToken();
+
     headers = {
       ...headers,
-      Authorization: `Bearer ${auth?.getToken()}`,
+      Authorization: `Bearer ${accessToken}`,
     };
   }
 
@@ -185,7 +187,7 @@ const submitPost = async () => {
 
   try {
     await axios.post(`/api/chat/${room?.id}/post`, formData, {
-      headers: buildHeaders(),
+      headers: await buildHeaders(),
       onUploadProgress: (e) => {
         if (e.lengthComputable) {
           const percentComplete = Math.round((e.loaded / e.total) * 100);
@@ -277,7 +279,7 @@ const deletePost = async (post?: Post) => {
   }
 
   await axios.delete(`/api/chat/${room?.id}/post/${post.id}`, {
-    headers: buildHeaders(),
+    headers: await buildHeaders(),
   });
 };
 

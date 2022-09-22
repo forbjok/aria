@@ -1,6 +1,7 @@
 use std::net::IpAddr;
 
 use chrono::{DateTime, Utc};
+use uuid::Uuid;
 
 #[derive(Debug, sqlx::Type)]
 #[sqlx(type_name = "room")]
@@ -86,4 +87,11 @@ pub struct NewEmote {
     pub name: Option<String>,
     pub hash: Option<String>,
     pub ext: Option<String>,
+}
+
+#[derive(Debug, sqlx::Type)]
+#[sqlx(type_name = "refresh_refresh_token_result")]
+pub struct RefreshRefreshTokenResult {
+    pub token: Option<Uuid>,
+    pub claims: Option<String>,
 }

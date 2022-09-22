@@ -5,6 +5,7 @@ use aria_models::local as lm;
 use aria_store::{AriaStore, PgStore};
 use futures_channel::mpsc::UnboundedSender;
 
+mod auth;
 mod emote;
 mod image;
 mod post;

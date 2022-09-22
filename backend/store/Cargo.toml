@@ -11,6 +11,7 @@ async-trait = "0.1.57"
 chrono = "0.4.22"
 serde = "1.0.144"
 serde_derive = "1.0.144"
-sqlx = { version = "0.6.1", features = ["chrono", "ipnetwork", "offline", "postgres", "runtime-tokio-rustls"] }
+sqlx = { version = "0.6.1", features = ["chrono", "ipnetwork", "offline", "postgres", "runtime-tokio-rustls", "uuid"] }
 tokio = "1.21.1"
 tracing = "0.1.36"
+uuid = "1.1.2"

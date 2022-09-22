@@ -728,5 +728,51 @@
       }
     },
     "query": "SELECT delete_post($1, $2, $3, $4);"
+  },
+  "f8b6abb5c443fa4397dcd17efb362ec70647d13f74596a8233d6a1b0a812119f": {
+    "describe": {
+      "columns": [
+        {
+          "name": "token",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "claims",
+          "ordinal": 1,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        null,
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "SELECT * FROM refresh_refresh_token($1);"
+  },
+  "fd2682a1a588461ca0ba771bc9f246a6086d1ce47a8934acfef9b88ab28909b2": {
+    "describe": {
+      "columns": [
+        {
+          "name": "create_refresh_token",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "SELECT create_refresh_token($1);"
   }
 }

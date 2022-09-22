@@ -33,7 +33,7 @@ async fn create_post(
     Path(room_id): Path<i32>,
     ContentLengthLimit(mut multipart): ContentLengthLimit<Multipart, { MAX_IMAGE_SIZE }>,
 ) -> Result<Json<i64>, ApiError> {
-    let admin = auth.map(|a| a.claims.room_id == room_id).unwrap_or(false);
+    let admin = auth.map(|a| a.for_room(room_id)).unwrap_or(false);
 
     let mut name: Option<String> = None;
     let mut comment: Option<String> = None;
@@ -99,7 +99,7 @@ async fn delete_post(
     State(server): State<Arc<AriaServer>>,
     Path((room_id, post_id)): Path<(i32, i64)>,
 ) -> Result<(), ApiError> {
-    let is_admin = auth.map(|a| a.claims.room_id == room_id).unwrap_or(false);
+    let is_admin = auth.map(|a| a.for_room(room_id)).unwrap_or(false);
 
     let success = server.core.delete_post(room_id, post_id, user.id, is_admin).await?;
 
@@ -117,7 +117,7 @@ async fn create_emote(
     Path(room_id): Path<i32>,
     ContentLengthLimit(mut multipart): ContentLengthLimit<Multipart, { MAX_IMAGE_SIZE }>,
 ) -> Result<(StatusCode, ()), ApiError> {
-    if auth.claims.room_id != room_id {
+    if !auth.for_room(room_id) {
         return Err(ApiError::Unauthorized);
     }
 
@@ -182,7 +182,7 @@ async fn delete_emote(
     State(server): State<Arc<AriaServer>>,
     Path((room_id, emote_id)): Path<(i32, i32)>,
 ) -> Result<(), ApiError> {
-    if auth.claims.room_id != room_id {
+    if !auth.for_room(room_id) {
         return Err(ApiError::Unauthorized);
     }
 

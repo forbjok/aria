@@ -1,9 +1,13 @@
 export class LocalStorageService {
   get<T>(name: string): T | undefined {
     const json = window.localStorage.getItem(this.getKeyName(name));
-    if (!json) return undefined;
+    if (!json) return;
 
-    return JSON.parse(json);
+    try {
+      return JSON.parse(json);
+    } catch {
+      return;
+    }
   }
 
   set<T>(name: string, value: T | undefined) {

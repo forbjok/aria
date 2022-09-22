@@ -12,7 +12,7 @@ use tracing::{error, info, warn};
 
 use aria_models::api as am;
 
-use crate::auth::{RoomClaims, UserClaims};
+use crate::auth::{AuthClaims, UserClaims};
 
 use super::{room::Room, send_raw, ConnectionId, ServerState, Tx};
 
@@ -133,8 +133,8 @@ pub(super) async fn handle_connection(
 
                                 if let Some(&room_id) = cn_state.room.lock().await.as_ref() {
                                     let mut is_authorized = false;
-                                    if let Ok(claims) = sv_state.auth.verify::<RoomClaims>(&token) {
-                                        if claims.room_id == room_id {
+                                    if let Ok(claims) = sv_state.auth.verify::<AuthClaims>(&token) {
+                                        if claims.for_room(room_id) {
                                             is_authorized = true;
                                         }
                                     }
