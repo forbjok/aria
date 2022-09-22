@@ -96,7 +96,6 @@ impl Room {
             .map(|p| {
                 let mut post = am::Post::from(p);
                 post.you = p.user_id == user_id;
-                post.admin = self.members.values().any(|m| m.user_id == p.user_id && m.is_admin);
 
                 post
             })
@@ -116,8 +115,6 @@ impl Room {
 
         let mut post_am = am::Post::from(&post);
         let post_user_id = post.user_id;
-
-        post_am.admin = self.members.values().any(|m| m.user_id == post_user_id && m.is_admin);
 
         self.posts.push_back(post);
 

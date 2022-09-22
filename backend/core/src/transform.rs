@@ -25,6 +25,7 @@ pub fn dbm_post_to_lm(p: dbm::PostAndImage) -> lm::Post {
         }),
         posted_at: p.post.created_at.unwrap(),
         user_id: p.post.user_id.unwrap(),
+        admin: p.post.admin,
     }
 }
 

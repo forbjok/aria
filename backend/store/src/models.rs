@@ -27,6 +27,7 @@ pub struct Post {
     pub ip: Option<IpAddr>,
     pub is_deleted: bool,
     pub user_id: Option<i64>,
+    pub admin: bool,
 }
 
 #[derive(Debug, sqlx::Type)]
@@ -55,6 +56,7 @@ pub struct NewPost {
     pub comment: Option<String>,
     pub ip: Option<IpAddr>,
     pub user_id: i64,
+    pub admin: bool,
 }
 
 #[derive(Debug, sqlx::Type)]

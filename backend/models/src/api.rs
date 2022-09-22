@@ -52,9 +52,10 @@ pub struct Post {
     pub image: Option<Image>,
 
     #[serde(skip_serializing_if = "is_false")]
-    pub you: bool,
-    #[serde(skip_serializing_if = "is_false")]
     pub admin: bool,
+
+    #[serde(skip_serializing_if = "is_false")]
+    pub you: bool,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
@@ -93,8 +94,8 @@ impl From<&lm::Post> for Post {
                 tn_url: format!("/f/t/{}.{}", i.hash, i.tn_ext),
             }),
             posted: p.posted_at,
+            admin: p.admin,
             you: false,
-            admin: false,
         }
     }
 }

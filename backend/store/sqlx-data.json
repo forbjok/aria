@@ -302,6 +302,10 @@
                   [
                     "user_id",
                     "Int8"
+                  ],
+                  [
+                    "admin",
+                    "Bool"
                   ]
                 ]
               },
@@ -434,6 +438,10 @@
                   [
                     "user_id",
                     "Int8"
+                  ],
+                  [
+                    "admin",
+                    "Bool"
                   ]
                 ]
               },
@@ -513,6 +521,10 @@
                   [
                     "user_id",
                     "Int8"
+                  ],
+                  [
+                    "admin",
+                    "Bool"
                   ]
                 ]
               },

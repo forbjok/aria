@@ -50,6 +50,7 @@ impl AriaCore {
             comment: post.comment.map(|v| v.into()),
             ip: Some(post.ip),
             user_id: post.user_id,
+            admin: post.admin,
         };
 
         let p = self.store.create_post(room_id, &post, image.as_ref()).await?;

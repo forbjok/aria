@@ -27,11 +27,14 @@ pub fn router(server: Arc<AriaServer>) -> Router<Arc<AriaServer>> {
 #[axum::debug_handler(state = Arc<AriaServer>)]
 async fn create_post(
     user: User,
+    auth: Option<Authorized>,
     State(server): State<Arc<AriaServer>>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Path(room_id): Path<i32>,
     ContentLengthLimit(mut multipart): ContentLengthLimit<Multipart, { MAX_IMAGE_SIZE }>,
 ) -> Result<Json<i64>, ApiError> {
+    let admin = auth.map(|a| a.claims.room_id == room_id).unwrap_or(false);
+
     let mut name: Option<String> = None;
     let mut comment: Option<String> = None;
     let mut image: Option<lm::NewPostImage> = None;
@@ -81,6 +84,7 @@ async fn create_post(
         image,
         ip: addr.ip(),
         user_id: user.id,
+        admin,
     };
 
     let post = server.core.create_post(room_id, new_post).await?;

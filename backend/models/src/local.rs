@@ -37,6 +37,7 @@ pub struct Post {
     pub image: Option<PostImage>,
     pub posted_at: DateTime<Utc>,
     pub user_id: i64,
+    pub admin: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -61,6 +62,7 @@ pub struct NewPost<'a> {
     pub image: Option<NewPostImage<'a>>,
     pub ip: IpAddr,
     pub user_id: i64,
+    pub admin: bool,
 }
 
 #[derive(Debug)]
