@@ -25,7 +25,7 @@ const claim = async () => {
     const data = await roomService.claim();
 
     claimInfo.value = data;
-    await auth.setToken(data.token);
+    await auth.setAuth(data.auth);
   } catch (err: any) {
     claimError.value = err || "";
   }

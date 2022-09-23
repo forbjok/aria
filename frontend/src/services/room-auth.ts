@@ -4,7 +4,7 @@ import { inject, ref } from "vue";
 import type { LocalStorageService } from "@/services/localstorage";
 import type { RoomService } from "./room";
 
-interface LoginResponse {
+export interface LoginResponse {
   access_token: string;
   exp: number;
   refresh_token: string;

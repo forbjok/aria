@@ -2,6 +2,7 @@ import { ref, type Ref } from "vue";
 import axios from "axios";
 
 import type { Emote, Room } from "@/models";
+import type { LoginResponse } from "./room-auth";
 
 export interface ClaimRequest {
   name: string;
@@ -11,7 +12,7 @@ export interface ClaimInfo {
   id: number;
   name: string;
   password: string;
-  token: string;
+  auth: LoginResponse;
 }
 
 export class RoomService {

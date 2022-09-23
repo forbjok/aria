@@ -10,6 +10,8 @@ use crate::auth::{AuthClaims, JwtClaims};
 use crate::server::api::{ApiError, Authorized};
 use crate::server::AriaServer;
 
+use super::auth::LoginResponse;
+
 #[derive(Debug, Deserialize)]
 struct ClaimRequest {
     pub name: String,
@@ -20,7 +22,7 @@ struct ClaimResponse {
     pub id: i32,
     pub name: String,
     pub password: String,
-    pub token: String,
+    pub auth: LoginResponse,
 }
 
 #[derive(Debug, Deserialize)]
@@ -59,14 +61,25 @@ async fn claim(
 ) -> Result<Json<ClaimResponse>, ApiError> {
     let room = server.core.claim_room(&req.name).await?;
 
-    let claims = JwtClaims::short(AuthClaims::Room { room_id: room.id });
-    let token = server.auth.generate_token(&claims)?;
+    let claims = AuthClaims::Room { room_id: room.id };
+
+    let refresh_token = server.core.create_refresh_token(&claims).await?;
+
+    let claims = JwtClaims::short(claims);
+    let exp = claims.exp;
+    let access_token = server.auth.generate_token(&claims)?;
+
+    let auth = LoginResponse {
+        access_token,
+        exp,
+        refresh_token,
+    };
 
     Ok(Json(ClaimResponse {
         id: room.id,
         name: room.name,
         password: room.password,
-        token,
+        auth,
     }))
 }
 

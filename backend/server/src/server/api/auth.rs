@@ -18,7 +18,7 @@ enum LoginRequest {
 }
 
 #[derive(Debug, Serialize)]
-struct LoginResponse {
+pub struct LoginResponse {
     pub access_token: String,
     pub exp: usize,
     pub refresh_token: Uuid,
