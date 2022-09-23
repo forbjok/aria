@@ -7,13 +7,13 @@ const emit = defineEmits<{
   (e: "logged-in"): void;
 }>();
 
-const auth = inject<RoomAuthService>("auth");
+const auth = inject<RoomAuthService>("auth")!;
 
 const password = ref("");
 const errorText = ref<string>();
 
 const logIn = async () => {
-  const success = await auth?.login(password.value);
+  const success = await auth.login(password.value);
   password.value = "";
 
   if (success) {

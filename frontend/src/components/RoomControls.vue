@@ -3,13 +3,13 @@ import { inject, ref } from "vue";
 
 import type { RoomAdminService } from "@/services/room-admin";
 
-const admin = inject<RoomAdminService>("admin");
+const admin = inject<RoomAdminService>("admin")!;
 
 const contentUrl = ref("");
 
 const setContent = async () => {
   if (contentUrl.value) {
-    await admin?.setContentUrl(contentUrl.value);
+    await admin.setContentUrl(contentUrl.value);
     contentUrl.value = "";
   }
 };

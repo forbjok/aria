@@ -11,7 +11,7 @@ export default defineComponent({
   },
   emits: ["clickquotelink"],
   setup(props, ctx) {
-    const room = inject<RoomService>("room");
+    const room = inject<RoomService>("room")!;
 
     return () => {
       if (!props.text) {
@@ -38,7 +38,7 @@ export default defineComponent({
 
       const addEmote = (text: string) => {
         const name = text.substring(1);
-        const emote = room?.emotes.value[name];
+        const emote = room.emotes.value[name];
         if (!emote) {
           addText(text);
           return;

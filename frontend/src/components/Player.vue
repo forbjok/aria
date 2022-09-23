@@ -43,7 +43,7 @@ const emit = defineEmits<{
   (e: "ratechange", auto: boolean, rate: number): void;
 }>();
 
-const content = ref<Content | null>(null);
+const content = ref<Content>();
 
 let isContentLoaded = false;
 let isAutoUpdate = false;
@@ -53,9 +53,9 @@ let playbackController: PlaybackController | null;
 
 const sources = ref<Source[]>([]);
 
-const embeddedVideo = ref<HTMLMediaElement | null>(null);
-const youtubePlayer = ref<HTMLDivElement | null>(null);
-const googleDriveVideo = ref<HTMLMediaElement | null>(null);
+const embeddedVideo = ref<HTMLMediaElement>();
+const youtubePlayer = ref<HTMLDivElement>();
+const googleDriveVideo = ref<HTMLMediaElement>();
 
 const beginAuto = () => {
   isAutoUpdate = true;
@@ -65,7 +65,7 @@ const beginAuto = () => {
   }, 100);
 };
 
-const setContent = async (_content: Content | null) => {
+const setContent = async (_content?: Content) => {
   isContentLoaded = false;
 
   content.value = _content;

@@ -21,7 +21,7 @@ const emit = defineEmits<{
 
 const { post, highlight, actions } = toRefs(props);
 
-const auth = inject<RoomAuthService>("auth");
+const auth = inject<RoomAuthService>("auth")!;
 
 const toggleImage = (_post: Post): void => {
   _post.showFullImage = !_post.showFullImage;
@@ -74,7 +74,7 @@ const formatTime = (value: string): string => {
       </div>
       <div v-if="actions" class="admin-actions">
         <button
-          v-if="!post.isDeleted && (post.you || auth?.isAuthorized.value)"
+          v-if="!post.isDeleted && (post.you || auth.isAuthorized.value)"
           class="action-button"
           title="Delete post"
           @click="deletePost"

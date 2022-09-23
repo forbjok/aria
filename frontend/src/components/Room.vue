@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineAsyncComponent, onMounted, onUnmounted, provide, ref, toRefs, watch } from "vue";
+import { defineAsyncComponent, inject, onMounted, onUnmounted, provide, reactive, ref, toRefs, watch } from "vue";
 import router from "@/router";
 
 import Chat from "@/components/chat/Chat.vue";
@@ -9,7 +9,6 @@ import Dialog from "@/components/common/Dialog.vue";
 import LogIn from "@/components/admin/LogIn.vue";
 import RoomControls from "./RoomControls.vue";
 
-import { RoomSettingsService } from "@/services/room-settings";
 import { RoomAdminService } from "@/services/room-admin";
 import { RoomAuthService } from "@/services/room-auth";
 
@@ -17,6 +16,8 @@ import type { Content, Emote } from "@/models";
 import { RoomService } from "@/services/room";
 import { AriaWebSocket, AriaWsListener } from "@/services/websocket";
 import { UserService } from "@/services/user";
+import type { LocalStorageService } from "@/services/localstorage";
+import type { RoomSettings } from "@/settings";
 
 const AdminPanel = defineAsyncComponent(() => import("@/components/admin/AdminPanel.vue"));
 
@@ -36,11 +37,23 @@ const props = defineProps<{
 
 const { name } = toRefs(props);
 
+const DEFAULT_SETTINGS: RoomSettings = {
+  chatName: "",
+  theme: "dark",
+  isRightSideChat: false,
+
+  postBadges: {
+    room_admin: false,
+  },
+};
+
+const storage = inject<LocalStorageService>("storage")!;
+
 const isRoomLoaded = ref(false);
 
 const roomService = new RoomService(name.value);
 const auth = new RoomAuthService(roomService);
-const settings = new RoomSettingsService(roomService);
+const settings = reactive<RoomSettings>({ ...DEFAULT_SETTINGS });
 const admin = new RoomAdminService(roomService, auth);
 const user = new UserService();
 
@@ -60,13 +73,13 @@ const logInDialog = ref<typeof Dialog>();
 const roomControlsDialog = ref<typeof Dialog>();
 const adminPanelDialog = ref<typeof Dialog>();
 
-const room = ref<HTMLDivElement | null>(null);
-const toastChat = ref<typeof ToastChat | null>(null);
-const player = ref<typeof Player | null>(null);
+const room = ref<HTMLDivElement>();
+const toastChat = ref<typeof ToastChat>();
+const player = ref<typeof Player>();
 
 const theaterMode = ref(false);
 
-const content = ref<Content | null>(null);
+const content = ref<Content>();
 const isMaster = ref(false);
 const isDetached = ref(false);
 
@@ -89,6 +102,16 @@ onMounted(async () => {
     router.push({ name: "claim", params: { room: name.value } });
     return;
   }
+
+  const roomSettingsKeyName = `room_${name.value}`;
+
+  // Load setings from local storage
+  Object.assign(settings, storage.get(roomSettingsKeyName));
+
+  // Automatically save settings when something changes
+  watch(settings, () => {
+    storage.set(roomSettingsKeyName, settings);
+  });
 
   isRoomLoaded.value = true;
 
@@ -152,7 +175,7 @@ onUnmounted(() => {
   ws_listener?.dispose();
 });
 
-const setContent = async (_content: Content | null) => {
+const setContent = async (_content?: Content) => {
   content.value = _content;
   if (!content.value) return;
   if (!player.value) return;
@@ -167,7 +190,7 @@ const reloadContent = async () => {
   const playbackState = (await getPlaybackState()) || serverPlaybackState;
 
   // Set blank content to unload content
-  setContent(null);
+  setContent();
 
   // The restoration needs to go in a 1 second timeout, because otherwise it
   // doesn't work for some types of content.
@@ -385,17 +408,10 @@ const toggleDetached = () => {
     setPlaybackState(serverPlaybackState);
   }
 };
-
-const toggleRightSideChat = () => {
-  if (settings) {
-    settings.isRightSideChat.value = !settings.isRightSideChat.value;
-    settings.save();
-  }
-};
 </script>
 
 <template>
-  <div v-if="isRoomLoaded" ref="room" class="room" :class="settings.isRightSideChat.value ? 'right-side-chat' : ''">
+  <div v-if="isRoomLoaded" ref="room" class="room" :class="settings.isRightSideChat ? 'right-side-chat' : ''">
     <div class="usercontrols-activationzone">
       <div class="usercontrols">
         <button class="usercontrol" title="Reload" @click="reloadContent">
@@ -410,7 +426,11 @@ const toggleRightSideChat = () => {
         >
           <i class="fa-solid fa-film"></i>
         </button>
-        <button class="usercontrol" title="Switch chat side" @click="toggleRightSideChat">
+        <button
+          class="usercontrol"
+          title="Switch chat side"
+          @click="settings.isRightSideChat = !settings.isRightSideChat"
+        >
           <i class="fa-solid fa-arrow-right-arrow-left"></i>
         </button>
         <button
@@ -444,7 +464,7 @@ const toggleRightSideChat = () => {
       </div>
     </div>
     <div v-show="!theaterMode" ref="chatContainer" class="chat-container">
-      <Chat :class="settings.isRightSideChat.value ? 'right-side-chat' : ''" @post="toastChat?.post($event)" />
+      <Chat :class="settings.isRightSideChat ? 'right-side-chat' : ''" @post="toastChat?.post($event)" />
     </div>
     <div ref="contentArea" class="content-area" @keydown="onContentAreaKeydown($event)">
       <div v-show="theaterMode" class="toast-chat-container">

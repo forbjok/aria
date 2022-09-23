@@ -9,17 +9,17 @@ import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
 
 import type { Post } from "@/models";
 import type { RoomService } from "@/services/room";
-import type { RoomSettingsService } from "@/services/room-settings";
 import type { AriaWebSocket, AriaWsListener } from "@/services/websocket";
 import type { RoomAuthService } from "@/services/room-auth";
 import type { UserService } from "@/services/user";
+import type { RoomSettings } from "@/settings";
 
 const emit = defineEmits<{
   (e: "post", post: Post): void;
 }>();
 
-const auth = inject<RoomAuthService>("auth");
-const room = inject<RoomService>("room");
+const auth = inject<RoomAuthService>("auth")!;
+const room = inject<RoomService>("room")!;
 
 const maxPosts = 200;
 const maxImageSize = 2097152;
@@ -30,9 +30,9 @@ interface NewPost {
   image?: File;
 }
 
-const settings = inject<RoomSettingsService>("settings");
-const user = inject<UserService>("user");
-const ws = inject<AriaWebSocket>("ws");
+const settings = inject<RoomSettings>("settings")!;
+const user = inject<UserService>("user")!;
+const ws = inject<AriaWebSocket>("ws")!;
 
 const postContainer = ref<HTMLDivElement>();
 const postForm = ref<HTMLFormElement>();
@@ -54,7 +54,7 @@ let submitOnCooldown = false;
 
 const createEmptyPost = (): NewPost => {
   return {
-    name: settings?.chatName.value || "",
+    name: settings.chatName,
     comment: "",
   };
 };
@@ -73,14 +73,6 @@ const imageSelected = (event: Event) => {
 
   if (p.image && p.image.size > maxImageSize) {
     alert(`The selected file is bigger than the maximum allowed size of ${filesize(maxImageSize)}`);
-  }
-};
-
-const theme = ref(settings?.theme || "");
-const themeSelected = () => {
-  if (settings) {
-    settings.theme.value = theme.value;
-    settings.save();
   }
 };
 
@@ -133,11 +125,11 @@ const activatePostingCooldown = () => {
 
 const buildHeaders = async () => {
   let headers: AxiosRequestHeaders = {
-    "X-User": user?.userToken || "",
+    "X-User": user.userToken || "",
   };
 
-  if (auth?.isAuthorized.value) {
-    const accessToken = await auth?.getAccessToken();
+  if (auth.isAuthorized.value) {
+    const accessToken = await auth.getAccessToken();
 
     headers = {
       ...headers,
@@ -166,7 +158,7 @@ const submitPost = async () => {
 
   const options: string[] = [];
 
-  if (settings?.postBadges.value.room_admin && auth?.isAuthorized.value) {
+  if (settings.postBadges.room_admin && auth.isAuthorized.value) {
     options.push("ra");
   }
 
@@ -190,13 +182,10 @@ const submitPost = async () => {
   posting = true;
 
   // Save chat name
-  if (settings) {
-    settings.chatName.value = post.value.name;
-    settings.save();
-  }
+  settings.chatName = post.value.name;
 
   try {
-    await axios.post(`/api/chat/${room?.id}/post`, formData, {
+    await axios.post(`/api/chat/${room.id}/post`, formData, {
       headers: await buildHeaders(),
       onUploadProgress: (e) => {
         if (e.lengthComputable) {
@@ -288,7 +277,7 @@ const deletePost = async (post?: Post) => {
     return;
   }
 
-  await axios.delete(`/api/chat/${room?.id}/post/${post.id}`, {
+  await axios.delete(`/api/chat/${room.id}/post/${post.id}`, {
     headers: await buildHeaders(),
   });
 };
@@ -301,45 +290,44 @@ const confirmDeletePost = async (post: Post) => {
 let ws_listener: AriaWsListener | undefined;
 
 onMounted(() => {
-  ws_listener = ws?.create_listener();
-  if (ws_listener) {
-    ws_listener.on("post", (post: Post) => {
-      const _posts = posts.value;
-      if (_posts.length >= maxPosts) {
-        _posts.splice(0, 2);
-      }
+  ws_listener = ws.create_listener();
 
-      _posts.push(post);
-      emit("post", post);
-    });
+  ws_listener.on("post", (post: Post) => {
+    const _posts = posts.value;
+    if (_posts.length >= maxPosts) {
+      _posts.splice(0, 2);
+    }
 
-    ws_listener.on("delete-post", (postId: number) => {
-      const _posts = posts.value;
-      const post = _posts.find((p) => p.id === postId);
-      if (!post) {
-        return;
-      }
+    _posts.push(post);
+    emit("post", post);
+  });
 
-      post.isDeleted = true;
-    });
+  ws_listener.on("delete-post", (postId: number) => {
+    const _posts = posts.value;
+    const post = _posts.find((p) => p.id === postId);
+    if (!post) {
+      return;
+    }
 
-    ws_listener.on("oldposts", (__posts: Post[]) => {
-      const _posts = posts.value;
-      let newPosts: Post[];
-      if (_posts.length > 0) {
-        const lastPost = _posts[_posts.length - 1];
-        newPosts = __posts.filter((p) => p.id > lastPost.id);
-      } else {
-        newPosts = __posts;
-      }
+    post.isDeleted = true;
+  });
 
-      _posts.push(...newPosts);
+  ws_listener.on("oldposts", (__posts: Post[]) => {
+    const _posts = posts.value;
+    let newPosts: Post[];
+    if (_posts.length > 0) {
+      const lastPost = _posts[_posts.length - 1];
+      newPosts = __posts.filter((p) => p.id > lastPost.id);
+    } else {
+      newPosts = __posts;
+    }
 
-      setTimeout(() => {
-        scrollToBottom();
-      }, 1);
-    });
-  }
+    _posts.push(...newPosts);
+
+    setTimeout(() => {
+      scrollToBottom();
+    }, 1);
+  });
 });
 
 onUnmounted(() => {
@@ -348,7 +336,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="chat" :class="`theme-${settings?.theme.value}`">
+  <div class="chat" :class="`theme-${settings.theme}`">
     <div class="chat-posts">
       <div ref="postContainer" class="post-container">
         <ChatPost
@@ -372,10 +360,10 @@ onUnmounted(() => {
                 <input name="name" type="text" v-model="post.name" placeholder="Anonymous" :readonly="posting" />
                 <div class="badges">
                   <button
-                    v-if="auth?.isAuthorized.value"
+                    v-if="auth.isAuthorized.value"
                     class="admin badge"
-                    :class="settings?.postBadges.value.room_admin ? '' : 'off'"
-                    @click.prevent="settings!.postBadges.value.room_admin = !settings?.postBadges.value.room_admin"
+                    :class="settings.postBadges.room_admin ? '' : 'off'"
+                    @click.prevent="settings.postBadges.room_admin = !settings.postBadges.room_admin"
                     title="Room Admin"
                   >
                     <i class="fa-solid fa-star"></i>
@@ -453,7 +441,7 @@ onUnmounted(() => {
         <button class="emote-button" title="Emotes" @click="openEmoteSelector">
           <i class="fa-regular fa-face-smile"></i>
         </button>
-        <select v-if="!useCompactPostForm" class="theme-selector" v-model="theme" @change="themeSelected">
+        <select v-if="!useCompactPostForm" class="theme-selector" v-model="settings.theme">
           <option v-for="theme of themes" :key="theme.name" :value="theme.name">{{ theme.description }}</option>
         </select>
         <button
@@ -476,7 +464,7 @@ onUnmounted(() => {
         <template v-slot:confirm><i class="fa-solid fa-trash"></i> Delete</template>
         <div v-if="!!actionTargetPost" class="confirm-delete-dialog">
           <span>Are you sure you want to delete this post?</span>
-          <div class="post-preview" :class="`theme-${settings?.theme.value}`">
+          <div class="post-preview" :class="`theme-${settings.theme}`">
             <div class="post-container">
               <ChatPost :post="actionTargetPost" />
             </div>

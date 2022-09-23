@@ -8,13 +8,9 @@ const emit = defineEmits<{
   (e: "selectemote", name: string): void;
 }>();
 
-const room = inject<RoomService>("room");
+const room = inject<RoomService>("room")!;
 
 const emotes = computed((): Emote[] => {
-  if (!room) {
-    return [];
-  }
-
   return Object.keys(room.emotes.value)
     .sort()
     .map((n) => room.emotes.value[n]);

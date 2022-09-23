@@ -21,8 +21,8 @@ interface NewEmote {
 const MAX_IMAGE_SIZE = 2097152;
 const UPLOADING_TEXT = "Uploading...";
 
-const auth = inject<RoomAuthService>("auth");
-const room = inject<RoomService>("room");
+const auth = inject<RoomAuthService>("auth")!;
+const room = inject<RoomService>("room")!;
 
 const addEmoteDialog = ref<typeof Dialog>();
 const confirmDelete = ref<typeof ConfirmDialog>();
@@ -32,7 +32,7 @@ const adding = ref(false);
 const errorText = ref<string>();
 const progressText = ref<string>();
 const newEmote = ref<NewEmote>({ name: "" });
-const selectedEmote = ref<Emote | undefined>();
+const selectedEmote = ref<Emote>();
 
 const emotes = computed((): Emote[] => {
   if (!room) {
@@ -68,13 +68,13 @@ const deleteEmote = async (emote?: Emote) => {
     return;
   }
 
-  const accessToken = await auth?.getAccessToken();
+  const accessToken = await auth.getAccessToken();
   if (!accessToken) {
     return;
   }
 
   try {
-    await axios.delete(`/api/chat/${room?.id}/emote/${emote.id}`, {
+    await axios.delete(`/api/chat/${room.id}/emote/${emote.id}`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -121,7 +121,7 @@ const submitEmote = async () => {
     return;
   }
 
-  const accessToken = await auth?.getAccessToken();
+  const accessToken = await auth.getAccessToken();
   if (!accessToken) {
     return;
   }
@@ -137,7 +137,7 @@ const submitEmote = async () => {
   progressText.value = UPLOADING_TEXT;
 
   try {
-    await axios.post(`/api/chat/${room?.id}/emote`, formData, {
+    await axios.post(`/api/chat/${room.id}/emote`, formData, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -180,13 +180,13 @@ const submitEmote = async () => {
 
     <!-- Dialogs -->
     <Dialog ref="emoteDetailsDialog" title="Emote details">
-      <div class="emote-details">
+      <div v-if="selectedEmote" class="emote-details">
         <div class="content">
           <div class="emote-image">
-            <img :src="selectedEmote?.url" :title="selectedEmote?.name" />
+            <img :src="selectedEmote.url" :title="selectedEmote.name" />
           </div>
           <div class="caption">
-            {{ selectedEmote?.name }}
+            {{ selectedEmote.name }}
           </div>
         </div>
         <Toolbar>

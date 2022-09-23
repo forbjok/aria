@@ -14,7 +14,7 @@ export class RoomAuthService {
   public readonly isAuthorized = ref(false);
 
   private auth?: LoginResponse;
-  private localStorageService = inject<LocalStorageService>("storage");
+  private localStorageService = inject<LocalStorageService>("storage")!;
 
   constructor(private room: RoomService) {}
 
@@ -123,11 +123,11 @@ export class RoomAuthService {
   }
 
   private async loadAuth() {
-    this.auth = this.localStorageService?.get<LoginResponse>(this.authKeyName);
+    this.auth = this.localStorageService.get<LoginResponse>(this.authKeyName);
     await this.verifyToken();
   }
 
   private saveAuth() {
-    this.localStorageService?.set(this.authKeyName, this.auth);
+    this.localStorageService.set(this.authKeyName, this.auth);
   }
 }
