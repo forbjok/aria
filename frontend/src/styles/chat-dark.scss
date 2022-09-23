@@ -1,10 +1,9 @@
-:global(:root) {
+.theme-dark {
   --color-spoiler: black;
   --color-spoiler-background: black;
   --color-spoiler-hover: white;
-}
+  --color-admin-badge: #ffe44d;
 
-.theme-dark {
   background: #020202;
   color: white;
 
@@ -30,7 +29,6 @@
       .post-header {
         .post-info {
           .admin {
-            color: #ffe44d;
             font-size: 0.6rem;
           }
 

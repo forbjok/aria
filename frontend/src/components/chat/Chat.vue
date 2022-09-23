@@ -164,12 +164,22 @@ const submitPost = async () => {
 
   const formData = new FormData();
 
+  const options: string[] = [];
+
+  if (settings?.postBadges.value.room_admin && auth?.isAuthorized.value) {
+    options.push("ra");
+  }
+
   if (_post.name) {
     formData.append("name", _post.name);
   }
 
   if (_post.comment) {
     formData.append("comment", _post.comment);
+  }
+
+  if (options) {
+    formData.append("options", options.join(" "));
   }
 
   if (image) {
@@ -360,6 +370,17 @@ onUnmounted(() => {
             <tr>
               <td>
                 <input name="name" type="text" v-model="post.name" placeholder="Anonymous" :readonly="posting" />
+                <div class="badges">
+                  <button
+                    v-if="auth?.isAuthorized.value"
+                    class="admin badge"
+                    :class="settings?.postBadges.value.room_admin ? '' : 'off'"
+                    @click.prevent="settings!.postBadges.value.room_admin = !settings?.postBadges.value.room_admin"
+                    title="Room Admin"
+                  >
+                    <i class="fa-solid fa-star"></i>
+                  </button>
+                </div>
               </td>
             </tr>
             <tr>

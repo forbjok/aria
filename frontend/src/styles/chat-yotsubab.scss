@@ -1,10 +1,9 @@
-:global(:root) {
+.theme-yotsubab {
   --color-spoiler: black;
   --color-spoiler-background: black;
   --color-spoiler-hover: white;
-}
+  --color-admin-badge: #00a2ff;
 
-.theme-yotsubab {
   font-family: Arial, Helvetica, sans-serif;
   font-size: 0.8rem;
 
@@ -35,7 +34,6 @@
     .post-header {
       .post-info {
         .admin {
-          color: #00a2ff;
           font-size: 0.6rem;
         }
 

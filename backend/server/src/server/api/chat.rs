@@ -33,10 +33,11 @@ async fn create_post(
     Path(room_id): Path<i32>,
     ContentLengthLimit(mut multipart): ContentLengthLimit<Multipart, { MAX_IMAGE_SIZE }>,
 ) -> Result<Json<i64>, ApiError> {
-    let admin = auth.map(|a| a.for_room(room_id)).unwrap_or(false);
+    let is_room_admin = auth.map(|a| a.for_room(room_id)).unwrap_or(false);
 
     let mut name: Option<String> = None;
     let mut comment: Option<String> = None;
+    let mut admin = false;
     let mut image: Option<lm::NewPostImage> = None;
 
     while let Some(mut field) = multipart
@@ -52,6 +53,15 @@ async fn create_post(
             }
             "comment" => {
                 comment = Some(field.text().await.map_err(|err| ApiError::Anyhow(err.into()))?);
+            }
+            "options" => {
+                let options = field.text().await.map_err(|err| ApiError::Anyhow(err.into()))?;
+
+                for o in options.split(' ') {
+                    if o == "ra" {
+                        admin = is_room_admin;
+                    }
+                }
             }
             "image" => {
                 let filename = field

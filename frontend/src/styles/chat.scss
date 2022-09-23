@@ -42,6 +42,30 @@
     // Needed to prevent .options' absolute positioning
     // from placing it outside the parent element.
     position: relative;
+
+    .badges {
+      display: inline-flex;
+      flex-direction: row;
+      gap: 4px;
+
+      padding: 0 4px;
+
+      button {
+        background: none;
+        border: none;
+        padding: 0;
+
+        cursor: pointer !important;
+      }
+
+      .off {
+        filter: brightness(0.4);
+      }
+
+      .admin {
+        color: var(--color-admin-badge);
+      }
+    }
   }
 
   .chat-controls-table {
