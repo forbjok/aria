@@ -11,7 +11,8 @@ export class LocalStorageService {
   }
 
   set<T>(name: string, value: T | undefined) {
-    window.localStorage.setItem(this.getKeyName(name), JSON.stringify(value));
+    const json = value ? JSON.stringify(value) : "";
+    window.localStorage.setItem(this.getKeyName(name), json);
   }
 
   private getKeyName(name: string): string {
