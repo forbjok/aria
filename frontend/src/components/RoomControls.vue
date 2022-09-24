@@ -3,14 +3,22 @@ import { inject, ref } from "vue";
 
 import type { RoomAdminService } from "@/services/room-admin";
 
+const emit = defineEmits<{
+  (e: "set-content", url: string): void;
+}>();
+
 const admin = inject<RoomAdminService>("admin")!;
 
 const contentUrl = ref("");
 
 const setContent = async () => {
   if (contentUrl.value) {
-    await admin.setContentUrl(contentUrl.value);
+    const url = contentUrl.value;
+
+    await admin.setContentUrl(url);
     contentUrl.value = "";
+
+    emit("set-content", url);
   }
 };
 </script>

@@ -511,7 +511,7 @@ const toggleDetached = () => {
       <LogIn @logged-in="logInDialog?.close()" />
     </Dialog>
     <Dialog ref="roomControlsDialog" :darken="true" title="Room Controls">
-      <RoomControls />
+      <RoomControls @set-content="roomControlsDialog?.close()" />
     </Dialog>
     <Dialog ref="adminPanelDialog" :darken="true" title="Admin Panel">
       <AdminPanel />
