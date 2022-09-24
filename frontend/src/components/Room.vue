@@ -21,6 +21,11 @@ import type { RoomSettings } from "@/settings";
 
 const AdminPanel = defineAsyncComponent(() => import("@/components/admin/AdminPanel.vue"));
 
+enum ContentKind {
+  Video = "video",
+  Other = "other",
+}
+
 interface PlaybackState {
   time: number;
   rate: number;
@@ -80,6 +85,8 @@ const player = ref<typeof Player>();
 const theaterMode = ref(false);
 
 const content = ref<Content>();
+const contentKind = ref<ContentKind>();
+const contentUrl = ref<string>();
 const isMaster = ref(false);
 const isDetached = ref(false);
 
@@ -178,10 +185,19 @@ onUnmounted(() => {
 const setContent = async (_content?: Content) => {
   content.value = _content;
   if (!content.value) return;
-  if (!player.value) return;
 
-  player.value.setContent(_content);
-  isPlayerInteractedWith = false;
+  if (content.value.type === "twitch") {
+    contentKind.value = ContentKind.Other;
+    contentUrl.value = `https://player.twitch.tv/?channel=${content.value.meta.channel}&parent=${window.location.hostname}`;
+    return;
+  }
+
+  contentKind.value = ContentKind.Video;
+
+  setTimeout(() => {
+    player.value?.setContent(_content);
+    isPlayerInteractedWith = false;
+  }, 100);
 };
 
 const reloadContent = async () => {
@@ -471,6 +487,7 @@ const toggleDetached = () => {
         <ToastChat ref="toastChat" />
       </div>
       <Player
+        v-if="contentKind === ContentKind.Video"
         ref="player"
         class="video-container"
         @play="onPlay"
@@ -479,6 +496,14 @@ const toggleDetached = () => {
         @seek="onSeek"
         @ratechange="onRateChange"
       />
+      <iframe
+        v-if="contentKind === ContentKind.Other"
+        class="video-container"
+        :src="contentUrl"
+        frameborder="0"
+        allowfullscreen="true"
+        scrolling="no"
+      ></iframe>
     </div>
 
     <!-- Dialogs -->

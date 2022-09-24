@@ -10,6 +10,7 @@ use super::AriaCore;
 
 static RE_YOUTUBE_URL: Lazy<Regex> = Lazy::new(|| Regex::new(r#"https?://www.youtube.com/watch\?v=(.+)"#).unwrap());
 static RE_GDRIVE_URL: Lazy<Regex> = Lazy::new(|| Regex::new(r#"https?://drive.google.com/file/d/(.+)/view"#).unwrap());
+static RE_TWITCH_URL: Lazy<Regex> = Lazy::new(|| Regex::new(r#"https?://(?:www\.)?twitch.tv/([^#\?]+)"#).unwrap());
 
 impl AriaCore {
     pub async fn get_room(&self, room_id: i32) -> Result<Option<lm::Room>, anyhow::Error> {
@@ -50,6 +51,10 @@ impl AriaCore {
         } else if let Some(m) = RE_GDRIVE_URL.captures(content_url) {
             lm::ContentMetadata::GoogleDrive {
                 id: m.get(1).unwrap().as_str().to_owned(),
+            }
+        } else if let Some(m) = RE_TWITCH_URL.captures(content_url) {
+            lm::ContentMetadata::Twitch {
+                channel: m.get(1).unwrap().as_str().to_owned(),
             }
         } else {
             lm::ContentMetadata::Unknown

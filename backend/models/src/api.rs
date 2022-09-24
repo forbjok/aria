@@ -22,6 +22,9 @@ pub enum ContentMetadata {
     GoogleDrive {
         id: String,
     },
+    Twitch {
+        channel: String,
+    },
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

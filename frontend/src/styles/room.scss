@@ -19,6 +19,12 @@
     // Needed to prevent children with absolute positioning from
     // ending up outside the parent.
     position: relative;
+
+    .video-container {
+      background-color: black;
+      height: 100%;
+      width: 100%;
+    }
   }
 
   @media screen and (orientation: landscape) {
