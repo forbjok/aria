@@ -90,7 +90,7 @@ const contentUrl = ref<string>();
 const isMaster = ref(false);
 const isDetached = ref(false);
 
-let isPlayerInteractedWith = false;
+const isPlayerInteractedWith = ref(false);
 let isMasterInitiatedPlay = false;
 let isViewerPaused = false;
 let serverPlaybackStateTimestamp = 0;
@@ -196,7 +196,7 @@ const setContent = async (_content?: Content) => {
 
   setTimeout(() => {
     player.value?.setContent(_content);
-    isPlayerInteractedWith = false;
+    isPlayerInteractedWith.value = false;
   }, 100);
 };
 
@@ -251,11 +251,11 @@ const onPlay = async (auto: boolean) => {
 
   isViewerPaused = false;
 
-  if (!isMaster.value || !isPlayerInteractedWith) {
+  if (!isMaster.value || !isPlayerInteractedWith.value) {
     await setPlaybackState(serverPlaybackState);
   }
 
-  isPlayerInteractedWith = true;
+  isPlayerInteractedWith.value = true;
 
   if (isMaster.value) {
     isMasterInitiatedPlay = true;
@@ -268,7 +268,7 @@ const onPlaying = async () => {
       await broadcastPlaybackState();
     }
 
-    if (isPlayerInteractedWith) {
+    if (isPlayerInteractedWith.value) {
       return;
     }
   }
@@ -283,7 +283,7 @@ const onPause = async (auto: boolean) => {
     return;
   }
 
-  isPlayerInteractedWith = true;
+  isPlayerInteractedWith.value = true;
   isViewerPaused = true;
   await broadcastPlaybackState();
 };
@@ -337,7 +337,7 @@ const setPlaybackState = async (ps: PlaybackState) => {
 
   const currentPlaybackState = await getPlaybackState();
 
-  if (ps.is_playing || !isPlayerInteractedWith) {
+  if (ps.is_playing || !isPlayerInteractedWith.value) {
     const elapsedSinceTimestamp = ((getTimestamp() - serverPlaybackStateTimestamp) * ps.rate) / 1000;
     const newTime = ps.time + elapsedSinceTimestamp;
 
@@ -366,7 +366,7 @@ const setPlaybackState = async (ps: PlaybackState) => {
       return;
     }
 
-    if (isMaster.value && !isPlayerInteractedWith) {
+    if (isMaster.value && !isPlayerInteractedWith.value) {
       return;
     }
 
@@ -375,7 +375,7 @@ const setPlaybackState = async (ps: PlaybackState) => {
 };
 
 const broadcastPlaybackState = async () => {
-  if (isDetached.value || !isMaster.value || !isPlayerInteractedWith) return;
+  if (isDetached.value || !isMaster.value || !isPlayerInteractedWith.value) return;
 
   const ps = (await getPlaybackState()) || serverPlaybackState;
   ps.time += ws.latency * ps.rate;
@@ -428,7 +428,7 @@ const toggleDetached = () => {
 
 <template>
   <div v-if="isRoomLoaded" ref="room" class="room" :class="settings.isRightSideChat ? 'right-side-chat' : ''">
-    <div class="usercontrols-activationzone">
+    <div v-if="isPlayerInteractedWith || !player" class="usercontrols-activationzone">
       <div class="usercontrols">
         <button class="usercontrol" title="Reload" @click="reloadContent">
           <i class="fa-solid fa-arrows-rotate"></i>
