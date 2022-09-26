@@ -62,10 +62,11 @@ const beginAuto = () => {
 
   setTimeout(() => {
     isAutoUpdate = false;
-  }, 100);
+  }, 200);
 };
 
 const setContent = async (_content?: Content) => {
+  await pause();
   isContentLoaded = false;
 
   content.value = _content;

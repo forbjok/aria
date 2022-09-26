@@ -283,8 +283,12 @@ const onPause = async (auto: boolean) => {
     return;
   }
 
-  isPlayerInteractedWith.value = true;
-  isViewerPaused = true;
+  if (isPlayerInteractedWith.value) {
+    isViewerPaused = true;
+  } else {
+    isPlayerInteractedWith.value = true;
+  }
+
   await broadcastPlaybackState();
 };
 
@@ -331,13 +335,13 @@ const setPlaybackState = async (ps: PlaybackState) => {
     return;
   }
 
-  if (isViewerPaused) {
+  if (isViewerPaused || !isPlayerInteractedWith.value) {
     return;
   }
 
   const currentPlaybackState = await getPlaybackState();
 
-  if (ps.is_playing || !isPlayerInteractedWith.value) {
+  if (ps.is_playing) {
     const elapsedSinceTimestamp = ((getTimestamp() - serverPlaybackStateTimestamp) * ps.rate) / 1000;
     const newTime = ps.time + elapsedSinceTimestamp;
 
@@ -366,7 +370,7 @@ const setPlaybackState = async (ps: PlaybackState) => {
       return;
     }
 
-    if (isMaster.value && !isPlayerInteractedWith.value) {
+    if (isMaster.value) {
       return;
     }
 
