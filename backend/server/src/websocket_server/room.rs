@@ -9,7 +9,9 @@ use aria_core::AriaCore;
 use aria_models::api as am;
 use aria_models::local as lm;
 
-use super::{send, ConnectionId, Tx};
+use super::{send, Tx};
+
+pub type MemberId = u64;
 
 const MAX_POSTS: usize = 50;
 
@@ -21,10 +23,12 @@ struct Member {
 
 pub(super) struct Room {
     pub id: i32,
-    members: HashMap<ConnectionId, Member>,
+    pub name: String,
+    next_member_id: MemberId,
+    members: HashMap<MemberId, Member>,
     posts: VecDeque<lm::Post>,
     emotes: Vec<am::Emote>,
-    master: ConnectionId,
+    master: MemberId,
     content: Option<am::Content>,
     playback_state_timestamp: DateTime<Utc>,
     playback_state: am::PlaybackState,
@@ -50,6 +54,8 @@ impl Room {
 
         Ok(Self {
             id: room_id,
+            name: room.name,
+            next_member_id: 1,
             members: HashMap::new(),
             posts: recent_posts.into_iter().collect(),
             emotes,
@@ -60,7 +66,11 @@ impl Room {
         })
     }
 
-    pub fn join(&mut self, id: ConnectionId, user_id: i64, tx: Tx) -> Result<(), anyhow::Error> {
+    pub fn join(&mut self, user_id: i64, tx: Tx) -> Result<MemberId, anyhow::Error> {
+        // Generate member ID
+        let id = self.next_member_id;
+        self.next_member_id += 1;
+
         let member = Member {
             user_id,
             is_admin: false,
@@ -75,10 +85,10 @@ impl Room {
         self.send_recent_posts(&tx, user_id)?;
         send(&tx, "joined", ())?;
 
-        Ok(())
+        Ok(id)
     }
 
-    pub fn leave(&mut self, id: ConnectionId) -> Result<(), anyhow::Error> {
+    pub fn leave(&mut self, id: MemberId) -> Result<(), anyhow::Error> {
         self.members.remove(&id);
         Ok(())
     }
@@ -150,7 +160,7 @@ impl Room {
         Ok(())
     }
 
-    pub fn set_admin(&mut self, id: ConnectionId) -> Result<(), anyhow::Error> {
+    pub fn set_admin(&mut self, id: MemberId) -> Result<(), anyhow::Error> {
         let me = self.members.get_mut(&id).context("Error getting member")?;
 
         me.is_admin = true;
@@ -158,7 +168,7 @@ impl Room {
         Ok(())
     }
 
-    pub fn set_master(&mut self, id: ConnectionId) -> Result<(), anyhow::Error> {
+    pub fn set_master(&mut self, id: MemberId) -> Result<(), anyhow::Error> {
         // If already master, return immediately.
         if self.master == id {
             return Ok(());
@@ -180,7 +190,7 @@ impl Room {
         Ok(())
     }
 
-    pub fn relinquish_master(&mut self, id: ConnectionId) -> Result<(), anyhow::Error> {
+    pub fn relinquish_master(&mut self, id: MemberId) -> Result<(), anyhow::Error> {
         // If this id is not master, return immediately.
         if self.master != id {
             return Ok(());
@@ -192,7 +202,7 @@ impl Room {
         Ok(())
     }
 
-    pub fn set_playback_state(&mut self, id: ConnectionId, ps: &am::PlaybackState) -> Result<(), anyhow::Error> {
+    pub fn set_playback_state(&mut self, id: MemberId, ps: &am::PlaybackState) -> Result<(), anyhow::Error> {
         // Sender is not master. Ignore.
         if id != self.master {
             return Ok(());

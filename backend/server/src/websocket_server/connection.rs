@@ -14,11 +14,11 @@ use aria_models::api as am;
 
 use crate::auth::{AuthClaims, UserClaims};
 
-use super::{room::Room, send_raw, ConnectionId, ServerState, Tx};
+use super::{lobby::RoomMembership, send_raw, ConnectionId, ServerState, Tx};
 
 struct ConnectionState {
     tx: Tx,
-    room: Mutex<Option<i32>>,
+    room: Mutex<Option<RoomMembership>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -73,56 +73,33 @@ pub(super) async fn handle_connection(
                                     .auth
                                     .verify::<UserClaims>(&req.user)
                                     .map_err(|_| anyhow::anyhow!("Error verifying user token"))?;
+
                                 let user_id = user_claims.user_id;
 
                                 let room_name = req.room;
 
                                 info!("[{id}] Joining room '{room_name}'...");
 
-                                let mut rooms = sv_state.rooms.lock().await;
-
-                                let room = {
-                                    let mut room_ids_by_name = sv_state.room_ids_by_name.lock().await;
-
-                                    if let Some(room_id) = room_ids_by_name.get(&room_name) {
-                                        rooms.get_mut(room_id)
-                                    } else if let Some(room) = sv_state.core.get_room_by_name(&room_name).await? {
-                                        room_ids_by_name.insert(room_name, room.id);
-
-                                        let new_room = Room::load(room.id, &sv_state.core).await?;
-                                        rooms.insert(room.id, new_room);
-
-                                        rooms.get_mut(&room.id)
-                                    } else {
-                                        None
-                                    }
-                                };
-
-                                if let Some(room) = room {
-                                    // If connection is already joined to another room...
-                                    if let Some(&old_room_id) = cn_state.room.lock().await.as_ref() {
-                                        // If connection is already joined to the same room, return immediately.
-                                        if room.id == old_room_id {
-                                            return Ok(());
-                                        }
-
-                                        return Err(anyhow::anyhow!("Already in a different room."));
+                                // If connection is already joined to another room...
+                                if let Some(room_membership) = cn_state.room.lock().await.as_ref() {
+                                    // If connection is already joined to the same room, return immediately.
+                                    if room_membership.room_name == room_name {
+                                        return Ok(());
                                     }
 
-                                    room.join(id, user_id, tx.clone())?;
-                                    *cn_state.room.lock().await = Some(room.id);
+                                    // Otherwise, leave the current room before joining the new one.
+                                    room_membership.leave().await?;
                                 }
+
+                                let room_membership = sv_state.lobby.join_room(room_name, tx.clone(), user_id).await?;
+
+                                *cn_state.room.lock().await = Some(room_membership);
                             }
                             "leave" => {
-                                if let Some(&room_id) = cn_state.room.lock().await.as_ref() {
-                                    info!("[{id}] Leaving room {room_id}...");
+                                if let Some(room_membership) = cn_state.room.lock().await.as_ref() {
+                                    info!("[{id}] Leaving room '{}'...", room_membership.room_name);
 
-                                    let mut rooms = sv_state.rooms.lock().await;
-                                    let room = rooms.get_mut(&room_id);
-
-                                    if let Some(room) = room {
-                                        room.leave(id).context("leaving room")?;
-                                    }
+                                    room_membership.leave().await?;
                                 } else {
                                     warn!("[{id}] Tried to leave the room, but was not in a room.");
                                 }
@@ -131,47 +108,41 @@ pub(super) async fn handle_connection(
                                 let token: String =
                                     serde_json::from_str(data).context("Error deserializing authorization token")?;
 
-                                if let Some(&room_id) = cn_state.room.lock().await.as_ref() {
+                                if let Some(room_membership) = cn_state.room.lock().await.as_ref() {
                                     let mut is_authorized = false;
                                     if let Ok(claims) = sv_state.auth.verify::<AuthClaims>(&token) {
-                                        if claims.for_room(room_id) {
+                                        if claims.for_room(room_membership.room_id) {
                                             is_authorized = true;
                                         }
                                     }
 
                                     if is_authorized {
-                                        let mut rooms = sv_state.rooms.lock().await;
-                                        if let Some(room) = rooms.get_mut(&room_id) {
-                                            room.set_admin(id).context("setting admin")?;
-                                        }
+                                        room_membership.set_admin().await.context("setting admin")?;
                                     }
                                 }
                             }
                             "set-master" => {
-                                if let Some(&room_id) = cn_state.room.lock().await.as_ref() {
-                                    let mut rooms = sv_state.rooms.lock().await;
-                                    if let Some(room) = rooms.get_mut(&room_id) {
-                                        room.set_master(id).context("setting master")?;
-                                    }
+                                if let Some(room_membership) = cn_state.room.lock().await.as_ref() {
+                                    room_membership.set_master().await.context("setting master")?;
                                 }
                             }
                             "not-master" => {
-                                if let Some(room) = cn_state.room.lock().await.as_ref() {
-                                    let mut rooms = sv_state.rooms.lock().await;
-                                    if let Some(room) = rooms.get_mut(room) {
-                                        room.relinquish_master(id).context("relinquishing master")?;
-                                    }
+                                if let Some(room_membership) = cn_state.room.lock().await.as_ref() {
+                                    room_membership
+                                        .relinquish_master()
+                                        .await
+                                        .context("relinquishing master")?;
                                 }
                             }
                             "master-playbackstate" => {
                                 let ps: am::PlaybackState =
                                     serde_json::from_str(data).context("deserializing playback state")?;
 
-                                if let Some(room) = cn_state.room.lock().await.as_ref() {
-                                    let mut rooms = sv_state.rooms.lock().await;
-                                    if let Some(room) = rooms.get_mut(room) {
-                                        room.set_playback_state(id, &ps).context("setting playback state")?;
-                                    }
+                                if let Some(room_membership) = cn_state.room.lock().await.as_ref() {
+                                    room_membership
+                                        .set_playback_state(ps)
+                                        .await
+                                        .context("setting playback state")?;
                                 }
                             }
                             _ => {
@@ -207,10 +178,8 @@ pub(super) async fn handle_connection(
         info!("[{id}] Disconnected.");
 
         // Leave the room, to prevent dangling members
-        if let Some(room) = cn_state.room.lock().await.as_ref() {
-            if let Some(room) = sv_state.rooms.lock().await.get_mut(room) {
-                room.leave(id).ok();
-            }
+        if let Some(room_membership) = cn_state.room.lock().await.as_ref() {
+            room_membership.leave().await.ok();
         };
     } else {
         error!("[{id}] Error occurred during the websocket handshake.");

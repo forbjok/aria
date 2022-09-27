@@ -1,64 +1,45 @@
 mod connection;
-mod notification;
+mod lobby;
 mod room;
 
-use std::{collections::HashMap, net::SocketAddr, sync::Arc};
+use std::{net::SocketAddr, sync::Arc};
 
 use aria_core::AriaCore;
 use futures::{pin_mut, Future};
 use futures_channel::mpsc::UnboundedSender;
 use serde::Serialize;
-use tokio::{
-    net::TcpListener,
-    sync::{broadcast, Mutex},
-};
+use tokio::{net::TcpListener, sync::broadcast};
 use tokio_tungstenite::tungstenite::Message;
 use tracing::info;
 
 use crate::auth::AriaAuth;
 
-use self::connection::*;
-use self::notification::*;
-use self::room::*;
+use self::{connection::*, lobby::Lobby};
 
 type ConnectionId = u64;
 type Tx = UnboundedSender<Message>;
 
 struct ServerState {
     auth: Arc<AriaAuth>,
-    core: Arc<AriaCore>,
-    rooms: Mutex<HashMap<i32, Room>>,
-    room_ids_by_name: Mutex<HashMap<String, i32>>,
+    lobby: Arc<Lobby>,
 }
 
 pub async fn run_server(auth: Arc<AriaAuth>, core: Arc<AriaCore>, shutdown: impl Future) -> Result<(), anyhow::Error> {
-    let rooms = Mutex::new(HashMap::new());
-    let room_ids_by_name = Mutex::new(HashMap::new());
+    let (shutdown_tx, _) = broadcast::channel::<()>(1);
+    let (shutdown_complete_tx, mut shutdown_complete_rx) = tokio::sync::mpsc::channel(1);
 
-    let notify_rx = core.subscribe_notifications();
+    let lobby = Arc::new(Lobby::new(
+        core.clone(),
+        shutdown_tx.subscribe(),
+        shutdown_complete_tx.clone(),
+    ));
 
-    let state = Arc::new(ServerState {
-        auth,
-        core,
-        rooms,
-        room_ids_by_name,
-    });
+    let state = Arc::new(ServerState { auth, lobby });
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3001));
 
     let listener = TcpListener::bind(addr).await?;
     info!("WebSocket server listening on: {addr}");
-
-    let (shutdown_tx, shutdown_rx) = broadcast::channel::<()>(1);
-    let (shutdown_complete_tx, mut shutdown_complete_rx) = tokio::sync::mpsc::channel(1);
-
-    // Spawn notification receiver
-    tokio::spawn(handle_notifications(
-        state.clone(),
-        notify_rx,
-        shutdown_rx,
-        shutdown_complete_tx.clone(),
-    ));
 
     // Accept connections
     let mut next_id: ConnectionId = 1;
