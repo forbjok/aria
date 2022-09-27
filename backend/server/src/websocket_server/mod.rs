@@ -4,9 +4,9 @@ mod room;
 
 use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 
-use aria_core::{AriaCore, Notification};
+use aria_core::AriaCore;
 use futures::{pin_mut, Future};
-use futures_channel::mpsc::{UnboundedReceiver, UnboundedSender};
+use futures_channel::mpsc::UnboundedSender;
 use serde::Serialize;
 use tokio::{
     net::TcpListener,
@@ -31,14 +31,11 @@ struct ServerState {
     room_ids_by_name: Mutex<HashMap<String, i32>>,
 }
 
-pub async fn run_server(
-    auth: Arc<AriaAuth>,
-    core: Arc<AriaCore>,
-    notify_rx: UnboundedReceiver<Notification>,
-    shutdown: impl Future,
-) -> Result<(), anyhow::Error> {
+pub async fn run_server(auth: Arc<AriaAuth>, core: Arc<AriaCore>, shutdown: impl Future) -> Result<(), anyhow::Error> {
     let rooms = Mutex::new(HashMap::new());
     let room_ids_by_name = Mutex::new(HashMap::new());
+
+    let notify_rx = core.subscribe_notifications();
 
     let state = Arc::new(ServerState {
         auth,

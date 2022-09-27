@@ -3,7 +3,6 @@ use std::{env, fs};
 
 use aria_models::local as lm;
 use aria_store::{AriaStore, PgStore};
-use futures_channel::mpsc::UnboundedSender;
 
 mod auth;
 mod emote;
@@ -19,7 +18,7 @@ pub use self::image::*;
 pub use self::post::*;
 pub use self::room::*;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum Notification {
     NewPost(i32, lm::Post),
     NewEmote(i32, lm::Emote),
@@ -39,11 +38,11 @@ pub struct AriaCore {
     pub public_thumbnail_path: PathBuf,
     pub public_emote_path: PathBuf,
     store: PgStore,
-    notify_tx: UnboundedSender<Notification>,
+    notify_tx: tokio::sync::broadcast::Sender<Notification>,
 }
 
 impl AriaCore {
-    pub fn new(notify_tx: UnboundedSender<Notification>) -> Result<Self, anyhow::Error> {
+    pub fn new() -> Result<Self, anyhow::Error> {
         let files_path = env::var("FILES_PATH")
             .ok()
             .map(PathBuf::from)
@@ -77,6 +76,8 @@ impl AriaCore {
             &env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://aria:aria@localhost/aria".to_owned()),
         );
 
+        let (notify_tx, _) = tokio::sync::broadcast::channel(16);
+
         Ok(Self {
             temp_path,
             process_image_path,
@@ -94,5 +95,9 @@ impl AriaCore {
 
     pub async fn migrate(&self) -> Result<(), anyhow::Error> {
         self.store.migrate().await
+    }
+
+    pub fn subscribe_notifications(&self) -> tokio::sync::broadcast::Receiver<Notification> {
+        self.notify_tx.subscribe()
     }
 }

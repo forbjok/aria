@@ -57,8 +57,7 @@ impl AriaCore {
 
         let post = dbm_post_to_lm(p);
 
-        self.notify_tx
-            .unbounded_send(Notification::NewPost(room_id, post.clone()))?;
+        self.notify_tx.send(Notification::NewPost(room_id, post.clone()))?;
 
         Ok(post)
     }
@@ -73,8 +72,7 @@ impl AriaCore {
         let success = self.store.delete_post(room_id, post_id, user_id, is_admin).await?;
 
         if success {
-            self.notify_tx
-                .unbounded_send(Notification::DeletePost(room_id, post_id))?;
+            self.notify_tx.send(Notification::DeletePost(room_id, post_id))?;
         }
 
         Ok(success)

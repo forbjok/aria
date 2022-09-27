@@ -48,8 +48,7 @@ impl AriaCore {
         let emote = self.store.create_emote(room_id, &new_emote).await?;
         let emote = dbm_emote_to_lm(emote);
 
-        self.notify_tx
-            .unbounded_send(Notification::NewEmote(room_id, emote.clone()))?;
+        self.notify_tx.send(Notification::NewEmote(room_id, emote.clone()))?;
 
         Ok(emote)
     }
@@ -58,8 +57,7 @@ impl AriaCore {
         let success = self.store.delete_emote(room_id, emote_id).await?;
 
         if success {
-            self.notify_tx
-                .unbounded_send(Notification::DeleteEmote(room_id, emote_id))?;
+            self.notify_tx.send(Notification::DeleteEmote(room_id, emote_id))?;
         }
 
         Ok(success)

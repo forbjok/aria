@@ -28,12 +28,10 @@ async fn main() -> Result<(), anyhow::Error> {
 
     debug!("Debug logging enabled.");
 
-    let (notify_tx, notify_rx) = futures_channel::mpsc::unbounded();
-
     let jwt_secret = env::var("JWT_SECRET").unwrap_or_else(|_| "sekrit".to_owned());
 
     let auth = Arc::new(AriaAuth::new(jwt_secret.as_bytes()));
-    let core = Arc::new(AriaCore::new(notify_tx)?);
+    let core = Arc::new(AriaCore::new()?);
 
     if opt.migrate {
         info!("Running database migrations...");
@@ -47,7 +45,7 @@ async fn main() -> Result<(), anyhow::Error> {
     };
 
     let http_server = server.run_server(shutdown());
-    let ws_server = websocket_server::run_server(auth.clone(), core.clone(), notify_rx, shutdown());
+    let ws_server = websocket_server::run_server(auth.clone(), core.clone(), shutdown());
 
     let (http_result, ws_result) = tokio::join!(http_server, ws_server);
 

@@ -1,14 +1,11 @@
 use anyhow::Context;
 
 use aria_core::AriaCore;
-use futures_channel::mpsc::unbounded;
 use tokio::fs;
 use tracing::{error, info};
 
 pub async fn regenerate_emote_images() -> Result<(), anyhow::Error> {
-    let (tx, _rx) = unbounded();
-
-    let core = AriaCore::new(tx)?;
+    let core = AriaCore::new()?;
 
     info!("Original image path: {}", core.original_emote_path.display());
 

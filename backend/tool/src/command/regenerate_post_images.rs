@@ -1,14 +1,11 @@
 use anyhow::Context;
 
 use aria_core::{AriaCore, GeneratePostImageResult};
-use futures_channel::mpsc::unbounded;
 use tokio::fs;
 use tracing::{error, info};
 
 pub async fn regenerate_post_images() -> Result<(), anyhow::Error> {
-    let (tx, _rx) = unbounded();
-
-    let core = AriaCore::new(tx)?;
+    let core = AriaCore::new()?;
 
     info!("Original image path: {}", core.original_image_path.display());
 

@@ -1,14 +1,11 @@
 use anyhow::Context;
 
 use aria_core::{AriaCore, GeneratePostImageResult, ProcessImageResult};
-use futures_channel::mpsc::unbounded;
 use tokio::fs;
 use tracing::{error, info};
 
 pub async fn process_images() -> Result<(), anyhow::Error> {
-    let (tx, _rx) = unbounded();
-
-    let core = AriaCore::new(tx)?;
+    let core = AriaCore::new()?;
 
     process_post_images(&core).await?;
     process_emote_images(&core).await?;
