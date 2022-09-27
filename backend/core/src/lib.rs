@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::{env, fs};
 
 use aria_models::local as lm;
@@ -18,7 +19,7 @@ pub use self::image::*;
 pub use self::post::*;
 pub use self::room::*;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub enum Notification {
     NewPost(i32, lm::Post),
     NewEmote(i32, lm::Emote),
@@ -38,7 +39,7 @@ pub struct AriaCore {
     pub public_thumbnail_path: PathBuf,
     pub public_emote_path: PathBuf,
     store: PgStore,
-    notify_tx: tokio::sync::broadcast::Sender<Notification>,
+    notify_tx: tokio::sync::broadcast::Sender<Arc<Notification>>,
 }
 
 impl AriaCore {
@@ -97,7 +98,14 @@ impl AriaCore {
         self.store.migrate().await
     }
 
-    pub fn subscribe_notifications(&self) -> tokio::sync::broadcast::Receiver<Notification> {
+    pub fn subscribe_notifications(&self) -> tokio::sync::broadcast::Receiver<Arc<Notification>> {
         self.notify_tx.subscribe()
+    }
+
+    fn notify(
+        &self,
+        notification: Notification,
+    ) -> Result<usize, tokio::sync::broadcast::error::SendError<Arc<Notification>>> {
+        self.notify_tx.send(Arc::new(notification))
     }
 }

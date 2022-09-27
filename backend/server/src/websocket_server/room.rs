@@ -107,16 +107,16 @@ impl Room {
     }
 
     /// Add post
-    pub fn post(&mut self, post: lm::Post) -> Result<(), anyhow::Error> {
+    pub fn post(&mut self, post: &lm::Post) -> Result<(), anyhow::Error> {
         // If the maximum number of posts is reached, remove the oldest one.
         if self.posts.len() >= MAX_POSTS {
             self.posts.pop_front();
         }
 
-        let mut post_am = am::Post::from(&post);
+        let mut post_am = am::Post::from(post);
         let post_user_id = post.user_id;
 
-        self.posts.push_back(post);
+        self.posts.push_back(post.clone());
 
         for m in self.members.values() {
             post_am.you = post_user_id == m.user_id;

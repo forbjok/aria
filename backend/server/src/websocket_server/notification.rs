@@ -9,7 +9,7 @@ use super::ServerState;
 
 pub(super) async fn handle_notifications(
     state: Arc<ServerState>,
-    mut rx: broadcast::Receiver<Notification>,
+    mut rx: broadcast::Receiver<Arc<Notification>>,
     mut shutdown_rx: broadcast::Receiver<()>,
     _shutdown_complete_tx: Sender<()>,
 ) {
@@ -19,35 +19,35 @@ pub(super) async fn handle_notifications(
                 match result {
                     Ok(not) => {
                         let result: Result<(), anyhow::Error> = (|| async {
-                            match not {
+                            match &*not {
                                 Notification::NewPost(room, post) => {
                                     let mut rooms = state.rooms.lock().await;
-                                    if let Some(room) = rooms.get_mut(&room) {
+                                    if let Some(room) = rooms.get_mut(room) {
                                         room.post(post)?;
                                     }
                                 }
                                 Notification::NewEmote(room, emote) => {
                                     let mut rooms = state.rooms.lock().await;
-                                    if let Some(room) = rooms.get_mut(&room) {
-                                        room.add_emote(&emote)?;
+                                    if let Some(room) = rooms.get_mut(room) {
+                                        room.add_emote(emote)?;
                                     }
                                 }
                                 Notification::DeletePost(room, post_id) => {
                                     let mut rooms = state.rooms.lock().await;
-                                    if let Some(room) = rooms.get_mut(&room) {
-                                        room.delete_post(post_id)?;
+                                    if let Some(room) = rooms.get_mut(room) {
+                                        room.delete_post(*post_id)?;
                                     }
                                 }
                                 Notification::DeleteEmote(room, emote_id) => {
                                     let mut rooms = state.rooms.lock().await;
-                                    if let Some(room) = rooms.get_mut(&room) {
-                                        room.delete_emote(emote_id)?;
+                                    if let Some(room) = rooms.get_mut(room) {
+                                        room.delete_emote(*emote_id)?;
                                     }
                                 }
                                 Notification::Content(room, content) => {
                                     let mut rooms = state.rooms.lock().await;
-                                    if let Some(room) = rooms.get_mut(&room) {
-                                        room.content(&content)?;
+                                    if let Some(room) = rooms.get_mut(room) {
+                                        room.content(content)?;
                                     }
                                 }
                             }

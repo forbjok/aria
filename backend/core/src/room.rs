@@ -68,7 +68,7 @@ impl AriaCore {
         let content_json = serde_json::to_string(&content)?;
 
         self.store.set_room_content(room_id, &content_json).await?;
-        self.notify_tx.send(Notification::Content(room_id, content))?;
+        self.notify(Notification::Content(room_id, content))?;
 
         Ok(())
     }
