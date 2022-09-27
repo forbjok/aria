@@ -13,30 +13,25 @@ use axum::{
     response::{IntoResponse, Response},
     Router,
 };
+use thiserror::Error;
 use tracing::error;
 
 use crate::auth::{AuthClaims, AuthError, UserClaims};
 
 use super::AriaServer;
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 enum ApiError {
-    Anyhow(anyhow::Error),
+    #[error(transparent)]
+    Anyhow(#[from] anyhow::Error),
+    #[error(transparent)]
+    AuthError(#[from] AuthError),
+    #[error("Bad request")]
     BadRequest,
+    #[error("Not found")]
     NotFound,
+    #[error("Unauthorized")]
     Unauthorized,
-}
-
-impl From<AuthError> for ApiError {
-    fn from(_err: AuthError) -> Self {
-        Self::Unauthorized
-    }
-}
-
-impl From<anyhow::Error> for ApiError {
-    fn from(err: anyhow::Error) -> Self {
-        Self::Anyhow(err)
-    }
 }
 
 #[derive(Debug)]
@@ -64,12 +59,13 @@ pub fn router(server: Arc<AriaServer>) -> Router {
 
 impl IntoResponse for AuthError {
     fn into_response(self) -> Response {
-        let (status, error_message) = match self {
-            AuthError::TokenCreation => (StatusCode::INTERNAL_SERVER_ERROR, "Token creation error"),
-            AuthError::InvalidToken => (StatusCode::BAD_REQUEST, "Invalid token"),
+        let status = match self {
+            AuthError::ExpiredToken => StatusCode::UNAUTHORIZED,
+            AuthError::TokenCreation => StatusCode::INTERNAL_SERVER_ERROR,
+            AuthError::InvalidToken => StatusCode::BAD_REQUEST,
         };
 
-        (status, error_message).into_response()
+        (status, self.to_string()).into_response()
     }
 }
 
@@ -80,6 +76,8 @@ impl IntoResponse for ApiError {
                 error!("{err:#}");
                 (StatusCode::INTERNAL_SERVER_ERROR, format!("{err:#}")).into_response()
             }
+            Self::AuthError(AuthError::ExpiredToken) => (StatusCode::UNAUTHORIZED, ()).into_response(),
+            Self::AuthError(err) => (StatusCode::BAD_REQUEST, format!("{err:#}")).into_response(),
             Self::BadRequest => (StatusCode::BAD_REQUEST, ()).into_response(),
             Self::NotFound => (StatusCode::NOT_FOUND, ()).into_response(),
             Self::Unauthorized => (StatusCode::UNAUTHORIZED, ()).into_response(),

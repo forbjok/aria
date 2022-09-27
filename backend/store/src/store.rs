@@ -4,12 +4,6 @@ use uuid::Uuid;
 
 use crate::models::{self as dbm, RefreshRefreshTokenResult};
 
-#[derive(Debug)]
-pub enum StoreError {
-    NotFound,
-    Other(String),
-}
-
 #[async_trait]
 pub trait AriaStore: Send + Sync {
     async fn migrate(&self) -> Result<(), anyhow::Error>;

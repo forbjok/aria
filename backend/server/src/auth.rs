@@ -1,14 +1,19 @@
 use chrono::{Duration, Utc};
-use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
+use jsonwebtoken::{errors::ErrorKind, DecodingKey, EncodingKey, Header, Validation};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use thiserror::Error;
 
 pub struct AriaAuth {
     keys: Keys,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum AuthError {
+    #[error("Token expired")]
+    ExpiredToken,
+    #[error("Error creating token")]
     TokenCreation,
+    #[error("Invalid token")]
     InvalidToken,
 }
 
@@ -53,7 +58,10 @@ impl AriaAuth {
 
     pub fn verify<T: DeserializeOwned>(&self, token: &str) -> Result<T, AuthError> {
         let token_data = jsonwebtoken::decode::<JwtClaims<T>>(token, &self.keys.decoding, &Validation::default())
-            .map_err(|_| AuthError::InvalidToken)?;
+            .map_err(|err| match err.kind() {
+                ErrorKind::ExpiredSignature => AuthError::ExpiredToken,
+                _ => AuthError::InvalidToken,
+            })?;
 
         let JwtClaims { claims, .. } = token_data.claims;
 
