@@ -3,27 +3,23 @@ use std::collections::VecDeque;
 
 use anyhow::Context;
 use chrono::{DateTime, Utc};
+use tokio::sync::broadcast;
+use tokio::sync::mpsc::Sender;
 use tracing::error;
 
 use aria_core::AriaCore;
 use aria_models::api as am;
 use aria_models::local as lm;
 
-use super::{send, Tx};
-
-pub type MemberId = u64;
+use super::handler::handle_room_requests;
+use super::handler::RoomRequest;
+use super::MemberId;
+use super::Room;
+use super::{send, Member, Tx};
 
 const MAX_POSTS: usize = 50;
 
-struct Member {
-    user_id: i64,
-    is_admin: bool,
-    tx: Tx,
-}
-
-pub(super) struct Room {
-    pub id: i32,
-    pub name: String,
+pub(super) struct RoomState {
     next_member_id: MemberId,
     members: HashMap<MemberId, Member>,
     posts: VecDeque<lm::Post>,
@@ -34,36 +30,48 @@ pub(super) struct Room {
     playback_state: am::PlaybackState,
 }
 
-impl Room {
-    pub async fn load(room_id: i32, core: &AriaCore) -> Result<Self, anyhow::Error> {
-        let room = core
-            .get_room(room_id)
-            .await
-            .context("Getting room")?
-            .with_context(|| format!("Room not found: {room_id}"))?;
+impl RoomState {
+    pub async fn load(
+        core: &AriaCore,
+        name: &str,
+        shutdown_rx: broadcast::Receiver<()>,
+        shutdown_complete_tx: Sender<()>,
+    ) -> Result<Option<Room>, anyhow::Error> {
+        if let Some(room) = core.get_room_by_name(name).await.context("Getting room")? {
+            let emotes = core.get_emotes(room.id).await.context("Error getting emotes")?;
 
-        let emotes = core.get_emotes(room_id).await.context("Error getting emotes")?;
+            let recent_posts = core
+                .get_recent_posts(room.id, MAX_POSTS as i32)
+                .await
+                .context("Error getting recent posts")?;
 
-        let recent_posts = core
-            .get_recent_posts(room_id, MAX_POSTS as i32)
-            .await
-            .context("Error getting recent posts")?;
+            // Prepare emotes
+            let emotes = emotes.iter().map(am::Emote::from).collect();
 
-        // Prepare emotes
-        let emotes = emotes.iter().map(am::Emote::from).collect();
+            let state = RoomState {
+                next_member_id: 1,
+                members: HashMap::new(),
+                posts: recent_posts.into_iter().collect(),
+                emotes,
+                master: 0,
+                content: room.content,
+                playback_state_timestamp: Utc::now(),
+                playback_state: am::PlaybackState::default(),
+            };
 
-        Ok(Self {
-            id: room_id,
-            name: room.name,
-            next_member_id: 1,
-            members: HashMap::new(),
-            posts: recent_posts.into_iter().collect(),
-            emotes,
-            master: 0,
-            content: room.content,
-            playback_state_timestamp: Utc::now(),
-            playback_state: am::PlaybackState::default(),
-        })
+            let (tx, rx) = futures_channel::mpsc::unbounded::<RoomRequest>();
+
+            // Spawn room request handler
+            tokio::spawn(handle_room_requests(state, rx, shutdown_rx, shutdown_complete_tx));
+
+            Ok(Some(Room {
+                id: room.id,
+                name: room.name.clone(),
+                tx,
+            }))
+        } else {
+            Ok(None)
+        }
     }
 
     pub fn join(&mut self, user_id: i64, tx: Tx) -> Result<MemberId, anyhow::Error> {
@@ -117,16 +125,16 @@ impl Room {
     }
 
     /// Add post
-    pub fn post(&mut self, post: &lm::Post) -> Result<(), anyhow::Error> {
+    pub fn post(&mut self, post: lm::Post) -> Result<(), anyhow::Error> {
         // If the maximum number of posts is reached, remove the oldest one.
         if self.posts.len() >= MAX_POSTS {
             self.posts.pop_front();
         }
 
-        let mut post_am = am::Post::from(post);
+        let mut post_am = am::Post::from(&post);
         let post_user_id = post.user_id;
 
-        self.posts.push_back(post.clone());
+        self.posts.push_back(post);
 
         for m in self.members.values() {
             post_am.you = post_user_id == m.user_id;
@@ -150,13 +158,12 @@ impl Room {
         Ok(())
     }
 
-    pub fn content(&mut self, content: &am::Content) -> Result<(), anyhow::Error> {
-        self.content = Some(content.clone());
-
+    pub fn set_content(&mut self, content: am::Content) -> Result<(), anyhow::Error> {
         for m in self.members.values() {
-            send(&m.tx, "content", content).map_err(|err| error!("{err:?}")).ok();
+            send(&m.tx, "content", &content).map_err(|err| error!("{err:?}")).ok();
         }
 
+        self.content = Some(content);
         Ok(())
     }
 
@@ -244,8 +251,8 @@ impl Room {
     }
 
     /// Add or update emote
-    pub fn add_emote(&mut self, emote: &lm::Emote) -> Result<(), anyhow::Error> {
-        let emote = am::Emote::from(emote);
+    pub fn add_emote(&mut self, emote: lm::Emote) -> Result<(), anyhow::Error> {
+        let emote = am::Emote::from(&emote);
 
         self.emotes.retain(|e| e.name != emote.name);
         self.emotes.push(emote.clone());
