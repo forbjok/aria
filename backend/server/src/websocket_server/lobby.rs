@@ -22,12 +22,16 @@ struct LobbyState {
     rooms_by_name: HashMap<String, Room>,
 }
 
-enum LobbyRequest {
+pub(super) enum LobbyRequest {
     JoinRoom {
         name: String,
         member_tx: Tx,
         user_id: i64,
         result_tx: oneshot::Sender<Result<RoomMembership, anyhow::Error>>,
+    },
+    UnloadRoom {
+        room_id: i32,
+        result_tx: oneshot::Sender<Result<(), anyhow::Error>>,
     },
 }
 
@@ -36,7 +40,13 @@ impl Lobby {
         let (tx, rx) = futures_channel::mpsc::unbounded::<LobbyRequest>();
 
         // Spawn lobby request handler
-        tokio::spawn(handle_lobby_requests(core, rx, shutdown_rx, shutdown_complete_tx));
+        tokio::spawn(handle_lobby_requests(
+            core,
+            tx.clone(),
+            rx,
+            shutdown_rx,
+            shutdown_complete_tx,
+        ));
 
         Self { tx }
     }
@@ -57,6 +67,7 @@ impl Lobby {
 
 async fn handle_lobby_requests(
     core: Arc<AriaCore>,
+    request_tx: UnboundedSender<LobbyRequest>,
     mut request_rx: UnboundedReceiver<LobbyRequest>,
     mut shutdown_rx: broadcast::Receiver<()>,
     shutdown_complete_tx: Sender<()>,
@@ -71,11 +82,18 @@ async fn handle_lobby_requests(
         tokio::select! {
             // Handle lobby requests
             req = request_rx.select_next_some() => {
-                let LobbyRequest::JoinRoom { name, member_tx, user_id, result_tx } = req;
-
-                result_tx.send(handle_join_room(&mut state, core.clone(), name, member_tx, user_id, room_shutdown_tx.subscribe(), shutdown_complete_tx.clone()).await).map_err(|_| {
-                    warn!("Lobby request sender dropped.");
-                }).ok();
+                match req {
+                    LobbyRequest::JoinRoom { name, member_tx, user_id, result_tx } => {
+                        result_tx.send(handle_join_room(&mut state, core.clone(), &request_tx, name, member_tx, user_id, room_shutdown_tx.subscribe(), shutdown_complete_tx.clone()).await).map_err(|_| {
+                            warn!("Lobby request sender dropped.");
+                        }).ok();
+                    }
+                    LobbyRequest::UnloadRoom { room_id, result_tx } => {
+                        result_tx.send(handle_unload_room(&mut state, room_id)).map_err(|_| {
+                            warn!("Lobby request sender dropped.");
+                        }).ok();
+                    }
+                }
             }
             // Handle notifications
             result = notify_rx.recv() => {
@@ -135,9 +153,11 @@ async fn handle_lobby_requests(
     room_shutdown_tx.send(()).ok();
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn handle_join_room(
     state: &mut LobbyState,
     core: Arc<AriaCore>,
+    lobby_request_tx: &UnboundedSender<LobbyRequest>,
     name: String,
     member_tx: Tx,
     user_id: i64,
@@ -146,7 +166,15 @@ async fn handle_join_room(
 ) -> Result<RoomMembership, anyhow::Error> {
     let room = if let Some(room) = state.rooms_by_name.get(&name) {
         room.clone()
-    } else if let Some(room) = Room::load(&core, &name, shutdown_rx, shutdown_complete_tx).await? {
+    } else if let Some(room) = Room::load(
+        &core,
+        &name,
+        lobby_request_tx.clone(),
+        shutdown_rx,
+        shutdown_complete_tx,
+    )
+    .await?
+    {
         state.rooms_by_id.insert(room.id, room.clone());
         state.rooms_by_name.insert(name.clone(), room.clone());
 
@@ -156,4 +184,14 @@ async fn handle_join_room(
     };
 
     room.join(member_tx, user_id).await
+}
+
+fn handle_unload_room(state: &mut LobbyState, room_id: i32) -> Result<(), anyhow::Error> {
+    if let Some(room) = state.rooms_by_id.remove(&room_id) {
+        state.rooms_by_name.remove(&room.name);
+
+        info!("Room '{}' removed from lobby.", room.name);
+    }
+
+    Ok(())
 }

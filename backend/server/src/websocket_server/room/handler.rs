@@ -1,3 +1,4 @@
+use chrono::{DateTime, Duration, Utc};
 use futures::StreamExt;
 use futures_channel::mpsc::UnboundedReceiver;
 use futures_channel::mpsc::UnboundedSender;
@@ -8,6 +9,8 @@ use tracing::info;
 
 use aria_models::api as am;
 use aria_models::local as lm;
+
+use crate::websocket_server::lobby::LobbyRequest;
 
 use super::state::RoomState;
 use super::MemberId;
@@ -67,9 +70,14 @@ pub enum RoomRequest {
 pub(super) async fn handle_room_requests(
     mut state: RoomState,
     mut request_rx: UnboundedReceiver<RoomRequest>,
+    lobby_request_tx: UnboundedSender<LobbyRequest>,
     mut shutdown_rx: broadcast::Receiver<()>,
     _shutdown_complete_tx: Sender<()>,
 ) {
+    let mut unload_at: Option<DateTime<Utc>> = None;
+
+    let mut unload_check_interval = tokio::time::interval(std::time::Duration::from_secs(900));
+
     loop {
         tokio::select! {
             // Handle room requests
@@ -78,10 +86,18 @@ pub(super) async fn handle_room_requests(
                     RoomRequest::Join { tx, user_id, result_tx } => {
                         let res = state.join(user_id, tx);
                         result_tx.send(res).ok();
+
+                        unload_at = None;
                     }
                     RoomRequest::Leave { member_id, result_tx } => {
                         let res = state.leave(member_id);
                         result_tx.send(res).ok();
+
+                        if state.is_deserted() {
+                            info!("Room '{}' is deserted, unloading in 1 hour.", state.name);
+
+                            unload_at = Some(Utc::now() + Duration::hours(1));
+                        }
                     }
                     RoomRequest::Post { post, result_tx } => {
                         let res = state.post(post);
@@ -118,6 +134,19 @@ pub(super) async fn handle_room_requests(
                     RoomRequest::SetPlaybackState { member_id, ps, result_tx } => {
                         let res = state.set_playback_state(member_id, &ps);
                         result_tx.send(res).ok();
+                    }
+                }
+            }
+            _ = unload_check_interval.tick() => {
+                if let Some(unload_at) = unload_at {
+                    if Utc::now() > unload_at {
+                        info!("Unloading room '{}'...", state.name);
+
+                        let (result_tx, result_rx) = oneshot::channel();
+                        if lobby_request_tx.unbounded_send(LobbyRequest::UnloadRoom { room_id: state.id, result_tx }).is_ok() {
+                            result_rx.await.ok();
+                            break;
+                        }
                     }
                 }
             }

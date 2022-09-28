@@ -3,13 +3,16 @@ use std::collections::VecDeque;
 
 use anyhow::Context;
 use chrono::{DateTime, Utc};
+use futures_channel::mpsc::UnboundedSender;
 use tokio::sync::broadcast;
 use tokio::sync::mpsc::Sender;
-use tracing::error;
+use tracing::{error, info};
 
 use aria_core::AriaCore;
 use aria_models::api as am;
 use aria_models::local as lm;
+
+use crate::websocket_server::lobby::LobbyRequest;
 
 use super::handler::handle_room_requests;
 use super::handler::RoomRequest;
@@ -20,6 +23,8 @@ use super::{send, Member, Tx};
 const MAX_POSTS: usize = 50;
 
 pub(super) struct RoomState {
+    pub id: i32,
+    pub name: String,
     next_member_id: MemberId,
     members: HashMap<MemberId, Member>,
     posts: VecDeque<lm::Post>,
@@ -34,9 +39,12 @@ impl RoomState {
     pub async fn load(
         core: &AriaCore,
         name: &str,
+        lobby_request_tx: UnboundedSender<LobbyRequest>,
         shutdown_rx: broadcast::Receiver<()>,
         shutdown_complete_tx: Sender<()>,
     ) -> Result<Option<Room>, anyhow::Error> {
+        info!("Loading room '{name}'.");
+
         if let Some(room) = core.get_room_by_name(name).await.context("Getting room")? {
             let emotes = core.get_emotes(room.id).await.context("Error getting emotes")?;
 
@@ -49,6 +57,8 @@ impl RoomState {
             let emotes = emotes.iter().map(am::Emote::from).collect();
 
             let state = RoomState {
+                id: room.id,
+                name: room.name.clone(),
                 next_member_id: 1,
                 members: HashMap::new(),
                 posts: recent_posts.into_iter().collect(),
@@ -62,11 +72,17 @@ impl RoomState {
             let (tx, rx) = futures_channel::mpsc::unbounded::<RoomRequest>();
 
             // Spawn room request handler
-            tokio::spawn(handle_room_requests(state, rx, shutdown_rx, shutdown_complete_tx));
+            tokio::spawn(handle_room_requests(
+                state,
+                rx,
+                lobby_request_tx,
+                shutdown_rx,
+                shutdown_complete_tx,
+            ));
 
             Ok(Some(Room {
                 id: room.id,
-                name: room.name.clone(),
+                name: room.name,
                 tx,
             }))
         } else {
@@ -277,5 +293,9 @@ impl RoomState {
         }
 
         Ok(())
+    }
+
+    pub fn is_deserted(&self) -> bool {
+        self.members.is_empty()
     }
 }

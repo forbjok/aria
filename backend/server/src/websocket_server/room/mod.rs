@@ -15,6 +15,7 @@ use self::handler::RoomRequest;
 pub use self::membership::RoomMembership;
 use self::state::RoomState;
 
+use super::lobby::LobbyRequest;
 use super::{send, Tx};
 
 pub type MemberId = u64;
@@ -36,10 +37,11 @@ impl Room {
     pub async fn load(
         core: &AriaCore,
         name: &str,
+        lobby_request_tx: UnboundedSender<LobbyRequest>,
         shutdown_rx: broadcast::Receiver<()>,
         shutdown_complete_tx: Sender<()>,
     ) -> Result<Option<Room>, anyhow::Error> {
-        RoomState::load(core, name, shutdown_rx, shutdown_complete_tx).await
+        RoomState::load(core, name, lobby_request_tx, shutdown_rx, shutdown_complete_tx).await
     }
 
     pub async fn join(&self, tx: Tx, user_id: i64) -> Result<RoomMembership, anyhow::Error> {
