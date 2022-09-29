@@ -169,11 +169,16 @@ impl RoomState {
     }
 
     pub fn set_content(&mut self, content: am::Content) -> Result<(), anyhow::Error> {
-        for m in self.members.values() {
-            send(&m.tx, "content", &content).map_err(|err| error!("{err:?}")).ok();
-        }
-
+        // Set content
         self.content = Some(content);
+
+        // Reset playback time
+        self.playback_state.time = 0.;
+
+        // Broadcast content change to members
+        self.send_content()?;
+        self.broadcast_playback_state()?;
+
         Ok(())
     }
 
@@ -291,6 +296,16 @@ impl RoomState {
             rate,
             is_playing: self.playback_state.is_playing,
         }
+    }
+
+    fn send_content(&self) -> Result<(), anyhow::Error> {
+        if let Some(content) = self.content.as_ref() {
+            for m in self.members.values() {
+                send(&m.tx, "content", &content).map_err(|err| error!("{err:?}")).ok();
+            }
+        }
+
+        Ok(())
     }
 
     fn send_emotes(&self, tx: &Tx) -> Result<(), anyhow::Error> {
