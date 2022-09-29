@@ -117,12 +117,6 @@ impl RoomState {
         Ok(())
     }
 
-    pub fn send_emotes(&self, tx: &Tx) -> Result<(), anyhow::Error> {
-        send(tx, "emotes", &self.emotes)?;
-
-        Ok(())
-    }
-
     pub fn send_recent_posts(&self, tx: &Tx, user_id: i64) -> Result<(), anyhow::Error> {
         let posts: Vec<_> = self
             .posts
@@ -248,24 +242,6 @@ impl RoomState {
         Ok(())
     }
 
-    fn get_playback_state(&self) -> am::PlaybackState {
-        let rate = self.playback_state.rate;
-
-        let time = if self.playback_state.is_playing {
-            let time_diff = ((Utc::now() - self.playback_state_timestamp).num_milliseconds() as f64 * rate) / 1000.;
-
-            self.playback_state.time + time_diff
-        } else {
-            self.playback_state.time
-        };
-
-        am::PlaybackState {
-            time,
-            rate,
-            is_playing: self.playback_state.is_playing,
-        }
-    }
-
     /// Add or update emote
     pub fn add_emote(&mut self, emote: lm::Emote) -> Result<(), anyhow::Error> {
         let emote = am::Emote::from(&emote);
@@ -297,5 +273,29 @@ impl RoomState {
 
     pub fn is_deserted(&self) -> bool {
         self.members.is_empty()
+    }
+
+    fn get_playback_state(&self) -> am::PlaybackState {
+        let rate = self.playback_state.rate;
+
+        let time = if self.playback_state.is_playing {
+            let time_diff = ((Utc::now() - self.playback_state_timestamp).num_milliseconds() as f64 * rate) / 1000.;
+
+            self.playback_state.time + time_diff
+        } else {
+            self.playback_state.time
+        };
+
+        am::PlaybackState {
+            time,
+            rate,
+            is_playing: self.playback_state.is_playing,
+        }
+    }
+
+    fn send_emotes(&self, tx: &Tx) -> Result<(), anyhow::Error> {
+        send(tx, "emotes", &self.emotes)?;
+
+        Ok(())
     }
 }
