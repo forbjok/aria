@@ -86,6 +86,7 @@ const theaterMode = ref(false);
 
 const content = ref<Content>();
 const contentKind = ref<ContentKind>();
+const isContentLoaded = ref(false);
 const contentUrl = ref<string>();
 const isMaster = ref(false);
 const isDetached = ref(false);
@@ -183,6 +184,8 @@ onUnmounted(() => {
 });
 
 const setContent = async (_content?: Content) => {
+  isContentLoaded.value = false;
+
   content.value = _content;
   if (!content.value) return;
 
@@ -432,7 +435,7 @@ const toggleDetached = () => {
 
 <template>
   <div v-if="isRoomLoaded" ref="room" class="room" :class="settings.isRightSideChat ? 'right-side-chat' : ''">
-    <div v-if="isPlayerInteractedWith || !player" class="usercontrols-activationzone">
+    <div v-if="isPlayerInteractedWith || !isContentLoaded" class="usercontrols-activationzone">
       <div class="usercontrols">
         <button class="usercontrol" title="Reload" @click="reloadContent">
           <i class="fa-solid fa-arrows-rotate"></i>
@@ -494,6 +497,8 @@ const toggleDetached = () => {
         v-if="contentKind === ContentKind.Video"
         ref="player"
         class="video-container"
+        @contentloaded="isContentLoaded = true"
+        @contenterror="isContentLoaded = false"
         @play="onPlay"
         @playing="onPlaying"
         @pause="onPause"

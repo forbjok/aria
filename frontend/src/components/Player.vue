@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch } from "vue";
 
 import YouTubePlayer from "youtube-player";
 import PlayerStates from "youtube-player/dist/constants/PlayerStates";
@@ -36,6 +36,7 @@ interface UserscriptDetails {
 
 const emit = defineEmits<{
   (e: "contentloaded"): void;
+  (e: "contenterror"): void;
   (e: "play", auto: boolean): void;
   (e: "playing"): void;
   (e: "pause", auto: boolean): void;
@@ -45,17 +46,23 @@ const emit = defineEmits<{
 
 const content = ref<Content>();
 
-let isContentLoaded = false;
 let isAutoUpdate = false;
 let isPlaying = false;
 let isYouTubePlayerLoaded = false;
 let playbackController: PlaybackController | null;
 
+const isContentLoaded = ref(false);
 const sources = ref<Source[]>([]);
 
 const embeddedVideo = ref<HTMLMediaElement>();
 const youtubePlayer = ref<HTMLDivElement>();
 const googleDriveVideo = ref<HTMLMediaElement>();
+
+watch(isContentLoaded, () => {
+  if (isContentLoaded.value) {
+    emit("contentloaded");
+  }
+});
 
 const beginAuto = () => {
   isAutoUpdate = true;
@@ -67,7 +74,7 @@ const beginAuto = () => {
 
 const setContent = async (_content?: Content) => {
   await pause();
-  isContentLoaded = false;
+  isContentLoaded.value = false;
 
   content.value = _content;
   if (content.value == null) return;
@@ -121,7 +128,13 @@ const setContent = async (_content?: Content) => {
         onRateChange();
       });
 
-      isContentLoaded = true;
+      ytp.on("ready", () => {
+        isContentLoaded.value = true;
+      });
+
+      ytp.on("error", () => {
+        emit("contenterror");
+      });
     }, 100);
     return;
   }
@@ -174,8 +187,7 @@ const setContent = async (_content?: Content) => {
             };
 
             setTimeout(() => {
-              isContentLoaded = true;
-              emit("contentloaded");
+              isContentLoaded.value = true;
             }, 1);
           }, 100);
         },
@@ -211,8 +223,17 @@ const setContent = async (_content?: Content) => {
         return;
       }
 
-      videojs(video, { controls: true });
-      video.load();
+      videojs(video, { controls: true }, () => {
+        video.addEventListener(
+          "canplay",
+          () => {
+            isContentLoaded.value = true;
+          },
+          { once: true }
+        );
+
+        video.load();
+      });
 
       playbackController = {
         getTime: async (): Promise<number> => {
@@ -234,15 +255,12 @@ const setContent = async (_content?: Content) => {
           video.pause();
         },
       };
-
-      isContentLoaded = true;
-      emit("contentloaded");
     }, 100);
   }, 1);
 };
 
 const getIsContentLoaded = (): boolean => {
-  return isContentLoaded;
+  return isContentLoaded.value;
 };
 
 const getIsPlaying = (): boolean => {
