@@ -32,6 +32,10 @@
       border-right: 1px solid black;
 
       width: 350px;
+
+      // Required because in Chrome, width is apparently not so much a rule
+      // as a guideline that the browser might follow if it feels like it.
+      min-width: 350px;
     }
   }
 
