@@ -362,7 +362,7 @@ onUnmounted(() => {
                   <button
                     v-if="auth.isAuthorized.value"
                     class="admin badge"
-                    :class="settings.postBadges.room_admin ? '' : 'off'"
+                    :class="{ off: !settings.postBadges.room_admin }"
                     @click.prevent="settings.postBadges.room_admin = !settings.postBadges.room_admin"
                     title="Room Admin"
                   >

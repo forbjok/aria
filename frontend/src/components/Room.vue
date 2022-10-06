@@ -434,7 +434,7 @@ const toggleDetached = () => {
 </script>
 
 <template>
-  <div v-if="isRoomLoaded" ref="room" class="room" :class="settings.isRightSideChat ? 'right-side-chat' : ''">
+  <div v-if="isRoomLoaded" ref="room" class="room" :class="{ 'right-side-chat': settings.isRightSideChat }">
     <div v-if="isPlayerInteractedWith || !isContentLoaded" class="usercontrols-activationzone">
       <div class="usercontrols">
         <button class="usercontrol" title="Reload" @click="reloadContent">
@@ -443,7 +443,7 @@ const toggleDetached = () => {
         <div class="spacer"></div>
         <button
           class="usercontrol"
-          :class="theaterMode ? '' : 'usercontrol-off'"
+          :class="{ 'usercontrol-off': !theaterMode }"
           title="Theater mode"
           @click="toggleTheaterMode"
         >
@@ -458,7 +458,7 @@ const toggleDetached = () => {
         </button>
         <button
           class="usercontrol"
-          :class="isDetached ? 'usercontrol-off' : ''"
+          :class="{ 'usercontrol-off': isDetached }"
           :title="isDetached ? 'Attach' : 'Detach'"
           @click="toggleDetached"
         >
@@ -477,7 +477,7 @@ const toggleDetached = () => {
           </button>
           <button
             class="usercontrol"
-            :class="isMaster ? '' : 'usercontrol-off'"
+            :class="{ 'usercontrol-off': !isMaster }"
             title="Toggle master"
             @click="toggleMaster"
           >
@@ -487,7 +487,7 @@ const toggleDetached = () => {
       </div>
     </div>
     <div v-show="!theaterMode" ref="chatContainer" class="chat-container">
-      <Chat :class="settings.isRightSideChat ? 'right-side-chat' : ''" @post="toastChat?.post($event)" />
+      <Chat :class="{ 'right-side-chat': settings.isRightSideChat }" @post="toastChat?.post($event)" />
     </div>
     <div ref="contentArea" class="content-area" @keydown="onContentAreaKeydown($event)">
       <div v-show="theaterMode" class="toast-chat-container">

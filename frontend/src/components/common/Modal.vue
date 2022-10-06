@@ -25,7 +25,7 @@ const clickOutside = () => {
 
 <template>
   <Teleport to="#overlay">
-    <div class="modal" :class="darken ? 'darken' : ''" v-if="show" @click.stop="clickOutside">
+    <div class="modal" :class="{ darken: darken }" v-if="show" @click.stop="clickOutside">
       <div class="content" v-bind="$attrs" @click.stop>
         <slot></slot>
       </div>

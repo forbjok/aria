@@ -19,7 +19,7 @@ const toggleExpanded = (): void => {
 <template>
   <img
     class="emote"
-    :class="expandImage ? 'expanded' : ''"
+    :class="{ expanded: expandImage }"
     :src="emote.url"
     :title="`!${emote.name}`"
     @click="toggleExpanded"

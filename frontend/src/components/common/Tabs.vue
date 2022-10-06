@@ -51,7 +51,7 @@ const TabContent = () => {
         v-for="t in tabs"
         :key="t.index"
         class="tab-header"
-        :class="selectedIndex === t.index ? 'selected' : ''"
+        :class="{ selected: selectedIndex === t.index }"
         @click="selectTab(t.index)"
       >
         {{ t.title }}

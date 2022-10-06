@@ -7,11 +7,16 @@ import PostComment from "./PostComment.vue";
 import type { Post } from "@/models";
 import type { RoomAuthService } from "@/services/room-auth";
 
-const props = defineProps<{
+interface Props {
   post: Post;
   highlight?: boolean;
   actions?: boolean;
-}>();
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  highlight: false,
+  actions: false,
+});
 
 const emit = defineEmits<{
   (e: "quotepost", id: number): void;
@@ -57,11 +62,7 @@ const formatTime = (value: string): string => {
 </script>
 
 <template>
-  <div
-    :id="`p${post.id}`"
-    class="post"
-    :class="[highlight ? 'highlight' : '', post.admin ? 'admin' : '', post.you ? 'you' : '']"
-  >
+  <div :id="`p${post.id}`" class="post" :class="{ highlight: highlight, admin: post.admin, you: post.you }">
     <div class="post-header">
       <div class="post-info">
         <span class="time">{{ formatTime(post.posted) }}</span>
@@ -84,7 +85,7 @@ const formatTime = (value: string): string => {
       </div>
     </div>
     <div v-if="!post.isDeleted" class="post-body">
-      <div v-if="post.image" class="post-image" :class="post.showFullImage ? 'expanded' : ''">
+      <div v-if="post.image" class="post-image" :class="{ expanded: post.showFullImage }">
         <a :href="post.image.url" @click.prevent="toggleImage(post)" target="_blank">
           <img class="thumbnail" :src="post.image.tn_url" :title="post.image.filename" />
           <img v-if="post.showFullImage" class="expanded-image" :src="post.image.url" />
