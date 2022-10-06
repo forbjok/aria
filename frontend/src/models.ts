@@ -26,7 +26,7 @@ export interface Post {
   posted: string;
   you: boolean;
   admin: boolean;
-  showFullImage: boolean;
+
   isDeleted: boolean;
 }
 

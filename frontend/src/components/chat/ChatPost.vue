@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, toRefs } from "vue";
+import { inject, ref, toRefs } from "vue";
 import { format, isSameDay, isSameYear, parseJSON } from "date-fns";
 
 import PostComment from "./PostComment.vue";
@@ -28,8 +28,10 @@ const { post, highlight, actions } = toRefs(props);
 
 const auth = inject<RoomAuthService>("auth")!;
 
-const toggleImage = (_post: Post): void => {
-  _post.showFullImage = !_post.showFullImage;
+const expandImage = ref(false);
+
+const toggleExpandImage = () => {
+  expandImage.value = !expandImage.value;
 };
 
 const quotePost = (id: number) => {
@@ -85,10 +87,10 @@ const formatTime = (value: string): string => {
       </div>
     </div>
     <div v-if="!post.isDeleted" class="post-body">
-      <div v-if="post.image" class="post-image" :class="{ expanded: post.showFullImage }">
-        <a :href="post.image.url" @click.prevent="toggleImage(post)" target="_blank">
+      <div v-if="post.image" class="post-image" :class="{ expanded: expandImage }">
+        <a :href="post.image.url" @click.prevent="toggleExpandImage" target="_blank">
           <img class="thumbnail" :src="post.image.tn_url" :title="post.image.filename" />
-          <img v-if="post.showFullImage" class="expanded-image" :src="post.image.url" />
+          <img v-if="expandImage" class="expanded-image" :src="post.image.url" />
         </a>
         <div class="filename">{{ post.image.filename }}</div>
       </div>
