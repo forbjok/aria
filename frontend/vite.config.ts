@@ -15,10 +15,10 @@ export default defineConfig({
   server: {
     https: true,
     proxy: {
-      "/api": {
+      "/api/": {
         target: "http://localhost:3000",
       },
-      "/f": {
+      "/f/": {
         target: "http://localhost:3000",
       },
       "/aria-ws": {
