@@ -6,17 +6,27 @@ use clap::Parser;
 use tracing::{debug, info};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
-use crate::{auth::AriaAuth, server::AriaServer};
+use crate::auth::AriaAuth;
 
 mod auth;
+mod command;
 mod server;
 mod websocket_server;
 
 #[derive(Debug, Parser)]
-#[clap(name = "Aria Server", version = env!("CARGO_PKG_VERSION"), author = env!("CARGO_PKG_AUTHORS"))]
+#[clap(name = "Aria", version = env!("CARGO_PKG_VERSION"), author = env!("CARGO_PKG_AUTHORS"))]
 struct Opt {
     #[clap(long = "migrate", help = "Run database migration on startup")]
     migrate: bool,
+
+    #[clap(subcommand)]
+    command: Command,
+}
+
+#[derive(Debug, Parser)]
+enum Command {
+    #[clap(about = "Run Aria server")]
+    Server,
 }
 
 #[tokio::main]
@@ -38,19 +48,9 @@ async fn main() -> Result<(), anyhow::Error> {
         core.migrate().await?;
     }
 
-    let server = AriaServer::new(auth.clone(), core.clone());
-
-    let shutdown = || async {
-        tokio::signal::ctrl_c().await.expect("Error awaiting Ctrl-C signal");
+    match opt.command {
+        Command::Server => command::server(auth, core).await?,
     };
-
-    let http_server = server.run_server(shutdown());
-    let ws_server = websocket_server::run_server(auth.clone(), core.clone(), shutdown());
-
-    let (http_result, ws_result) = tokio::join!(http_server, ws_server);
-
-    http_result?;
-    ws_result?;
 
     Ok(())
 }
