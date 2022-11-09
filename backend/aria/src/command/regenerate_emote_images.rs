@@ -25,6 +25,8 @@ pub async fn regenerate_emote_images() -> Result<(), anyhow::Error> {
                 .split_once('.')
                 .context("Error determining hash from filename")?;
 
+            let ext = core.image_extension(ext);
+
             core.generate_emote_image(&path, hash, ext, true).await?;
 
             core.update_emote_images(hash, ext).await?;

@@ -74,11 +74,7 @@ impl AriaCore {
             tokio::fs::remove_file(file.path).await?;
         }
 
-        let ext = if self.is_preserve_original(original_ext) {
-            original_ext
-        } else {
-            "webp"
-        };
+        let ext = self.image_extension(original_ext);
 
         Ok(ProcessImageResult {
             hash: hash.into(),
@@ -86,6 +82,14 @@ impl AriaCore {
             original_ext: original_ext.into(),
             original_image_path,
         })
+    }
+
+    pub fn image_extension<'a>(&self, original_ext: &'a str) -> &'a str {
+        if self.is_preserve_original(original_ext) {
+            original_ext
+        } else {
+            "webp"
+        }
     }
 
     pub fn is_preserve_original(&self, ext: &str) -> bool {
