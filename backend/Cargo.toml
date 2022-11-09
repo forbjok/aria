@@ -1,17 +1,17 @@
 [workspace]
 members = [
+  "aria",
   "core",
   "models",
-  "server",
   "shared",
   "store",
   "tool",
 ]
 
 default-members = [
+  "aria",
   "core",
   "models",
-  "server",
   "shared",
   "store",
   "tool",

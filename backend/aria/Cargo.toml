@@ -1,5 +1,5 @@
 [package]
-name = "aria_server"
+name = "aria"
 version = "0.1.0"
 edition = "2021"
 
