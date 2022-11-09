@@ -27,6 +27,22 @@ struct Opt {
 enum Command {
     #[clap(about = "Run Aria server")]
     Server,
+
+    #[clap(about = "Tool commands")]
+    Tool {
+        #[clap(subcommand)]
+        command: ToolCommand,
+    },
+}
+
+#[derive(Debug, Parser)]
+enum ToolCommand {
+    #[clap(about = "Process images from the 'process' directory")]
+    ProcessImages,
+    #[clap(about = "Regenerate post images and thumbnails from original files")]
+    RegeneratePostImages,
+    #[clap(about = "Regenerate emote images from original files")]
+    RegenerateEmoteImages,
 }
 
 #[tokio::main]
@@ -50,6 +66,11 @@ async fn main() -> Result<(), anyhow::Error> {
 
     match opt.command {
         Command::Server => command::server(auth, core).await?,
+        Command::Tool { command } => match command {
+            ToolCommand::ProcessImages => command::process_images().await?,
+            ToolCommand::RegeneratePostImages => command::regenerate_post_images().await?,
+            ToolCommand::RegenerateEmoteImages => command::regenerate_emote_images().await?,
+        },
     };
 
     Ok(())
