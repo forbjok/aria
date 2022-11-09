@@ -3,7 +3,8 @@ use std::{net::SocketAddr, sync::Arc};
 use anyhow::Context;
 use aria_models::local as lm;
 use axum::{
-    extract::{ConnectInfo, ContentLengthLimit, Multipart, Path, State},
+    extract::{ConnectInfo, DefaultBodyLimit, Multipart, Path, State},
+    handler::Handler,
     http::StatusCode,
     routing::{delete, post},
     Json, Router,
@@ -14,13 +15,19 @@ use crate::server::{
     AriaServer,
 };
 
-const MAX_IMAGE_SIZE: u64 = 2 * 1024 * 1024; // 2MB
+const MAX_IMAGE_SIZE: usize = 2 * 1024 * 1024; // 2MB
 
 pub fn router(server: Arc<AriaServer>) -> Router<Arc<AriaServer>> {
     Router::with_state(server)
-        .route("/:room_id/post", post(create_post))
+        .route(
+            "/:room_id/post",
+            post(create_post.layer(DefaultBodyLimit::max(MAX_IMAGE_SIZE))),
+        )
         .route("/:room_id/post/:post_id", delete(delete_post))
-        .route("/:room_id/emote", post(create_emote))
+        .route(
+            "/:room_id/emote",
+            post(create_emote.layer(DefaultBodyLimit::max(MAX_IMAGE_SIZE))),
+        )
         .route("/:room_id/emote/:emote_id", delete(delete_emote))
 }
 
@@ -31,7 +38,7 @@ async fn create_post(
     State(server): State<Arc<AriaServer>>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Path(room_id): Path<i32>,
-    ContentLengthLimit(mut multipart): ContentLengthLimit<Multipart, { MAX_IMAGE_SIZE }>,
+    mut multipart: Multipart,
 ) -> Result<Json<i64>, ApiError> {
     let is_room_admin = auth.map(|a| a.for_room(room_id)).unwrap_or(false);
 
@@ -125,7 +132,7 @@ async fn create_emote(
     auth: Authorized,
     State(server): State<Arc<AriaServer>>,
     Path(room_id): Path<i32>,
-    ContentLengthLimit(mut multipart): ContentLengthLimit<Multipart, { MAX_IMAGE_SIZE }>,
+    mut multipart: Multipart,
 ) -> Result<(StatusCode, ()), ApiError> {
     if !auth.for_room(room_id) {
         return Err(ApiError::Unauthorized);

@@ -9,10 +9,10 @@ edition = "2021"
 aria_core = { path = "../core" }
 aria_models = { path = "../models" }
 aria_shared = { path = "../shared" }
-anyhow = "1.0.64"
+anyhow = "1.0.66"
 chrono = "0.4.22"
-clap = { version = "3.2.20", features = ["derive"] }
-futures-channel = "0.3.24"
-tokio = "1.21.1"
-tracing = "0.1.36"
-tracing-subscriber = { version = "0.3.15", features = ["env-filter"] }
+clap = { version = "4.0.22", features = ["derive"] }
+futures-channel = "0.3.25"
+tokio = "1.21.2"
+tracing = "0.1.37"
+tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
