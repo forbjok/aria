@@ -74,12 +74,10 @@ impl AriaCore {
             tokio::fs::remove_file(file.path).await?;
         }
 
-        let ext = if original_ext == "gif" {
+        let ext = if self.is_preserve_original(original_ext) {
             original_ext
-        } else if original_ext == "png" {
-            "png"
         } else {
-            "jpg"
+            "webp"
         };
 
         Ok(ProcessImageResult {

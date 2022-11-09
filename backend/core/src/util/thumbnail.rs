@@ -43,7 +43,10 @@ impl<'a> ThumbnailGenerator<'a> {
 
         for tn in self.thumbnails.iter() {
             let tn_img = img.thumbnail(tn.width, tn.height);
-            tn_img.save(tn.dst_path).context("Error saving thumbnail")?;
+            tn_img
+                .into_rgba8()
+                .save(tn.dst_path)
+                .context("Error saving thumbnail")?;
         }
 
         Ok(())
