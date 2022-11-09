@@ -2,7 +2,7 @@
 import { computed, inject, ref } from "vue";
 
 import axios from "axios";
-import filesize from "filesize";
+import { filesize } from "filesize";
 
 import type { Emote } from "@/models";
 import type { RoomAuthService } from "@/services/room-auth";
@@ -141,8 +141,8 @@ const submitEmote = async () => {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
-      onUploadProgress: (e: ProgressEvent) => {
-        if (e.lengthComputable) {
+      onUploadProgress: (e) => {
+        if (e.total) {
           const percentComplete = Math.round((e.loaded / e.total) * 100);
           progressText.value = `${percentComplete}%`;
         } else {

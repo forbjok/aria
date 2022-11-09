@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject, onMounted, onUnmounted, ref } from "vue";
-import axios, { type AxiosRequestHeaders } from "axios";
-import filesize from "filesize";
+import axios, { type RawAxiosRequestHeaders } from "axios";
+import { filesize } from "filesize";
 
 import ChatPost from "./ChatPost.vue";
 import EmoteSelector from "./EmoteSelector.vue";
@@ -124,7 +124,7 @@ const activatePostingCooldown = () => {
 };
 
 const buildHeaders = async () => {
-  let headers: AxiosRequestHeaders = {
+  let headers: RawAxiosRequestHeaders = {
     "X-User": user.userToken || "",
   };
 
@@ -188,7 +188,7 @@ const submitPost = async () => {
     await axios.post(`/api/chat/${room.id}/post`, formData, {
       headers: await buildHeaders(),
       onUploadProgress: (e) => {
-        if (e.lengthComputable) {
+        if (e.total) {
           const percentComplete = Math.round((e.loaded / e.total) * 100);
           postingProgress.value = `${percentComplete}%`;
         } else {
