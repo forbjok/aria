@@ -1,9 +1,10 @@
 <script lang="ts">
-import { defineComponent, h, inject, type VNodeArrayChildren } from "vue";
+import { defineComponent, h, type VNodeArrayChildren } from "vue";
 import * as P from "parsimmon";
 
 import Emote from "./Emote.vue";
-import type { RoomService } from "@/services/room";
+
+import { useRoomStore } from "@/stores/room";
 
 export default defineComponent({
   props: {
@@ -11,7 +12,7 @@ export default defineComponent({
   },
   emits: ["clickquotelink"],
   setup(props, ctx) {
-    const room = inject<RoomService>("room")!;
+    const roomStore = useRoomStore();
 
     return () => {
       if (!props.text) {
@@ -38,7 +39,7 @@ export default defineComponent({
 
       const addEmote = (text: string) => {
         const name = text.substring(1);
-        const emote = room.emotes.value[name];
+        const emote = roomStore.emotes[name];
         if (!emote) {
           addText(text);
           return;

@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { inject, reactive } from "vue";
+import { reactive } from "vue";
 
 import ChatPost from "./ChatPost.vue";
 
-import type { Post } from "@/models";
-import type { RoomSettings } from "@/settings";
+import { useMainStore } from "@/stores/main";
 
-const settings = inject<RoomSettings>("settings")!;
+import type { Post } from "@/models";
+
+const mainStore = useMainStore();
 
 const posts = reactive<Post[]>([]);
 
@@ -24,7 +25,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="toast-chat chat" :class="`theme-${settings.theme}`">
+  <div class="toast-chat chat" :class="`theme-${mainStore.settings.theme}`">
     <div class="post-container">
       <ChatPost :post="post" v-for="post of posts" :key="post.id"></ChatPost>
     </div>

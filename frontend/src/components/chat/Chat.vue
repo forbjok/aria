@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, onMounted, onUnmounted, ref } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
 import { filesize } from "filesize";
 
 import ChatPost from "./ChatPost.vue";
@@ -7,8 +7,7 @@ import EmoteSelector from "./EmoteSelector.vue";
 import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
 
 import type { Post } from "@/models";
-import type { AriaWebSocket, AriaWsListener } from "@/services/websocket";
-import type { RoomSettings } from "@/settings";
+import type { AriaWsListener } from "@/services/websocket";
 
 import { useMainStore } from "@/stores/main";
 import { useRoomStore, type NewPost } from "@/stores/room";
@@ -22,9 +21,6 @@ const roomStore = useRoomStore();
 
 const maxPosts = 200;
 const maxImageSize = 2097152;
-
-const settings = inject<RoomSettings>("settings")!;
-const ws = inject<AriaWebSocket>("ws")!;
 
 const postContainer = ref<HTMLDivElement>();
 const postForm = ref<HTMLFormElement>();
@@ -46,7 +42,7 @@ let submitOnCooldown = false;
 
 const createEmptyPost = (): NewPost => {
   return {
-    name: settings.chatName,
+    name: roomStore.settings.chatName,
     comment: "",
   };
 };
@@ -301,8 +297,10 @@ onUnmounted(() => {
                   <button
                     v-if="roomStore.isAuthorized"
                     class="admin badge"
-                    :class="{ off: !settings.postBadges.room_admin }"
-                    @click.prevent="settings.postBadges.room_admin = !settings.postBadges.room_admin"
+                    :class="{ off: !roomStore.settings.postBadges.room_admin }"
+                    @click.prevent="
+                      roomStore.settings.postBadges.room_admin = !roomStore.settings.postBadges.room_admin
+                    "
                     title="Room Admin"
                   >
                     <i class="fa-solid fa-star"></i>
