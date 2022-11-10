@@ -1,33 +1,17 @@
 <script setup lang="ts">
-import { reactive } from "vue";
-
 import ChatPost from "./ChatPost.vue";
 
 import { useMainStore } from "@/stores/main";
-
-import type { Post } from "@/models";
+import { useChatStore } from "@/stores/chat";
 
 const mainStore = useMainStore();
-
-const posts = reactive<Post[]>([]);
-
-const post = (_post: Post) => {
-  posts.push(_post);
-
-  setTimeout(() => {
-    posts.shift();
-  }, 4000);
-};
-
-defineExpose({
-  post,
-});
+const chatStore = useChatStore();
 </script>
 
 <template>
   <div class="toast-chat chat" :class="`theme-${mainStore.settings.theme}`">
     <div class="post-container">
-      <ChatPost :post="post" v-for="post of posts" :key="post.id"></ChatPost>
+      <ChatPost :post="post" v-for="post of chatStore.recentPosts" :key="post.id" />
     </div>
   </div>
 </template>

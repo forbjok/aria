@@ -26,12 +26,6 @@ export interface LoginResponse {
   refresh_token: string;
 }
 
-export interface NewPost {
-  name: string;
-  comment: string;
-  image?: File;
-}
-
 export interface NewEmote {
   name: string;
   image?: File;
@@ -118,8 +112,6 @@ export const useRoomStore = defineStore("room", () => {
     await loadRoomSettings();
 
     await verifyLogin();
-
-    await setupWebsocket();
   }
 
   async function loadRoomAuth() {
@@ -222,41 +214,6 @@ export const useRoomStore = defineStore("room", () => {
     }
   }
 
-  async function submitPost(
-    post: NewPost,
-    onUploadProgress: ((progressEvent: AxiosProgressEvent) => void) | undefined
-  ) {
-    const formData = new FormData();
-
-    const options: string[] = [];
-
-    if (settings.value.postBadges.room_admin && isAuthorized) {
-      options.push("ra");
-    }
-
-    if (post.name) {
-      formData.append("name", post.name);
-    }
-
-    if (post.comment) {
-      formData.append("comment", post.comment);
-    }
-
-    if (options) {
-      formData.append("options", options.join(" "));
-    }
-
-    const image = post.image;
-    if (image) {
-      formData.append("image", image, image.name);
-    }
-
-    await axios.post(`/api/chat/${id.value}/post`, formData, {
-      headers: await getAuthHeaders(),
-      onUploadProgress,
-    });
-  }
-
   async function deletePost(postId: number) {
     await axios.delete(`/api/chat/${id.value}/post/${postId}`, {
       headers: await getAuthHeaders(),
@@ -289,57 +246,60 @@ export const useRoomStore = defineStore("room", () => {
   const ws_url = `${ws_protocol}://${window.location.host}/aria-ws`;
 
   const ws = new AriaWebSocket(ws_url, async () => {
+    console.log(`JION ${name.value}`);
     ws.send("join", { room: name.value, user: await mainStore.getUser() });
   });
 
-  async function setupWebsocket() {
-    const authorizeWebsocket = async () => {
-      ws.send("auth", await getAccessToken());
-    };
+  async function authorizeWebsocket() {
+    ws.send("auth", await getAccessToken());
+  }
 
-    const ws_listener = ws.create_listener();
+  const ws_listener = ws.create_listener();
 
-    ws_listener.on("joined", async () => {
+  ws_listener.on("joined", async () => {
+    if (isAuthorized.value) {
       await authorizeWebsocket();
-    });
-
-    ws_listener.on("emotes", async (_emotes: Emote[]) => {
-      for (const e of _emotes) {
-        emotes.value[e.name] = e;
-      }
-    });
-
-    ws_listener.on("emote", async (emote: Emote) => {
-      emotes.value[emote.name] = emote;
-    });
-
-    ws_listener.on("delete-emote", async (name: string) => {
-      delete emotes.value[name];
-    });
-
-    ws_listener.on("content", async (_content: Content) => {
-      content.value = _content;
-    });
-
-    ws_listener.on("not-master", () => {
-      isMaster.value = false;
-    });
-
-    ws_listener.on("playbackstate", async (ps: PlaybackState) => {
-      serverPlaybackStateTimestamp.value = getTimestamp();
-
-      ps.time += ws.latency * ps.rate;
-      serverPlaybackState.value = ps;
-    });
-
-    ws.connect();
-
-    if (!isAuthorized.value) {
+    } else {
       const unwatch = watch(isAuthorized, async () => {
         await authorizeWebsocket();
         unwatch();
       });
     }
+  });
+
+  ws_listener.on("emotes", async (_emotes: Emote[]) => {
+    for (const e of _emotes) {
+      emotes.value[e.name] = e;
+    }
+  });
+
+  ws_listener.on("emote", async (emote: Emote) => {
+    emotes.value[emote.name] = emote;
+  });
+
+  ws_listener.on("delete-emote", async (name: string) => {
+    delete emotes.value[name];
+  });
+
+  ws_listener.on("content", async (_content: Content) => {
+    content.value = _content;
+  });
+
+  ws_listener.on("not-master", () => {
+    isMaster.value = false;
+  });
+
+  ws_listener.on("playbackstate", async (ps: PlaybackState) => {
+    serverPlaybackStateTimestamp.value = getTimestamp();
+
+    ps.time += ws.latency * ps.rate;
+    serverPlaybackState.value = ps;
+  });
+
+  ws.connect();
+
+  function createWebsocketListener() {
+    return ws.create_listener();
   }
 
   async function broadcastPlaybackState(ps: PlaybackState) {
@@ -396,8 +356,9 @@ export const useRoomStore = defineStore("room", () => {
     isMaster,
     claimRoom,
     loadRoom,
+    createWebsocketListener,
     login,
-    submitPost,
+    getAuthHeaders,
     deletePost,
     deleteEmote,
     submitEmote,
