@@ -12,7 +12,7 @@ const emit = defineEmits<{
 const roomStore = useRoomStore();
 
 const emotes = computed((): Emote[] => {
-  return Object.keys(roomStore.emotes.value)
+  return Object.keys(roomStore.emotes)
     .sort()
     .map((n) => roomStore.emotes[n]);
 });

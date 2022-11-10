@@ -112,6 +112,8 @@ export const useRoomStore = defineStore("room", () => {
     await loadRoomSettings();
 
     await verifyLogin();
+
+    ws.connect();
   }
 
   async function loadRoomAuth() {
@@ -295,8 +297,6 @@ export const useRoomStore = defineStore("room", () => {
     ps.time += ws.latency * ps.rate;
     serverPlaybackState.value = ps;
   });
-
-  ws.connect();
 
   function createWebsocketListener() {
     return ws.create_listener();
