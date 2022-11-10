@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { inject, onMounted, onUnmounted, ref } from "vue";
-import axios, { type RawAxiosRequestHeaders } from "axios";
 import { filesize } from "filesize";
 
 import ChatPost from "./ChatPost.vue";
@@ -8,30 +7,23 @@ import EmoteSelector from "./EmoteSelector.vue";
 import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
 
 import type { Post } from "@/models";
-import type { RoomService } from "@/services/room";
 import type { AriaWebSocket, AriaWsListener } from "@/services/websocket";
-import type { RoomAuthService } from "@/services/room-auth";
-import type { UserService } from "@/services/user";
 import type { RoomSettings } from "@/settings";
+
+import { useMainStore } from "@/stores/main";
+import { useRoomStore, type NewPost } from "@/stores/room";
 
 const emit = defineEmits<{
   (e: "post", post: Post): void;
 }>();
 
-const auth = inject<RoomAuthService>("auth")!;
-const room = inject<RoomService>("room")!;
+const mainStore = useMainStore();
+const roomStore = useRoomStore();
 
 const maxPosts = 200;
 const maxImageSize = 2097152;
 
-interface NewPost {
-  name: string;
-  comment: string;
-  image?: File;
-}
-
 const settings = inject<RoomSettings>("settings")!;
-const user = inject<UserService>("user")!;
 const ws = inject<AriaWebSocket>("ws")!;
 
 const postContainer = ref<HTMLDivElement>();
@@ -123,23 +115,6 @@ const activatePostingCooldown = () => {
   }, 1000);
 };
 
-const buildHeaders = async () => {
-  let headers: RawAxiosRequestHeaders = {
-    "X-User": user.userToken || "",
-  };
-
-  if (auth.isAuthorized.value) {
-    const accessToken = await auth.getAccessToken();
-
-    headers = {
-      ...headers,
-      Authorization: `Bearer ${accessToken}`,
-    };
-  }
-
-  return headers;
-};
-
 const submitPost = async () => {
   if (!canSubmitPost()) {
     return;
@@ -150,51 +125,17 @@ const submitPost = async () => {
     return;
   }
 
-  const _post = post.value;
-
-  const image = _post.image;
-
-  const formData = new FormData();
-
-  const options: string[] = [];
-
-  if (settings.postBadges.room_admin && auth.isAuthorized.value) {
-    options.push("ra");
-  }
-
-  if (_post.name) {
-    formData.append("name", _post.name);
-  }
-
-  if (_post.comment) {
-    formData.append("comment", _post.comment);
-  }
-
-  if (options) {
-    formData.append("options", options.join(" "));
-  }
-
-  if (image) {
-    formData.append("image", image, image.name);
-  }
-
   // Disable post controls while posting
   posting = true;
 
-  // Save chat name
-  settings.chatName = post.value.name;
-
   try {
-    await axios.post(`/api/chat/${room.id}/post`, formData, {
-      headers: await buildHeaders(),
-      onUploadProgress: (e) => {
-        if (e.total) {
-          const percentComplete = Math.round((e.loaded / e.total) * 100);
-          postingProgress.value = `${percentComplete}%`;
-        } else {
-          postingProgress.value = "Posting...";
-        }
-      },
+    await roomStore.submitPost(post.value, (e) => {
+      if (e.total) {
+        const percentComplete = Math.round((e.loaded / e.total) * 100);
+        postingProgress.value = `${percentComplete}%`;
+      } else {
+        postingProgress.value = "Posting...";
+      }
     });
 
     postingProgress.value = "Posted.";
@@ -277,9 +218,7 @@ const deletePost = async (post?: Post) => {
     return;
   }
 
-  await axios.delete(`/api/chat/${room.id}/post/${post.id}`, {
-    headers: await buildHeaders(),
-  });
+  await roomStore.deletePost(post.id);
 };
 
 const confirmDeletePost = async (post: Post) => {
@@ -336,7 +275,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="chat" :class="`theme-${settings.theme}`">
+  <div class="chat" :class="`theme-${mainStore.settings.theme}`">
     <div class="chat-posts">
       <div ref="postContainer" class="post-container">
         <ChatPost
@@ -360,7 +299,7 @@ onUnmounted(() => {
                 <input name="name" type="text" v-model="post.name" placeholder="Anonymous" :readonly="posting" />
                 <div class="badges">
                   <button
-                    v-if="auth.isAuthorized.value"
+                    v-if="roomStore.isAuthorized"
                     class="admin badge"
                     :class="{ off: !settings.postBadges.room_admin }"
                     @click.prevent="settings.postBadges.room_admin = !settings.postBadges.room_admin"
@@ -441,7 +380,7 @@ onUnmounted(() => {
         <button class="emote-button" title="Emotes" @click="openEmoteSelector">
           <i class="fa-regular fa-face-smile"></i>
         </button>
-        <select v-if="!useCompactPostForm" class="theme-selector" v-model="settings.theme">
+        <select v-if="!useCompactPostForm" class="theme-selector" v-model="mainStore.settings.theme">
           <option v-for="theme of themes" :key="theme.name" :value="theme.name">{{ theme.description }}</option>
         </select>
         <button
@@ -464,7 +403,7 @@ onUnmounted(() => {
         <template v-slot:confirm><i class="fa-solid fa-trash"></i> Delete</template>
         <div v-if="!!actionTargetPost" class="confirm-delete-dialog">
           <span>Are you sure you want to delete this post?</span>
-          <div class="post-preview" :class="`theme-${settings.theme}`">
+          <div class="post-preview" :class="`theme-${mainStore.settings.theme}`">
             <div class="post-container">
               <ChatPost :post="actionTargetPost" />
             </div>

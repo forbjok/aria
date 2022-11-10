@@ -1,28 +1,21 @@
 <script setup lang="ts">
-import { computed, inject, ref } from "vue";
+import { computed, ref } from "vue";
 
-import axios from "axios";
 import { filesize } from "filesize";
 
+import { useRoomStore, type NewEmote } from "@/stores/room";
+
 import type { Emote } from "@/models";
-import type { RoomAuthService } from "@/services/room-auth";
 
 import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
 import Button from "@/components/common/Button.vue";
 import Dialog from "@/components/common/Dialog.vue";
 import Toolbar from "@/components/common/Toolbar.vue";
-import type { RoomService } from "@/services/room";
-
-interface NewEmote {
-  name: string;
-  image?: File;
-}
 
 const MAX_IMAGE_SIZE = 2097152;
 const UPLOADING_TEXT = "Uploading...";
 
-const auth = inject<RoomAuthService>("auth")!;
-const room = inject<RoomService>("room")!;
+const roomStore = useRoomStore();
 
 const addEmoteDialog = ref<typeof Dialog>();
 const confirmDelete = ref<typeof ConfirmDialog>();
@@ -35,13 +28,13 @@ const newEmote = ref<NewEmote>({ name: "" });
 const selectedEmote = ref<Emote>();
 
 const emotes = computed((): Emote[] => {
-  if (!room) {
+  if (!roomStore.exists) {
     return [];
   }
 
-  return Object.keys(room.emotes.value)
+  return Object.keys(roomStore.emotes)
     .sort()
-    .map((n) => room.emotes.value[n]);
+    .map((n) => roomStore.emotes[n]);
 });
 
 const newEmoteImage = computed((): string | undefined => {
@@ -68,17 +61,8 @@ const deleteEmote = async (emote?: Emote) => {
     return;
   }
 
-  const accessToken = await auth.getAccessToken();
-  if (!accessToken) {
-    return;
-  }
-
   try {
-    await axios.delete(`/api/chat/${room.id}/emote/${emote.id}`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    await roomStore.deleteEmote(emote.id);
 
     selectedEmote.value = undefined;
     emoteDetailsDialog.value?.close();
@@ -121,34 +105,18 @@ const submitEmote = async () => {
     return;
   }
 
-  const accessToken = await auth.getAccessToken();
-  if (!accessToken) {
-    return;
-  }
-
   adding.value = true;
   errorText.value = undefined;
-  progressText.value = undefined;
-
-  const formData = new FormData();
-  formData.append("name", _newEmote.name);
-  formData.append("image", _newEmote.image, _newEmote.image.name);
-
   progressText.value = UPLOADING_TEXT;
 
   try {
-    await axios.post(`/api/chat/${room.id}/emote`, formData, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-      onUploadProgress: (e) => {
-        if (e.total) {
-          const percentComplete = Math.round((e.loaded / e.total) * 100);
-          progressText.value = `${percentComplete}%`;
-        } else {
-          progressText.value = UPLOADING_TEXT;
-        }
-      },
+    await roomStore.submitEmote(_newEmote, (e) => {
+      if (e.total) {
+        const percentComplete = Math.round((e.loaded / e.total) * 100);
+        progressText.value = `${percentComplete}%`;
+      } else {
+        progressText.value = UPLOADING_TEXT;
+      }
     });
 
     addEmoteDialog.value?.close();

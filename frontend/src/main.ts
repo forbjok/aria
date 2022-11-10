@@ -1,8 +1,7 @@
 import { createApp } from "vue";
 import App from "@/App.vue";
 import router from "@/router";
-
-import { LocalStorageService } from "@/services/localstorage";
+import { createPinia } from "pinia";
 
 // CSS reset
 import "ress";
@@ -20,8 +19,7 @@ import "@/styles/main.scss";
 
 const app = createApp(App);
 
+app.use(createPinia());
 app.use(router);
-
-app.provide("storage", new LocalStorageService());
 
 app.mount("#app");

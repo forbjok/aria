@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { inject, ref } from "vue";
+import { ref } from "vue";
 
-import type { RoomAdminService } from "@/services/room-admin";
+import { useRoomStore } from "@/stores/room";
 
 const emit = defineEmits<{
   (e: "set-content", url: string): void;
 }>();
 
-const admin = inject<RoomAdminService>("admin")!;
+const roomStore = useRoomStore();
 
 const contentUrl = ref("");
 
@@ -15,7 +15,7 @@ const setContent = async () => {
   if (contentUrl.value) {
     const url = contentUrl.value;
 
-    await admin.setContentUrl(url);
+    await roomStore.setContentUrl(url);
     contentUrl.value = "";
 
     emit("set-content", url);
