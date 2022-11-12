@@ -36,7 +36,7 @@ pub async fn run_server(auth: Arc<AriaAuth>, core: Arc<AriaCore>, shutdown: impl
 
     let state = Arc::new(ServerState { auth, lobby });
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], 3001));
+    let addr: SocketAddr = "[::]:3001".parse().unwrap();
 
     let listener = TcpListener::bind(addr).await?;
     info!("WebSocket server listening on: {addr}");

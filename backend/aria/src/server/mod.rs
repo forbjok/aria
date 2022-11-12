@@ -31,7 +31,7 @@ impl AriaServer {
             .merge(axum_extra::routing::SpaRouter::new("/f", public_path))
             .layer(tower_http::trace::TraceLayer::new_for_http());
 
-        let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
+        let addr = "[::]:3000".parse().unwrap();
 
         info!("Web server listening on: {addr}");
         axum::Server::bind(&addr)
