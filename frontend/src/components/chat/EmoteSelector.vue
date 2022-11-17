@@ -1,19 +1,20 @@
 <script setup lang="ts">
-import { computed, inject } from "vue";
+import { computed } from "vue";
+
+import { useRoomStore } from "@/stores/room";
 
 import type { Emote } from "@/models";
-import type { RoomService } from "@/services/room";
 
 const emit = defineEmits<{
   (e: "selectemote", name: string): void;
 }>();
 
-const room = inject<RoomService>("room")!;
+const roomStore = useRoomStore();
 
 const emotes = computed((): Emote[] => {
-  return Object.keys(room.emotes.value)
+  return Object.keys(roomStore.emotes)
     .sort()
-    .map((n) => room.emotes.value[n]);
+    .map((n) => roomStore.emotes[n]);
 });
 
 const selectEmote = (emote: Emote) => {

@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { inject, ref } from "vue";
+import { ref } from "vue";
 
-import type { RoomAuthService } from "@/services/room-auth";
+import { useRoomStore } from "@/stores/room";
 
 const emit = defineEmits<{
   (e: "logged-in"): void;
 }>();
 
-const auth = inject<RoomAuthService>("auth")!;
+const roomStore = useRoomStore();
 
 const password = ref("");
 const errorText = ref<string>();
 
 const logIn = async () => {
-  const success = await auth.login(password.value);
+  const success = await roomStore.login(password.value);
   password.value = "";
 
   if (success) {

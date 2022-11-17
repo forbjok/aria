@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { defineAsyncComponent, inject, onMounted, onUnmounted, provide, reactive, ref, toRefs, watch } from "vue";
-import router from "@/router";
+import { defineAsyncComponent, onMounted, ref, toRefs, watch } from "vue";
+import { useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
 
 import Chat from "@/components/chat/Chat.vue";
 import ToastChat from "@/components/chat/ToastChat.vue";
@@ -9,32 +10,18 @@ import Dialog from "@/components/common/Dialog.vue";
 import LogIn from "@/components/admin/LogIn.vue";
 import RoomControls from "./RoomControls.vue";
 
-import { RoomAdminService } from "@/services/room-admin";
-import { RoomAuthService } from "@/services/room-auth";
+import { useMainStore } from "@/stores/main";
+import { useRoomStore, type PlaybackState } from "@/stores/room";
 
-import type { Content, Emote } from "@/models";
-import { RoomService } from "@/services/room";
-import { AriaWebSocket, AriaWsListener } from "@/services/websocket";
-import { UserService } from "@/services/user";
-import type { LocalStorageService } from "@/services/localstorage";
-import type { RoomSettings } from "@/settings";
-
-const AdminPanel = defineAsyncComponent(() => import("@/components/admin/AdminPanel.vue"));
+import type { Content } from "@/models";
+import { getTimestamp } from "@/utils/timestamp";
 
 enum ContentKind {
   Video = "video",
   Other = "other",
 }
 
-interface PlaybackState {
-  time: number;
-  rate: number;
-  is_playing: boolean;
-}
-
-function getTimestamp(): number {
-  return new Date().getTime();
-}
+const AdminPanel = defineAsyncComponent(() => import("@/components/admin/AdminPanel.vue"));
 
 const props = defineProps<{
   name: string;
@@ -42,37 +29,16 @@ const props = defineProps<{
 
 const { name } = toRefs(props);
 
-const DEFAULT_SETTINGS: RoomSettings = {
-  chatName: "",
-  theme: "dark",
-  isRightSideChat: false,
+const router = useRouter();
 
-  postBadges: {
-    room_admin: false,
-  },
-};
-
-const storage = inject<LocalStorageService>("storage")!;
+const mainStore = useMainStore();
+const roomStore = useRoomStore();
 
 const isRoomLoaded = ref(false);
-
-const roomService = new RoomService(name.value);
-const auth = new RoomAuthService(roomService);
-const settings = reactive<RoomSettings>({ ...DEFAULT_SETTINGS });
-const admin = new RoomAdminService(roomService, auth);
-const user = new UserService();
-
-const ws_protocol = window.location.protocol === "https:" ? "wss" : "ws";
-
-const ws_url = `${ws_protocol}://${window.location.host}/aria-ws`;
-const ws = new AriaWebSocket(ws_url, roomService, user);
-
-provide("room", roomService);
-provide("auth", auth);
-provide("settings", settings);
-provide("admin", admin);
-provide("user", user);
-provide("ws", ws);
+const isContentLoaded = ref(false);
+const contentKind = ref<ContentKind>();
+const isDetached = ref(false);
+const contentUrl = ref<string>();
 
 const logInDialog = ref<typeof Dialog>();
 const roomControlsDialog = ref<typeof Dialog>();
@@ -84,103 +50,31 @@ const player = ref<typeof Player>();
 
 const theaterMode = ref(false);
 
-const content = ref<Content>();
-const contentKind = ref<ContentKind>();
-const isContentLoaded = ref(false);
-const contentUrl = ref<string>();
-const isMaster = ref(false);
-const isDetached = ref(false);
-
 const isPlayerInteractedWith = ref(false);
 let isMasterInitiatedPlay = false;
 let isViewerPaused = false;
-let serverPlaybackStateTimestamp = 0;
-let serverPlaybackState: PlaybackState = {
-  time: 0,
-  rate: 1,
-  is_playing: false,
-};
 
-let ws_listener: AriaWsListener | undefined;
 onMounted(async () => {
-  await user.setup();
-  await roomService.setup();
-
-  if (!roomService.exists()) {
+  await roomStore.loadRoom(name.value);
+  if (!roomStore.exists) {
     router.push({ name: "claim", params: { room: name.value } });
     return;
   }
 
-  const roomSettingsKeyName = `room_${name.value}`;
-
-  // Load setings from local storage
-  Object.assign(settings, storage.get(roomSettingsKeyName));
-
-  // Automatically save settings when something changes
-  watch(settings, () => {
-    storage.set(roomSettingsKeyName, settings);
-  });
-
   isRoomLoaded.value = true;
-
-  await auth.setup();
-
-  const authorizeWebsocket = async () => {
-    ws.send("auth", await auth.getAccessToken());
-  };
-
-  ws_listener = ws.create_listener();
-
-  ws_listener.on("joined", async () => {
-    await authorizeWebsocket();
-  });
-
-  ws_listener.on("emotes", async (emotes: Emote[]) => {
-    for (const e of emotes) {
-      roomService.emotes.value[e.name] = e;
-    }
-  });
-
-  ws_listener.on("emote", async (emote: Emote) => {
-    roomService.emotes.value[emote.name] = emote;
-  });
-
-  ws_listener.on("delete-emote", async (name: string) => {
-    delete roomService.emotes.value[name];
-  });
-
-  ws_listener.on("content", async (_content: Content) => {
-    await setContent(_content);
-  });
-
-  ws_listener.on("not-master", () => {
-    isMaster.value = false;
-  });
-
-  ws_listener.on("playbackstate", async (ps: PlaybackState) => {
-    serverPlaybackStateTimestamp = getTimestamp();
-    serverPlaybackState = ps;
-    serverPlaybackState.time += ws.latency * ps.rate;
-
-    if (isMaster.value && isPlayerInteractedWith) {
-      return;
-    }
-
-    await setPlaybackState(ps);
-  });
-
-  ws.connect();
-
-  if (!auth.isAuthorized.value) {
-    const unwatch = watch(auth.isAuthorized, async () => {
-      await authorizeWebsocket();
-      unwatch();
-    });
-  }
 });
 
-onUnmounted(() => {
-  ws_listener?.dispose();
+const { content, serverPlaybackState } = storeToRefs(roomStore);
+watch(content, (value) => {
+  setContent(value);
+});
+
+watch(serverPlaybackState, async (value) => {
+  if (roomStore.isMaster && isPlayerInteractedWith) {
+    return;
+  }
+
+  await setPlaybackState(value);
 });
 
 const setContent = async (_content?: Content) => {
@@ -206,7 +100,7 @@ const setContent = async (_content?: Content) => {
 const reloadContent = async () => {
   // Store original content
   const original_content = content.value;
-  const playbackState = (await getPlaybackState()) || serverPlaybackState;
+  const playbackState = (await getPlaybackState()) || roomStore.serverPlaybackState;
 
   // Set blank content to unload content
   setContent();
@@ -254,19 +148,19 @@ const onPlay = async (auto: boolean) => {
 
   isViewerPaused = false;
 
-  if (!isMaster.value || !isPlayerInteractedWith.value) {
-    await setPlaybackState(serverPlaybackState);
+  if (!roomStore.isMaster || !isPlayerInteractedWith.value) {
+    await setPlaybackState(roomStore.serverPlaybackState);
   }
 
   isPlayerInteractedWith.value = true;
 
-  if (isMaster.value) {
+  if (roomStore.isMaster) {
     isMasterInitiatedPlay = true;
   }
 };
 
 const onPlaying = async () => {
-  if (isMaster.value) {
+  if (roomStore.isMaster) {
     if (isMasterInitiatedPlay) {
       await broadcastPlaybackState();
     }
@@ -277,7 +171,7 @@ const onPlaying = async () => {
   }
 
   setTimeout(() => {
-    setPlaybackState(serverPlaybackState);
+    setPlaybackState(roomStore.serverPlaybackState);
   }, 1);
 };
 
@@ -315,7 +209,7 @@ const getPlaybackState = async (): Promise<PlaybackState> => {
   const _player = player.value;
 
   if (!_player || !_player.getIsContentLoaded()) {
-    return serverPlaybackState;
+    return roomStore.serverPlaybackState;
   }
 
   return {
@@ -345,7 +239,7 @@ const setPlaybackState = async (ps: PlaybackState) => {
   const currentPlaybackState = await getPlaybackState();
 
   if (ps.is_playing) {
-    const elapsedSinceTimestamp = ((getTimestamp() - serverPlaybackStateTimestamp) * ps.rate) / 1000;
+    const elapsedSinceTimestamp = ((getTimestamp() - roomStore.serverPlaybackStateTimestamp) * ps.rate) / 1000;
     const newTime = ps.time + elapsedSinceTimestamp;
 
     if (ps.rate !== currentPlaybackState.rate) {
@@ -373,7 +267,7 @@ const setPlaybackState = async (ps: PlaybackState) => {
       return;
     }
 
-    if (isMaster.value) {
+    if (roomStore.isMaster) {
       return;
     }
 
@@ -382,12 +276,13 @@ const setPlaybackState = async (ps: PlaybackState) => {
 };
 
 const broadcastPlaybackState = async () => {
-  if (isDetached.value || !isMaster.value || !isPlayerInteractedWith.value) return;
+  if (isDetached.value || !isPlayerInteractedWith.value) {
+    return;
+  }
 
-  const ps = (await getPlaybackState()) || serverPlaybackState;
-  ps.time += ws.latency * ps.rate;
+  const ps = await getPlaybackState();
 
-  ws.send("master-playbackstate", ps);
+  await roomStore.broadcastPlaybackState(ps);
 };
 
 const onContentAreaKeydown = (event: KeyboardEvent) => {
@@ -399,25 +294,14 @@ const onContentAreaKeydown = (event: KeyboardEvent) => {
 };
 
 const setMaster = (v: boolean) => {
-  if (isMaster.value === v) {
-    return;
-  }
-
-  isMaster.value = v;
-
-  if (isMaster.value) {
+  roomStore.setMaster(v);
+  if (roomStore.isMaster) {
     isDetached.value = false;
-  }
-
-  if (isMaster.value) {
-    ws.send("set-master");
-  } else {
-    ws.send("not-master");
   }
 };
 
 const toggleMaster = () => {
-  setMaster(!isMaster.value);
+  setMaster(!roomStore.isMaster);
 };
 
 const toggleDetached = () => {
@@ -428,13 +312,13 @@ const toggleDetached = () => {
   }
 
   if (!isDetached.value) {
-    setPlaybackState(serverPlaybackState);
+    setPlaybackState(roomStore.serverPlaybackState);
   }
 };
 </script>
 
 <template>
-  <div v-if="isRoomLoaded" ref="room" class="room" :class="{ 'right-side-chat': settings.isRightSideChat }">
+  <div v-if="isRoomLoaded" ref="room" class="room" :class="{ 'right-side-chat': mainStore.settings.isRightSideChat }">
     <div v-if="isPlayerInteractedWith || !isContentLoaded" class="usercontrols-activationzone">
       <div class="usercontrols">
         <button class="usercontrol" title="Reload" @click="reloadContent">
@@ -452,7 +336,7 @@ const toggleDetached = () => {
         <button
           class="usercontrol"
           title="Switch chat side"
-          @click="settings.isRightSideChat = !settings.isRightSideChat"
+          @click="mainStore.settings.isRightSideChat = !mainStore.settings.isRightSideChat"
         >
           <i class="fa-solid fa-arrow-right-arrow-left"></i>
         </button>
@@ -465,10 +349,10 @@ const toggleDetached = () => {
           <i class="fa-solid fa-plug"></i>
         </button>
         <div class="spacer"></div>
-        <button v-if="!auth.isAuthorized.value" class="usercontrol" title="Log In" @click="showLogIn">
+        <button v-if="!roomStore.isAuthorized" class="usercontrol" title="Log In" @click="showLogIn">
           <i class="fa-solid fa-right-to-bracket"></i>
         </button>
-        <div v-if="auth.isAuthorized.value" class="admin-controls usercontrol-group">
+        <div v-if="roomStore.isAuthorized" class="admin-controls usercontrol-group">
           <button class="usercontrol" title="Admin Panel" @click="showAdminPanel">
             <i class="fa-solid fa-gear"></i>
           </button>
@@ -477,7 +361,7 @@ const toggleDetached = () => {
           </button>
           <button
             class="usercontrol"
-            :class="{ 'usercontrol-off': !isMaster }"
+            :class="{ 'usercontrol-off': !roomStore.isMaster }"
             title="Toggle master"
             @click="toggleMaster"
           >
@@ -487,7 +371,7 @@ const toggleDetached = () => {
       </div>
     </div>
     <div v-show="!theaterMode" ref="chatContainer" class="chat-container">
-      <Chat :class="{ 'right-side-chat': settings.isRightSideChat }" @post="toastChat?.post($event)" />
+      <Chat :class="{ 'right-side-chat': mainStore.settings.isRightSideChat }" @post="toastChat?.post($event)" />
     </div>
     <div ref="contentArea" class="content-area" @keydown="onContentAreaKeydown($event)">
       <div v-show="theaterMode" class="toast-chat-container">

@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref, toRefs } from "vue";
+import { useRouter } from "vue-router";
 
-import router from "@/router";
-
-import { RoomAuthService } from "@/services/room-auth";
-import { RoomService, type ClaimInfo } from "@/services/room";
+import { useRoomStore, type ClaimInfo } from "@/stores/room";
 
 const props = defineProps<{
   room: string;
@@ -12,33 +10,31 @@ const props = defineProps<{
 
 const { room } = toRefs(props);
 
-const isRoomLoaded = ref(false);
+const router = useRouter();
 
-const roomService = new RoomService(room.value);
-const auth = new RoomAuthService(roomService);
+const roomStore = useRoomStore();
+
+const isRoomLoaded = ref(false);
 
 const claimInfo = ref<ClaimInfo>();
 const claimError = ref<string>();
 
 const claim = async () => {
   try {
-    const data = await roomService.claim();
-
-    claimInfo.value = data;
-    await auth.setAuth(data.auth);
+    claimInfo.value = await roomStore.claimRoom(room.value);
   } catch (err: any) {
     claimError.value = err || "";
   }
 };
 
 const enterRoom = () => {
-  router.push({ name: "room", params: { name: roomService.name } });
+  router.push({ name: "room", params: { name: roomStore.name } });
 };
 
 onMounted(async () => {
-  await roomService.setup();
+  await roomStore.loadRoom(room.value);
 
-  if (roomService.exists()) {
+  if (roomStore.exists) {
     enterRoom();
     return;
   }

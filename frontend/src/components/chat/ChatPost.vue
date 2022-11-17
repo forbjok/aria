@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { inject, ref, toRefs } from "vue";
+import { ref, toRefs } from "vue";
 import { format, isSameDay, isSameYear, parseJSON } from "date-fns";
 
 import PostComment from "./PostComment.vue";
 
+import { useRoomStore } from "@/stores/room";
+
 import type { Post } from "@/models";
-import type { RoomAuthService } from "@/services/room-auth";
 
 interface Props {
   post: Post;
@@ -26,7 +27,7 @@ const emit = defineEmits<{
 
 const { post, highlight, actions } = toRefs(props);
 
-const auth = inject<RoomAuthService>("auth")!;
+const roomStore = useRoomStore();
 
 const expandImage = ref(false);
 
@@ -77,7 +78,7 @@ const formatTime = (value: string): string => {
       </div>
       <div v-if="actions" class="admin-actions">
         <button
-          v-if="!post.isDeleted && (post.you || auth.isAuthorized.value)"
+          v-if="!post.isDeleted && (post.you || roomStore.isAuthorized)"
           class="action-button"
           title="Delete post"
           @click="deletePost"

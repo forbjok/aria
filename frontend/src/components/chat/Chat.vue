@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { inject, onMounted, onUnmounted, ref } from "vue";
-import axios, { type RawAxiosRequestHeaders } from "axios";
+import { computed, ref } from "vue";
 import { filesize } from "filesize";
 
 import ChatPost from "./ChatPost.vue";
@@ -8,38 +7,42 @@ import EmoteSelector from "./EmoteSelector.vue";
 import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
 
 import type { Post } from "@/models";
-import type { RoomService } from "@/services/room";
-import type { AriaWebSocket, AriaWsListener } from "@/services/websocket";
-import type { RoomAuthService } from "@/services/room-auth";
-import type { UserService } from "@/services/user";
-import type { RoomSettings } from "@/settings";
 
-const emit = defineEmits<{
-  (e: "post", post: Post): void;
-}>();
+import { useMainStore } from "@/stores/main";
+import { useRoomStore } from "@/stores/room";
+import { MAX_IMAGE_SIZE, useChatStore } from "@/stores/chat";
 
-const auth = inject<RoomAuthService>("auth")!;
-const room = inject<RoomService>("room")!;
-
-const maxPosts = 200;
-const maxImageSize = 2097152;
-
-interface NewPost {
-  name: string;
-  comment: string;
-  image?: File;
-}
-
-const settings = inject<RoomSettings>("settings")!;
-const user = inject<UserService>("user")!;
-const ws = inject<AriaWebSocket>("ws")!;
+const mainStore = useMainStore();
+const roomStore = useRoomStore();
+const chatStore = useChatStore();
 
 const postContainer = ref<HTMLDivElement>();
 const postForm = ref<HTMLFormElement>();
 const commentField = ref<HTMLTextAreaElement>();
 const confirmDeleteDialog = ref<typeof ConfirmDialog>();
 
-const posts = ref<Post[]>([]);
+const postingProgress = computed(() =>
+  chatStore.posting
+    ? chatStore.postingProgress
+      ? `${chatStore.postingProgress}%`
+      : "Posting..."
+    : chatStore.postingError
+    ? chatStore.postingError
+    : undefined
+);
+
+const postingCooldownText = computed(() => {
+  if (chatStore.postingCooldown > 0) {
+    if (chatStore.submitOnCooldown) {
+      return `Auto (${chatStore.postingCooldown})`;
+    }
+
+    return `${chatStore.postingCooldown}`;
+  }
+
+  return "";
+});
+
 const actionTargetPost = ref<Post>();
 
 const themes = [
@@ -47,170 +50,35 @@ const themes = [
   { name: "yotsubab", description: "Yotsuba B" },
 ];
 
-let posting = false;
-const postingProgress = ref("");
-const postingCooldown = ref(0);
-let submitOnCooldown = false;
-
-const createEmptyPost = (): NewPost => {
-  return {
-    name: settings.chatName,
-    comment: "",
-  };
-};
-
-const post = ref(createEmptyPost());
 const highlightedPost = ref(-1);
 const useCompactPostForm = ref(false);
 
 const imageSelected = (event: Event) => {
-  const p = post.value;
-
   const input = event.target as HTMLInputElement;
   if (!input || !input.files) return;
 
-  p.image = input.files[0];
+  const image = input.files[0];
 
-  if (p.image && p.image.size > maxImageSize) {
-    alert(`The selected file is bigger than the maximum allowed size of ${filesize(maxImageSize)}`);
+  if (image && image.size > MAX_IMAGE_SIZE) {
+    alert(`The selected file is bigger than the maximum allowed size of ${filesize(MAX_IMAGE_SIZE)}`);
+    return;
   }
+
+  chatStore.newPost.image = image;
 };
 
 const toggleCompactPostForm = () => {
   useCompactPostForm.value = !useCompactPostForm.value;
 };
 
-const clearPost = () => {
-  postForm.value?.reset();
-  post.value = createEmptyPost();
-};
-
-const canSubmitPost = (): boolean => {
-  // Prevent duplicate submits
-  if (posting) {
-    return false;
-  }
-
-  const image = post.value.image;
-
-  // Disallow posts with neither comment nor image
-  if (!post.value.comment && !image) {
-    return false;
-  }
-
-  // Disallow posting images bigger than the max image size
-  if (image && image.size > maxImageSize) {
-    return false;
-  }
-
-  return true;
-};
-
-const activatePostingCooldown = () => {
-  postingCooldown.value = 5;
-  const cooldownInterval = setInterval(() => {
-    postingCooldown.value -= 1;
-
-    if (postingCooldown.value <= 0) {
-      clearInterval(cooldownInterval);
-      postingProgress.value = "";
-
-      if (submitOnCooldown) {
-        submitOnCooldown = false;
-        submitPost();
-      }
-    }
-  }, 1000);
-};
-
-const buildHeaders = async () => {
-  let headers: RawAxiosRequestHeaders = {
-    "X-User": user.userToken || "",
-  };
-
-  if (auth.isAuthorized.value) {
-    const accessToken = await auth.getAccessToken();
-
-    headers = {
-      ...headers,
-      Authorization: `Bearer ${accessToken}`,
-    };
-  }
-
-  return headers;
-};
-
 const submitPost = async () => {
-  if (!canSubmitPost()) {
+  if (!chatStore.canSubmitPost) {
     return;
   }
 
-  if (postingCooldown.value > 0) {
-    submitOnCooldown = !submitOnCooldown;
-    return;
-  }
-
-  const _post = post.value;
-
-  const image = _post.image;
-
-  const formData = new FormData();
-
-  const options: string[] = [];
-
-  if (settings.postBadges.room_admin && auth.isAuthorized.value) {
-    options.push("ra");
-  }
-
-  if (_post.name) {
-    formData.append("name", _post.name);
-  }
-
-  if (_post.comment) {
-    formData.append("comment", _post.comment);
-  }
-
-  if (options) {
-    formData.append("options", options.join(" "));
-  }
-
-  if (image) {
-    formData.append("image", image, image.name);
-  }
-
-  // Disable post controls while posting
-  posting = true;
-
-  // Save chat name
-  settings.chatName = post.value.name;
-
-  try {
-    await axios.post(`/api/chat/${room.id}/post`, formData, {
-      headers: await buildHeaders(),
-      onUploadProgress: (e) => {
-        if (e.total) {
-          const percentComplete = Math.round((e.loaded / e.total) * 100);
-          postingProgress.value = `${percentComplete}%`;
-        } else {
-          postingProgress.value = "Posting...";
-        }
-      },
-    });
-
-    postingProgress.value = "Posted.";
-    clearPost();
+  const success = await chatStore.submitPost();
+  if (success) {
     scrollToBottom();
-
-    // Activate posting cooldown
-    activatePostingCooldown();
-  } catch (err) {
-    // Display the error response from the server
-    postingProgress.value = err as string;
-
-    // Activate posting cooldown
-    activatePostingCooldown();
-  } finally {
-    posting = false;
   }
 };
 
@@ -225,25 +93,15 @@ const submitOnEnterKeydown = (event: KeyboardEvent) => {
 const clearFileOnShiftClick = (event: MouseEvent) => {
   if (event.shiftKey) {
     (event.target as HTMLInputElement).value = "";
-    delete post.value.image;
+    chatStore.newPost.image = undefined;
 
     event.preventDefault();
     return;
   }
 };
 
-const postingCooldownText = () => {
-  if (postingCooldown.value > 0) {
-    if (submitOnCooldown) {
-      return `Auto (${postingCooldown.value})`;
-    }
-
-    return `${postingCooldown.value}`;
-  }
-};
-
 const quotePost = (id: number) => {
-  post.value.comment += `>>${id}\n`;
+  chatStore.newPost.comment += `>>${id}\n`;
   commentField.value?.focus();
 };
 
@@ -263,7 +121,7 @@ const openEmoteSelector = () => {
 };
 
 const selectEmote = (name: string) => {
-  post.value.comment += `!${name}`;
+  chatStore.newPost.comment += `!${name}`;
   showEmoteSelector.value = false;
   commentField.value?.focus();
 };
@@ -277,71 +135,22 @@ const deletePost = async (post?: Post) => {
     return;
   }
 
-  await axios.delete(`/api/chat/${room.id}/post/${post.id}`, {
-    headers: await buildHeaders(),
-  });
+  await roomStore.deletePost(post.id);
 };
 
 const confirmDeletePost = async (post: Post) => {
   actionTargetPost.value = post;
   confirmDeleteDialog.value?.show();
 };
-
-let ws_listener: AriaWsListener | undefined;
-
-onMounted(() => {
-  ws_listener = ws.create_listener();
-
-  ws_listener.on("post", (post: Post) => {
-    const _posts = posts.value;
-    if (_posts.length >= maxPosts) {
-      _posts.splice(0, 2);
-    }
-
-    _posts.push(post);
-    emit("post", post);
-  });
-
-  ws_listener.on("delete-post", (postId: number) => {
-    const _posts = posts.value;
-    const post = _posts.find((p) => p.id === postId);
-    if (!post) {
-      return;
-    }
-
-    post.isDeleted = true;
-  });
-
-  ws_listener.on("oldposts", (__posts: Post[]) => {
-    const _posts = posts.value;
-    let newPosts: Post[];
-    if (_posts.length > 0) {
-      const lastPost = _posts[_posts.length - 1];
-      newPosts = __posts.filter((p) => p.id > lastPost.id);
-    } else {
-      newPosts = __posts;
-    }
-
-    _posts.push(...newPosts);
-
-    setTimeout(() => {
-      scrollToBottom();
-    }, 1);
-  });
-});
-
-onUnmounted(() => {
-  ws_listener?.dispose();
-});
 </script>
 
 <template>
-  <div class="chat" :class="`theme-${settings.theme}`">
+  <div class="chat" :class="`theme-${mainStore.settings.theme}`">
     <div class="chat-posts">
       <div ref="postContainer" class="post-container">
         <ChatPost
           :post="post"
-          v-for="post of posts"
+          v-for="post of chatStore.posts"
           :key="post.id"
           :highlight="highlightedPost === post.id"
           :actions="true"
@@ -357,13 +166,21 @@ onUnmounted(() => {
           <table class="chat-controls-table">
             <tr>
               <td>
-                <input name="name" type="text" v-model="post.name" placeholder="Anonymous" :readonly="posting" />
+                <input
+                  name="name"
+                  type="text"
+                  v-model="chatStore.newPost.name"
+                  placeholder="Anonymous"
+                  :readonly="chatStore.posting"
+                />
                 <div class="badges">
                   <button
-                    v-if="auth.isAuthorized.value"
+                    v-if="roomStore.isAuthorized"
                     class="admin badge"
-                    :class="{ off: !settings.postBadges.room_admin }"
-                    @click.prevent="settings.postBadges.room_admin = !settings.postBadges.room_admin"
+                    :class="{ off: !roomStore.settings.postBadges.room_admin }"
+                    @click.prevent="
+                      roomStore.settings.postBadges.room_admin = !roomStore.settings.postBadges.room_admin
+                    "
                     title="Room Admin"
                   >
                     <i class="fa-solid fa-star"></i>
@@ -376,12 +193,12 @@ onUnmounted(() => {
                 <textarea
                   ref="commentField"
                   name="comment"
-                  v-model="post.comment"
+                  v-model="chatStore.newPost.comment"
                   placeholder="Comment"
                   maxlength="600"
                   class="comment-field"
                   wrap="soft"
-                  :readonly="posting"
+                  :readonly="chatStore.posting"
                   @keydown="submitOnEnterKeydown"
                   autofocus
                 ></textarea>
@@ -394,7 +211,7 @@ onUnmounted(() => {
                   type="file"
                   accept="image/*"
                   @change="imageSelected"
-                  :disabled="posting"
+                  :disabled="chatStore.posting"
                   @keydown="submitOnEnterKeydown"
                   @click="clearFileOnShiftClick"
                 />
@@ -402,8 +219,8 @@ onUnmounted(() => {
             </tr>
             <tr>
               <td>
-                <button class="post-button" type="submit" :disabled="!canSubmitPost()">
-                  {{ postingCooldownText() || "Post" }}
+                <button class="post-button" type="submit" :disabled="!chatStore.canSubmitPost">
+                  {{ postingCooldownText || "Post" }}
                 </button>
                 <span class="progress">{{ postingProgress }}</span>
               </td>
@@ -414,24 +231,24 @@ onUnmounted(() => {
           <textarea
             ref="commentField"
             name="comment"
-            v-model="post.comment"
+            v-model="chatStore.newPost.comment"
             placeholder="Comment"
             maxlength="600"
             class="comment-field"
             wrap="soft"
-            :readonly="posting"
+            :readonly="chatStore.posting"
             @keydown="submitOnEnterKeydown($event)"
             autofocus
           ></textarea>
-          <button class="post-button" type="submit" :disabled="!canSubmitPost">
-            {{ postingCooldownText() || postingProgress || "Post" }}
+          <button class="post-button" type="submit" :disabled="!chatStore.canSubmitPost">
+            {{ postingCooldownText || postingProgress || "Post" }}
           </button>
           <input
             name="image"
             type="file"
             accept="image/*"
             @change="imageSelected($event)"
-            :disabled="posting"
+            :disabled="chatStore.posting"
             @keydown="submitOnEnterKeydown($event)"
             @click="clearFileOnShiftClick($event)"
           />
@@ -441,7 +258,7 @@ onUnmounted(() => {
         <button class="emote-button" title="Emotes" @click="openEmoteSelector">
           <i class="fa-regular fa-face-smile"></i>
         </button>
-        <select v-if="!useCompactPostForm" class="theme-selector" v-model="settings.theme">
+        <select v-if="!useCompactPostForm" class="theme-selector" v-model="mainStore.settings.theme">
           <option v-for="theme of themes" :key="theme.name" :value="theme.name">{{ theme.description }}</option>
         </select>
         <button
@@ -464,7 +281,7 @@ onUnmounted(() => {
         <template v-slot:confirm><i class="fa-solid fa-trash"></i> Delete</template>
         <div v-if="!!actionTargetPost" class="confirm-delete-dialog">
           <span>Are you sure you want to delete this post?</span>
-          <div class="post-preview" :class="`theme-${settings.theme}`">
+          <div class="post-preview" :class="`theme-${mainStore.settings.theme}`">
             <div class="post-container">
               <ChatPost :post="actionTargetPost" />
             </div>
