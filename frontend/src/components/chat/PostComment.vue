@@ -144,6 +144,11 @@ export default defineComponent({
 .comment {
   word-wrap: break-word;
 
+  a {
+    color: var(--color-post-comment-link);
+    text-decoration: none;
+  }
+
   s {
     background-color: var(--color-spoiler-background);
     color: var(--color-spoiler);

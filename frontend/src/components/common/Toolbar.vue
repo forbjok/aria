@@ -7,8 +7,6 @@
 </template>
 
 <style scoped lang="scss">
-@use "@/styles/dialog.scss" as *;
-
 .toolbar {
   flex-shrink: 0;
 

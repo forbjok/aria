@@ -57,10 +57,10 @@ defineExpose({
 </template>
 
 <style scoped lang="scss">
-@use "@/styles/dialog.scss" as *;
-
 .dialog {
   background-color: var(--color-dialog-background);
+  color: var(--color-dialog-text);
+
   border: 1px solid black;
 
   display: flex;

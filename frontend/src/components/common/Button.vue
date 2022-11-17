@@ -7,8 +7,6 @@
 </template>
 
 <style scoped lang="scss">
-@use "@/styles/dialog.scss" as *;
-
 button {
   border: none;
   color: var(--color-button-text);

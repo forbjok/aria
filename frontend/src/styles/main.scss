@@ -1,14 +1,26 @@
 @import url(https://fonts.googleapis.com/css?family=Roboto);
 
-body {
-  background: black;
-  color: white;
+:root {
+  // Dialog colors
+  --color-dialog-text: white;
+  --color-dialog-background: rgb(29, 29, 29);
+  --color-button-text: white;
+  --color-button-background: rgb(44, 44, 44);
+  --color-button-hover: aquamarine;
+  --color-title-background: rgb(56, 56, 56);
+  --color-toolbar-background: rgb(37, 37, 37);
+}
 
+body {
   font-family: "Roboto", sans-serif;
   font-size: 0.8rem;
 
   overflow: auto;
-  background-color: black;
+}
+
+main {
+  background-color: var(--color-default-background);
+  color: var(--color-default-text);
 }
 
 button {

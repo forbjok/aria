@@ -145,7 +145,7 @@ const confirmDeletePost = async (post: Post) => {
 </script>
 
 <template>
-  <div class="chat" :class="`theme-${mainStore.settings.theme}`">
+  <div class="chat">
     <div class="chat-posts">
       <div ref="postContainer" class="post-container">
         <ChatPost
@@ -281,7 +281,7 @@ const confirmDeletePost = async (post: Post) => {
         <template v-slot:confirm><i class="fa-solid fa-trash"></i> Delete</template>
         <div v-if="!!actionTargetPost" class="confirm-delete-dialog">
           <span>Are you sure you want to delete this post?</span>
-          <div class="post-preview" :class="`theme-${mainStore.settings.theme}`">
+          <div class="post-preview">
             <div class="post-container">
               <ChatPost :post="actionTargetPost" />
             </div>
@@ -293,7 +293,160 @@ const confirmDeletePost = async (post: Post) => {
 </template>
 
 <style scoped lang="scss">
-@use "@/styles/chat.scss" as *;
-@use "@/styles/chat-dark.scss" as *;
-@use "@/styles/chat-yotsubab.scss" as *;
+.chat {
+  background-color: var(--color-chat-background);
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+
+  .chat-posts {
+    flex-grow: 1;
+
+    display: flex;
+    flex-direction: column-reverse;
+
+    overflow-y: scroll;
+    overflow-x: hidden;
+
+    // Make scrollbar scroll to new posts automatically
+    // when scrolled to the bottom.
+    scroll-snap-type: y proximity;
+
+    .post-container {
+      display: flex;
+      flex-direction: column;
+
+      .post {
+        flex-shrink: 0;
+      }
+
+      // Make scrollbar scroll to new posts automatically
+      // when scrolled to the bottom.
+      .post:last-child {
+        scroll-margin-bottom: 2px;
+        scroll-snap-align: end;
+      }
+    }
+  }
+
+  .chat-controls {
+    flex-shrink: 0;
+
+    background: var(--color-chat-controls-background);
+    border-top: 1px solid var(--color-chat-controls-border-top);
+
+    overflow: hidden;
+
+    // Needed to prevent .options' absolute positioning
+    // from placing it outside the parent element.
+    position: relative;
+
+    .badges {
+      display: inline-flex;
+      flex-direction: row;
+      gap: 4px;
+
+      padding: 0 4px;
+
+      button {
+        background: none;
+        border: none;
+        padding: 0;
+
+        cursor: pointer !important;
+      }
+
+      .off {
+        filter: brightness(0.4);
+      }
+
+      .admin {
+        color: var(--color-admin-badge);
+      }
+    }
+  }
+
+  .chat-controls-table {
+    width: 100%;
+  }
+
+  .progress {
+    margin-left: 3px;
+  }
+
+  textarea.comment-field {
+    resize: none;
+    width: calc(100%);
+  }
+
+  .options {
+    display: flex;
+    flex-direction: row;
+
+    position: absolute;
+    right: 2px;
+    bottom: 2px;
+  }
+
+  .emote-button {
+    margin-right: 2px;
+  }
+
+  .theme-selector {
+    margin-right: 2px;
+  }
+
+  .post-button {
+    min-width: 65px;
+  }
+
+  .overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 999;
+  }
+
+  .emote-selector {
+    position: absolute;
+    left: 100px;
+    bottom: 30px;
+
+    max-width: 36vw;
+    height: 33vh;
+
+    @media screen and (orientation: portrait) {
+      left: 3vw;
+
+      max-width: 94vw;
+      height: 46vh;
+    }
+  }
+
+  &.right-side-chat {
+    .emote-selector {
+      left: unset;
+      right: 100px;
+    }
+  }
+}
+
+.confirm-delete-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  .post-preview {
+    width: 350px;
+
+    max-width: 94vw;
+    max-height: 80vh;
+
+    overflow-y: auto;
+  }
+}
 </style>

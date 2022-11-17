@@ -65,5 +65,46 @@ onMounted(async () => {
 </template>
 
 <style scoped lang="scss">
-@use "@/styles/claim.scss" as *;
+.claim {
+  font-size: 1.5rem;
+
+  color: black;
+
+  text-align: center;
+
+  button {
+    border-radius: 3px;
+  }
+
+  .unclaimed-text {
+    margin: 10px;
+  }
+
+  .claim-button {
+    font-size: 2rem;
+  }
+
+  .enter-button {
+    font-size: 2rem;
+  }
+
+  .claim-result {
+    .proceed-button {
+      font-size: 2rem;
+    }
+
+    .password {
+      text-decoration: underline;
+    }
+
+    .claim-result-text {
+      padding: 20px;
+    }
+  }
+
+  .claim-error {
+    font-size: 1.5rem;
+    color: red;
+  }
+}
 </style>

@@ -17,6 +17,10 @@ import "video.js/src/css/video-js.scss";
 // Import main stylesheet
 import "@/styles/main.scss";
 
+// Import theme stylesheets
+import "@/styles/theme/dark.scss";
+import "@/styles/theme/yotsubab.scss";
+
 const app = createApp(App);
 
 app.use(createPinia());

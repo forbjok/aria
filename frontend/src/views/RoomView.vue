@@ -3,15 +3,19 @@ import { toRefs } from "vue";
 
 import Room from "@/components/Room.vue";
 
+import { useMainStore } from "@/stores/main";
+
 const props = defineProps<{
   name: string;
 }>();
 
 const { name } = toRefs(props);
+
+const mainStore = useMainStore();
 </script>
 
 <template>
-  <main>
+  <main :class="`theme-${mainStore.settings.theme}`">
     <Room :name="name" />
   </main>
 </template>

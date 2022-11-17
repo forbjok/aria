@@ -27,5 +27,19 @@ const toggleExpanded = (): void => {
 </template>
 
 <style scoped lang="scss">
-@use "@/styles/emote.scss" as *;
+.emote {
+  cursor: pointer;
+
+  &:not(.expanded) {
+    max-height: 100px;
+
+    @media screen and (orientation: portrait) {
+      max-height: 50px;
+    }
+  }
+
+  &.expanded {
+    max-width: 100%;
+  }
+}
 </style>

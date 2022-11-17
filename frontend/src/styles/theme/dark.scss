@@ -1,0 +1,25 @@
+.theme-dark {
+  --color-default-background: #020202;
+  --color-default-text: white;
+  --color-post-image-filename: #c4c4c4;
+  --color-post-background: rgb(13, 13, 13);
+  --color-post-alt-background: #121212;
+  --color-post-highlight-background: rgb(36, 36, 36);
+  --color-post-info-you-name: #20a560;
+  --color-post-info-you: #e3ee81;
+  --color-post-comment-link: #898ed6;
+  --color-chat-background: var(--color-default-background);
+  --color-chat-controls-background: #282828;
+  --color-chat-controls-border-top: black;
+
+  --color-spoiler: black;
+  --color-spoiler-background: black;
+  --color-spoiler-hover: white;
+  --color-admin-badge: #ffe44d;
+
+  .post {
+    &.highlight {
+      filter: drop-shadow(0px 0px 3px #fff);
+    }
+  }
+}

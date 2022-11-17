@@ -193,8 +193,6 @@ const submitEmote = async () => {
 </template>
 
 <style scoped lang="scss">
-@use "@/styles/dialog.scss" as *;
-
 :global(:root) {
   --color-caption-background: rgb(65, 65, 65);
   --color-emote-image-background: rgb(13, 13, 13);

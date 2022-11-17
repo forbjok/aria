@@ -1,0 +1,47 @@
+.theme-yotsubab {
+  --color-default-background: #eef2ff;
+  --color-default-text: black;
+  --color-post-image-filename: #c4c4c4;
+  --color-post-background: #d6daf0;
+  --color-post-alt-background: var(--color-post-background);
+  --color-post-highlight-background: #d6bad0;
+  --color-post-info-you-name: #20a560;
+  --color-post-info-you: #215fbd;
+  --color-post-comment-link: #34345c;
+  --color-chat-background: var(--color-default-background);
+  --color-chat-controls-background: var(--color-default-background);
+  --color-chat-controls-border-top: none;
+
+  --color-spoiler: black;
+  --color-spoiler-background: black;
+  --color-spoiler-hover: white;
+  --color-admin-badge: #00a2ff;
+
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.8rem;
+
+  .post-container {
+    padding: 2px;
+    gap: 4px;
+  }
+
+  .post {
+    border: 1px solid #b7c5d9;
+    border-left: none;
+    border-top: none;
+
+    &.highlight {
+      border: 1px solid #ba9dbf;
+      border-left: none;
+      border-top: none;
+    }
+
+    .post-header {
+      .post-info {
+        .you {
+          font-weight: bold;
+        }
+      }
+    }
+  }
+}

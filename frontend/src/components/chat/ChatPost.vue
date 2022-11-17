@@ -101,7 +101,141 @@ const formatTime = (value: string): string => {
 </template>
 
 <style scoped lang="scss">
-@use "@/styles/chat-post.scss" as *;
-@use "@/styles/chat-dark.scss" as *;
-@use "@/styles/chat-yotsubab.scss" as *;
+button {
+  background: none;
+  border: none;
+  padding: 0;
+
+  cursor: pointer !important;
+}
+
+.post-header {
+  display: flex;
+  flex-direction: row;
+
+  color: gray;
+
+  padding-bottom: 1px;
+
+  .post-info {
+    flex-grow: 1;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 3px;
+
+    .time {
+      vertical-align: top;
+      text-align: right;
+    }
+
+    .name {
+      vertical-align: top;
+      text-align: right;
+      color: #117743;
+      font-weight: bold;
+    }
+
+    .admin {
+      color: var(--color-admin-badge);
+      font-size: 0.6rem;
+    }
+
+    .you {
+      color: var(--color-post-info-you);
+    }
+
+    button {
+      color: gray;
+    }
+  }
+
+  .admin-actions {
+    flex-shrink: 0;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: right;
+    gap: 2px;
+  }
+
+  .action-button {
+    color: rgb(78, 78, 78);
+    font-size: 0.8rem;
+
+    visibility: hidden;
+  }
+}
+
+.post-image {
+  display: block;
+  float: left;
+  overflow: hidden;
+  max-width: 100%;
+
+  .thumbnail {
+    display: block;
+    border: none;
+    padding-right: 4px;
+    max-width: 100px;
+    max-height: 100px;
+
+    @media screen and (orientation: portrait) {
+      max-width: 50px;
+      max-height: 50px;
+    }
+  }
+
+  .expanded-image {
+    display: block;
+    max-width: 100%;
+  }
+
+  .filename {
+    display: none;
+    text-align: center;
+    clear: left;
+    font-weight: bold;
+  }
+
+  &.expanded {
+    .thumbnail {
+      display: none;
+    }
+
+    .filename {
+      display: block;
+
+      color: var(--color-post-image-filename);
+    }
+  }
+}
+
+.post {
+  background-color: var(--color-post-background);
+
+  &:nth-child(odd) {
+    background-color: var(--color-post-alt-background);
+  }
+
+  &.highlight {
+    background-color: var(--color-post-highlight-background);
+  }
+
+  overflow: hidden;
+  padding: 5px;
+
+  &:hover {
+    .action-button {
+      visibility: visible;
+    }
+  }
+
+  &.you {
+    .post-header .post-info .name {
+      color: var(--color-post-info-you-name);
+    }
+  }
+}
 </style>
