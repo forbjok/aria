@@ -181,7 +181,9 @@ const onPause = async (auto: boolean) => {
   }
 
   if (isPlayerInteractedWith.value) {
-    isViewerPaused = true;
+    if (!roomStore.isMaster) {
+      isViewerPaused = true;
+    }
   } else {
     isPlayerInteractedWith.value = true;
   }
