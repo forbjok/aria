@@ -103,7 +103,7 @@ impl RoomState {
         self.members.insert(id, member);
 
         send(&tx, "content", &self.content)?;
-        send(&tx, "playbackstate", &self.get_playback_state())?;
+        send(&tx, "playbackstate", self.get_playback_state())?;
 
         self.send_emotes(&tx)?;
         self.send_recent_posts(&tx, user_id)?;
@@ -241,7 +241,7 @@ impl RoomState {
         let ps = self.get_playback_state();
 
         for m in self.members.values() {
-            send(&m.tx, "playbackstate", &ps).map_err(|err| error!("{err:?}")).ok();
+            send(&m.tx, "playbackstate", ps).map_err(|err| error!("{err:?}")).ok();
         }
 
         Ok(())
@@ -301,7 +301,7 @@ impl RoomState {
     fn send_content(&self) -> Result<(), anyhow::Error> {
         if let Some(content) = self.content.as_ref() {
             for m in self.members.values() {
-                send(&m.tx, "content", &content).map_err(|err| error!("{err:?}")).ok();
+                send(&m.tx, "content", content).map_err(|err| error!("{err:?}")).ok();
             }
         }
 

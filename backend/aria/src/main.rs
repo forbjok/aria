@@ -35,6 +35,7 @@ enum Command {
     },
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Debug, Parser)]
 enum ToolCommand {
     #[clap(about = "Process images from the 'process' directory")]
