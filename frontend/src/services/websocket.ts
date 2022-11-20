@@ -52,6 +52,11 @@ export class AriaWebSocket {
       return;
     }
 
+    if (this.ws) {
+      this.ws.onclose = null;
+      this.ws.close();
+    }
+
     const ws = new WebSocket(this.url);
     this.ws = ws;
 

@@ -248,7 +248,6 @@ export const useRoomStore = defineStore("room", () => {
   const ws_url = `${ws_protocol}://${window.location.host}/aria-ws`;
 
   const ws = new AriaWebSocket(ws_url, async () => {
-    console.log(`JION ${name.value}`);
     ws.send("join", { room: name.value, user: await mainStore.getUser() });
   });
 
