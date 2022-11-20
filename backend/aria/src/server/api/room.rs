@@ -36,8 +36,8 @@ struct RoomControlRequest {
     pub action: RoomControlAction,
 }
 
-pub fn router(server: Arc<AriaServer>) -> Router<Arc<AriaServer>> {
-    Router::with_state(server)
+pub fn router() -> Router<Arc<AriaServer>> {
+    Router::new()
         .route("/room/:name", get(get_room))
         .route("/claim", post(claim))
         .route("/i/:room_id/loggedin", post(logged_in))

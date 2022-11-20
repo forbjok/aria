@@ -29,8 +29,8 @@ struct RefreshRequest {
     pub refresh_token: Uuid,
 }
 
-pub fn router(server: Arc<AriaServer>) -> Router<Arc<AriaServer>> {
-    Router::with_state(server)
+pub fn router() -> Router<Arc<AriaServer>> {
+    Router::new()
         .route("/login", post(login))
         .route("/refresh", post(refresh))
 }

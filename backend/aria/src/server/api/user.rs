@@ -15,8 +15,8 @@ struct NewUserResponse {
     token: String,
 }
 
-pub fn router(server: Arc<AriaServer>) -> Router<Arc<AriaServer>> {
-    Router::with_state(server)
+pub fn router() -> Router<Arc<AriaServer>> {
+    Router::new()
         .route("/new", post(new_user))
         .route("/verify", post(verify_user))
 }

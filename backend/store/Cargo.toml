@@ -8,10 +8,10 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.66"
 async-trait = "0.1.58"
-chrono = "0.4.22"
+chrono = "0.4.23"
 serde = "1.0.147"
 serde_derive = "1.0.147"
 sqlx = { version = "0.6.2", features = ["chrono", "ipnetwork", "offline", "postgres", "runtime-tokio-rustls", "uuid"] }
-tokio = "1.21.2"
+tokio = "1.22.0"
 tracing = "0.1.37"
-uuid = "1.2.1"
+uuid = "1.2.2"

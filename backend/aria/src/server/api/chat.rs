@@ -17,8 +17,8 @@ use crate::server::{
 
 const MAX_IMAGE_SIZE: usize = 2 * 1024 * 1024; // 2MB
 
-pub fn router(server: Arc<AriaServer>) -> Router<Arc<AriaServer>> {
-    Router::with_state(server)
+pub fn router() -> Router<Arc<AriaServer>> {
+    Router::new()
         .route(
             "/:room_id/post",
             post(create_post.layer(DefaultBodyLimit::max(MAX_IMAGE_SIZE))),

@@ -44,11 +44,11 @@ struct User {
     id: i64,
 }
 
-pub fn router(server: Arc<AriaServer>) -> Router {
-    let auth = auth::router(server.clone());
-    let room = room::router(server.clone());
-    let chat = chat::router(server.clone());
-    let user = user::router(server);
+pub fn router() -> Router<Arc<AriaServer>> {
+    let auth = auth::router();
+    let room = room::router();
+    let chat = chat::router();
+    let user = user::router();
 
     Router::new()
         .nest("/auth", auth)

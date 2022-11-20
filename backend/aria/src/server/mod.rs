@@ -24,12 +24,13 @@ impl AriaServer {
 
         let server = Arc::new(self);
 
-        let api = api::router(server);
+        let api = api::router();
 
         let app = Router::new()
             .nest("/api", api)
             .merge(axum_extra::routing::SpaRouter::new("/f", public_path))
-            .layer(tower_http::trace::TraceLayer::new_for_http());
+            .layer(tower_http::trace::TraceLayer::new_for_http())
+            .with_state(server);
 
         let addr = "[::]:3000".parse().unwrap();
 
