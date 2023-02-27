@@ -129,7 +129,7 @@ impl RoomState {
             })
             .collect();
 
-        send(tx, "oldposts", &posts)?;
+        send(tx, "oldposts", posts)?;
 
         Ok(())
     }
