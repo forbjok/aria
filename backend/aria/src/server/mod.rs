@@ -5,6 +5,7 @@ use std::{net::SocketAddr, sync::Arc};
 use aria_core::AriaCore;
 use axum::Router;
 use futures::Future;
+use tower_http::services::ServeDir;
 use tracing::info;
 
 use crate::auth::AriaAuth;
@@ -28,7 +29,7 @@ impl AriaServer {
 
         let app = Router::new()
             .nest("/api", api)
-            .merge(axum_extra::routing::SpaRouter::new("/f", public_path))
+            .nest_service("/f", ServeDir::new(public_path))
             .layer(tower_http::trace::TraceLayer::new_for_http())
             .with_state(server);
 
