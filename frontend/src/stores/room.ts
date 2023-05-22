@@ -67,7 +67,7 @@ export const useRoomStore = defineStore("room", () => {
       return;
     }
 
-    localStorage.setItem(authKey.value, JSON.stringify(value));
+    localStorage.setItem(authKey.value, JSON.stringify(value || {}));
   });
 
   watch(
@@ -77,7 +77,7 @@ export const useRoomStore = defineStore("room", () => {
         return;
       }
 
-      localStorage.setItem(settingsKey.value, JSON.stringify(value));
+      localStorage.setItem(settingsKey.value, JSON.stringify(value || {}));
     },
     { deep: true }
   );
