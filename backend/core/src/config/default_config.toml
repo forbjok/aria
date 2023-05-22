@@ -1,0 +1,4 @@
+#database-uri = 'postgres://aria:aria@localhost/aria'
+#files-path = '/PATH/TO/ARIA/FILES'
+
+#jwt-secret = 'sekrit'

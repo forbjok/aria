@@ -4,9 +4,7 @@ use aria_core::{AriaCore, GeneratePostImageResult, ProcessImageResult};
 use tokio::fs;
 use tracing::{error, info};
 
-pub async fn process_images() -> Result<(), anyhow::Error> {
-    let core = AriaCore::new()?;
-
+pub async fn process_images(core: AriaCore) -> Result<(), anyhow::Error> {
     process_post_images(&core).await?;
     process_emote_images(&core).await?;
 

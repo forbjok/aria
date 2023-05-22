@@ -4,9 +4,7 @@ use aria_core::AriaCore;
 use tokio::fs;
 use tracing::{error, info};
 
-pub async fn regenerate_emote_images() -> Result<(), anyhow::Error> {
-    let core = AriaCore::new()?;
-
+pub async fn regenerate_emote_images(core: AriaCore) -> Result<(), anyhow::Error> {
     info!("Original image path: {}", core.original_emote_path.display());
 
     let mut original_images = fs::read_dir(&core.original_emote_path).await?;

@@ -1,11 +1,14 @@
+use std::fs;
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::{env, fs};
+
+use anyhow::Context;
 
 use aria_models::local as lm;
 use aria_store::{AriaStore, PgStore};
 
 mod auth;
+pub mod config;
 mod emote;
 mod image;
 mod post;
@@ -19,6 +22,8 @@ pub use self::image::*;
 pub use self::post::*;
 pub use self::room::*;
 
+use self::config::AriaConfig;
+
 #[derive(Debug)]
 pub enum Notification {
     NewPost(i32, lm::Post),
@@ -29,6 +34,7 @@ pub enum Notification {
 }
 
 pub struct AriaCore {
+    pub config: AriaConfig,
     pub temp_path: PathBuf,
     pub process_image_path: PathBuf,
     pub process_emote_path: PathBuf,
@@ -43,10 +49,10 @@ pub struct AriaCore {
 }
 
 impl AriaCore {
-    pub fn new() -> Result<Self, anyhow::Error> {
-        let files_path = env::var("FILES_PATH")
-            .ok()
-            .map(PathBuf::from)
+    pub fn new(config: AriaConfig) -> Result<Self, anyhow::Error> {
+        let files_path = config
+            .files_path
+            .clone()
             .or_else(|| dirs::cache_dir().map(|p| p.join("aria/files")))
             .expect("No files path configured!");
 
@@ -73,13 +79,17 @@ impl AriaCore {
         fs::create_dir_all(&public_thumbnail_path)?;
         fs::create_dir_all(&public_emote_path)?;
 
-        let store = PgStore::new(
-            &env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://aria:aria@localhost/aria".to_owned()),
-        );
+        let database_uri = config
+            .database_uri
+            .as_ref()
+            .context("Database URI not set in configuration")?;
+
+        let store = PgStore::new(database_uri);
 
         let (notify_tx, _) = tokio::sync::broadcast::channel(16);
 
         Ok(Self {
+            config,
             temp_path,
             process_image_path,
             process_emote_path,

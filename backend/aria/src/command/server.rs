@@ -1,10 +1,21 @@
 use std::sync::Arc;
 
+use anyhow::Context;
+
 use aria_core::AriaCore;
 
 use crate::{auth::AriaAuth, server::AriaServer, websocket_server};
 
-pub async fn server(auth: Arc<AriaAuth>, core: Arc<AriaCore>, serve_files: bool) -> Result<(), anyhow::Error> {
+pub async fn server(core: AriaCore, serve_files: bool) -> Result<(), anyhow::Error> {
+    let jwt_secret = core
+        .config
+        .jwt_secret
+        .as_ref()
+        .context("No JWT secret set in configuration")?;
+
+    let auth = Arc::new(AriaAuth::new(jwt_secret.as_bytes()));
+    let core = Arc::new(core);
+
     let server = AriaServer::new(auth.clone(), core.clone(), serve_files);
 
     let shutdown = || async {

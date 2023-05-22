@@ -1,12 +1,10 @@
 use std::env;
-use std::sync::Arc;
 
-use aria_core::AriaCore;
 use clap::Parser;
 use tracing::{debug, info};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
-use crate::auth::AriaAuth;
+use aria_core::{config::AriaConfig, AriaCore};
 
 mod auth;
 mod command;
@@ -58,10 +56,8 @@ async fn main() -> Result<(), anyhow::Error> {
 
     debug!("Debug logging enabled.");
 
-    let jwt_secret = env::var("JWT_SECRET").unwrap_or_else(|_| "sekrit".to_owned());
-
-    let auth = Arc::new(AriaAuth::new(jwt_secret.as_bytes()));
-    let core = Arc::new(AriaCore::new()?);
+    let config = AriaConfig::from_default_location()?;
+    let core = AriaCore::new(config)?;
 
     if opt.migrate {
         info!("Running database migrations...");
@@ -69,11 +65,11 @@ async fn main() -> Result<(), anyhow::Error> {
     }
 
     match opt.command {
-        Command::Server { serve_files } => command::server(auth, core, serve_files).await?,
+        Command::Server { serve_files } => command::server(core, serve_files).await?,
         Command::Tool { command } => match command {
-            ToolCommand::ProcessImages => command::process_images().await?,
-            ToolCommand::RegeneratePostImages => command::regenerate_post_images().await?,
-            ToolCommand::RegenerateEmoteImages => command::regenerate_emote_images().await?,
+            ToolCommand::ProcessImages => command::process_images(core).await?,
+            ToolCommand::RegeneratePostImages => command::regenerate_post_images(core).await?,
+            ToolCommand::RegenerateEmoteImages => command::regenerate_emote_images(core).await?,
         },
     };
 
