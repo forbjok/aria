@@ -26,7 +26,10 @@ struct Opt {
 #[derive(Debug, Parser)]
 enum Command {
     #[clap(about = "Run Aria server")]
-    Server,
+    Server {
+        #[clap(long = "serve-files", help = "Serve public files (recommended only for development)")]
+        serve_files: bool,
+    },
 
     #[clap(about = "Tool commands")]
     Tool {
@@ -66,7 +69,7 @@ async fn main() -> Result<(), anyhow::Error> {
     }
 
     match opt.command {
-        Command::Server => command::server(auth, core).await?,
+        Command::Server { serve_files } => command::server(auth, core, serve_files).await?,
         Command::Tool { command } => match command {
             ToolCommand::ProcessImages => command::process_images().await?,
             ToolCommand::RegeneratePostImages => command::regenerate_post_images().await?,

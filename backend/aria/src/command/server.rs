@@ -4,8 +4,8 @@ use aria_core::AriaCore;
 
 use crate::{auth::AriaAuth, server::AriaServer, websocket_server};
 
-pub async fn server(auth: Arc<AriaAuth>, core: Arc<AriaCore>) -> Result<(), anyhow::Error> {
-    let server = AriaServer::new(auth.clone(), core.clone());
+pub async fn server(auth: Arc<AriaAuth>, core: Arc<AriaCore>, serve_files: bool) -> Result<(), anyhow::Error> {
+    let server = AriaServer::new(auth.clone(), core.clone(), serve_files);
 
     let shutdown = || async {
         tokio::signal::ctrl_c().await.expect("Error awaiting Ctrl-C signal");

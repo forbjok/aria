@@ -13,11 +13,16 @@ use crate::auth::AriaAuth;
 pub struct AriaServer {
     auth: Arc<AriaAuth>,
     core: Arc<AriaCore>,
+    serve_files: bool,
 }
 
 impl AriaServer {
-    pub fn new(auth: Arc<AriaAuth>, core: Arc<AriaCore>) -> Self {
-        Self { auth, core }
+    pub fn new(auth: Arc<AriaAuth>, core: Arc<AriaCore>, serve_files: bool) -> Self {
+        Self {
+            auth,
+            core,
+            serve_files,
+        }
     }
 
     pub async fn run_server(self, shutdown: impl Future<Output = ()>) -> Result<(), anyhow::Error> {
@@ -27,9 +32,17 @@ impl AriaServer {
 
         let api = api::router();
 
-        let app = Router::new()
-            .nest("/api", api)
-            .nest_service("/f", ServeDir::new(public_path))
+        let mut app = Router::new().nest("/api", api);
+
+        // If file serving is enabled, serve public files under /f.
+        // This should generally only be used for development.
+        // On a production deployment, the public file path should
+        // be served directly through a dedicated HTTP server instead.
+        if server.serve_files {
+            app = app.nest_service("/f", ServeDir::new(public_path))
+        }
+
+        let app = app
             .layer(tower_http::trace::TraceLayer::new_for_http())
             .with_state(server);
 
