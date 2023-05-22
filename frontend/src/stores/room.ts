@@ -8,6 +8,7 @@ import { DEFAULT_ROOM_SETTINGS, type RoomSettings } from "@/settings";
 import type { Content, Emote, Room } from "@/models";
 import { AriaWebSocket } from "@/services/websocket";
 import { getTimestamp } from "@/utils/timestamp";
+import { tryParseJson } from "@/utils/json";
 
 export interface ClaimRequest {
   name: string;
@@ -122,7 +123,8 @@ export const useRoomStore = defineStore("room", () => {
     }
 
     const _auth = localStorage.getItem(authKey.value);
-    auth.value = _auth ? JSON.parse(_auth) : undefined;
+
+    auth.value = tryParseJson(_auth, undefined);
   }
 
   async function loadRoomSettings() {
@@ -131,7 +133,8 @@ export const useRoomStore = defineStore("room", () => {
     }
 
     const _settings = localStorage.getItem(settingsKey.value);
-    settings.value = _settings ? JSON.parse(_settings) : DEFAULT_ROOM_SETTINGS;
+
+    settings.value = tryParseJson(_settings, DEFAULT_ROOM_SETTINGS);
   }
 
   async function getAccessToken(): Promise<string | undefined> {
