@@ -1,6 +1,6 @@
 import { ref, computed, watch } from "vue";
 import { defineStore } from "pinia";
-import axios, { type AxiosProgressEvent, type RawAxiosRequestHeaders } from "axios";
+import axios, { AxiosError, type AxiosProgressEvent, type RawAxiosRequestHeaders } from "axios";
 
 import { useMainStore } from "./main";
 
@@ -167,8 +167,11 @@ export const useRoomStore = defineStore("room", () => {
     try {
       const response = await axios.post<LoginResponse>(`/api/auth/refresh`, data);
       auth.value = response.data;
-    } catch {
-      auth.value = undefined;
+    } catch (e) {
+      // If refresh request returns unauthorized, clear auth info.
+      if (e instanceof AxiosError && e?.response?.status === 401) {
+        auth.value = undefined;
+      }
     }
   }
 
