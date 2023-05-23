@@ -177,10 +177,10 @@ export const useRoomStore = defineStore("room", () => {
       return;
     }
 
-    const now = Date.now() / 1000 - 60;
+    const now = Date.now() / 1000;
 
     // If token is within 1 minute of expiring, refresh
-    if (auth.value.exp < now) {
+    if (now > auth.value.exp - 60) {
       await refresh();
     }
   }
