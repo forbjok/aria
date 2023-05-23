@@ -56,7 +56,18 @@ async fn main() -> Result<(), anyhow::Error> {
 
     debug!("Debug logging enabled.");
 
-    let config = AriaConfig::from_default_location()?;
+    let mut config = AriaConfig::from_default_location()?;
+
+    // Allow database URI to be overridden by environment variable
+    if let Ok(v) = env::var("DATABASE_URI") {
+        config.database_uri = Some(v);
+    }
+
+    // Allow files path to be overridden by environment variable
+    if let Ok(v) = env::var("FILES_PATH") {
+        config.files_path = Some(v.into());
+    }
+
     let core = AriaCore::new(config)?;
 
     if opt.migrate {
