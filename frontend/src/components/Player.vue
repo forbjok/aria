@@ -69,7 +69,7 @@ const beginAuto = () => {
 
   setTimeout(() => {
     isAutoUpdate = false;
-  }, 200);
+  }, 2000);
 };
 
 const setContent = async (_content?: Content) => {
