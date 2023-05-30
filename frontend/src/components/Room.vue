@@ -254,7 +254,7 @@ const setPlaybackState = async (ps: PlaybackState) => {
       _player.setTime(newTime);
     }
 
-    if (ps.is_playing && !currentPlaybackState.is_playing) {
+    if (!currentPlaybackState.is_playing) {
       _player.setTime(newTime);
 
       if (isPlayerStateCooldown) {
@@ -264,16 +264,20 @@ const setPlaybackState = async (ps: PlaybackState) => {
       _player.play();
       activatePlayerStateCooldown();
     }
-  } else if (!ps.is_playing && currentPlaybackState.is_playing) {
-    if (isPlayerStateCooldown) {
-      return;
-    }
+  } else if (!ps.is_playing) {
+    _player.setTime(ps.time);
 
-    if (roomStore.isMaster) {
-      return;
-    }
+    if (currentPlaybackState.is_playing) {
+      if (isPlayerStateCooldown) {
+        return;
+      }
 
-    _player.pause();
+      if (roomStore.isMaster) {
+        return;
+      }
+
+      _player.pause();
+    }
   }
 };
 
