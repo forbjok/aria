@@ -377,6 +377,15 @@ const onMouseMove = () => {
   }, 2500);
 };
 
+const sourceListOpen = ref(false);
+const openSourceList = () => {
+  sourceListOpen.value = true;
+};
+
+const closeSourceList = () => {
+  sourceListOpen.value = false;
+};
+
 defineExpose({
   getIsPlaying,
   setContent,
@@ -392,16 +401,20 @@ defineExpose({
 
 <template>
   <div class="player" @mousemove="onMouseMove">
-    <div v-show="canSelectSource && showSources" class="quality-selector">
-      <div class="quality-list">
+    <div v-show="canSelectSource && showSources" class="source-selector" @mouseleave="closeSourceList">
+      <div v-show="sourceListOpen" class="source-list">
         <button
           v-for="source of sources"
           :key="source.description"
+          class="source"
           :class="{ selected: source === currentSource }"
           @click="selectSource(source)"
         >
           {{ source.description }}
         </button>
+      </div>
+      <div class="current-source" :class="{ open: sourceListOpen }" @mouseenter="openSourceList">
+        {{ currentSource?.description }}
       </div>
     </div>
     <div v-if="!!content" class="video-container">
@@ -462,35 +475,53 @@ defineExpose({
   color: #9e9e9e;
 }
 
-.quality-selector {
-  .quality-list {
-    z-index: 999;
+.source-selector {
+  z-index: 999;
 
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+
+  position: absolute;
+  left: 10px;
+  bottom: 40px;
+
+  .source-list {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
+    align-items: flex-start;
     gap: 0.2rem;
+  }
 
-    padding: 0.2rem;
+  .source {
+    background-color: black;
+    color: white;
 
-    position: absolute;
-    left: 10px;
-    bottom: 40px;
+    border: 0;
+    border-radius: 3px;
+    opacity: 0.4;
 
-    button {
-      background-color: black;
-      color: white;
+    padding: 0.2rem 0.3rem;
 
-      border: 0;
-      border-radius: 3px;
-      opacity: 0.2;
+    &.selected {
+      opacity: 0.8;
+    }
+  }
 
-      &:hover {
-        opacity: 0.3;
-      }
+  button.source {
+    &:not(.selected):hover {
+      opacity: 0.6;
+    }
+  }
 
-      &.selected {
-        opacity: 0.6;
-      }
+  .current-source {
+    @extend .source;
+
+    cursor: default;
+
+    &.open {
+      opacity: 1;
     }
   }
 }
