@@ -53,6 +53,10 @@ let playbackController: PlaybackController | null;
 
 const isContentLoaded = ref(false);
 const sources = ref<Source[]>([]);
+const currentSource = ref<Source | null>();
+const setSource = ref<((source: Source) => void) | null>();
+const canSelectSource = ref(true);
+const showSources = ref(false);
 
 const embeddedVideo = ref<HTMLMediaElement>();
 const youtubePlayer = ref<HTMLDivElement>();
@@ -75,6 +79,9 @@ const beginAuto = () => {
 const setContent = async (_content?: Content) => {
   await pause();
   isContentLoaded.value = false;
+  currentSource.value = null;
+  setSource.value = null;
+  canSelectSource.value = false;
 
   content.value = _content;
   if (content.value == null) return;
@@ -136,6 +143,7 @@ const setContent = async (_content?: Content) => {
         emit("contenterror");
       });
     }, 100);
+
     return;
   }
 
@@ -162,8 +170,15 @@ const setContent = async (_content?: Content) => {
               return;
             }
 
-            videojs(embeddedVideo, { controls: true });
-            embeddedVideo.load();
+            const player = videojs(embeddedVideo, { controls: true }, () => {
+              selectSource(_sources[0]);
+            });
+
+            setSource.value = (source) => {
+              player.src({ src: source.url, type: source.mediaType });
+            };
+
+            canSelectSource.value = true;
 
             playbackController = {
               getTime: async (): Promise<number> => {
@@ -200,6 +215,7 @@ const setContent = async (_content?: Content) => {
 
       document.dispatchEvent(contentLoadingEvent);
     }, 1);
+
     return;
   }
 
@@ -208,13 +224,13 @@ const setContent = async (_content?: Content) => {
       return;
     }
 
-    sources.value = [
-      {
-        url: content.value.url,
-        mediaType: "",
-        description: "default",
-      },
-    ];
+    const source = {
+      url: content.value.url,
+      mediaType: "",
+      description: "Source",
+    };
+
+    sources.value = [source];
 
     const video = embeddedVideo.value;
 
@@ -223,7 +239,7 @@ const setContent = async (_content?: Content) => {
         return;
       }
 
-      videojs(video, { controls: true }, () => {
+      const player = videojs(video, { controls: true }, () => {
         video.addEventListener(
           "canplay",
           () => {
@@ -232,8 +248,12 @@ const setContent = async (_content?: Content) => {
           { once: true }
         );
 
-        video.load();
+        selectSource(source);
       });
+
+      setSource.value = (source) => {
+        player.src({ src: source.url, type: source.mediaType });
+      };
 
       playbackController = {
         getTime: async (): Promise<number> => {
@@ -329,6 +349,34 @@ const onRateChange = async () => {
   emit("ratechange", true, await playbackController.getRate());
 };
 
+const selectSource = (source: Source) => {
+  currentSource.value = source;
+
+  if (!setSource.value) {
+    return;
+  }
+
+  setSource.value(source);
+};
+
+let showSourcesTimeout: number | null;
+const onMouseMove = () => {
+  if (!canSelectSource.value) {
+    return;
+  }
+
+  showSources.value = true;
+
+  if (showSourcesTimeout) {
+    clearTimeout(showSourcesTimeout);
+  }
+
+  showSourcesTimeout = setTimeout(() => {
+    showSources.value = false;
+    showSourcesTimeout = null;
+  }, 2500);
+};
+
 defineExpose({
   getIsPlaying,
   setContent,
@@ -343,7 +391,19 @@ defineExpose({
 </script>
 
 <template>
-  <div class="player">
+  <div class="player" @mousemove="onMouseMove">
+    <div v-show="canSelectSource && showSources" class="quality-selector">
+      <div class="quality-list">
+        <button
+          v-for="source of sources"
+          :key="source.description"
+          :class="{ selected: source === currentSource }"
+          @click="selectSource(source)"
+        >
+          {{ source.description }}
+        </button>
+      </div>
+    </div>
     <div v-if="!!content" class="video-container">
       <div v-if="content.type == 'unknown'" class="video-container">
         <video
@@ -355,9 +415,7 @@ defineExpose({
           @pause="onPause"
           @seeked="onSeek"
           @ratechange="onRateChange"
-        >
-          <source v-for="source of sources" :key="source.description" :src="source.url" :type="source.mediaType" />
-        </video>
+        ></video>
       </div>
       <div v-if="content.type == 'youtube'" class="video-container">
         <div ref="youtubePlayer" class="video-container youtube-player"></div>
@@ -402,5 +460,38 @@ defineExpose({
   text-align: center;
   font-size: 2rem;
   color: #9e9e9e;
+}
+
+.quality-selector {
+  .quality-list {
+    z-index: 999;
+
+    display: flex;
+    flex-direction: row;
+    gap: 0.2rem;
+
+    padding: 0.2rem;
+
+    position: absolute;
+    left: 10px;
+    bottom: 40px;
+
+    button {
+      background-color: black;
+      color: white;
+
+      border: 0;
+      border-radius: 3px;
+      opacity: 0.2;
+
+      &:hover {
+        opacity: 0.3;
+      }
+
+      &.selected {
+        opacity: 0.6;
+      }
+    }
+  }
 }
 </style>
