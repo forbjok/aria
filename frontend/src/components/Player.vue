@@ -56,7 +56,7 @@ const sources = ref<Source[]>([]);
 const currentSource = ref<Source | null>();
 const setSource = ref<((source: Source) => void) | null>();
 const canSelectSource = ref(true);
-const showSources = ref(false);
+const isControlsVisible = ref(false);
 
 const embeddedVideo = ref<HTMLMediaElement>();
 const youtubePlayer = ref<HTMLDivElement>();
@@ -359,22 +359,30 @@ const selectSource = (source: Source) => {
   setSource.value(source);
 };
 
-let showSourcesTimeout: number | null;
-const onMouseMove = () => {
+let showControlsTimeout: number | null;
+const showControls = () => {
   if (!canSelectSource.value) {
     return;
   }
 
-  showSources.value = true;
+  isControlsVisible.value = true;
 
-  if (showSourcesTimeout) {
-    clearTimeout(showSourcesTimeout);
+  if (showControlsTimeout) {
+    clearTimeout(showControlsTimeout);
   }
 
-  showSourcesTimeout = setTimeout(() => {
-    showSources.value = false;
-    showSourcesTimeout = null;
+  showControlsTimeout = setTimeout(() => {
+    isControlsVisible.value = false;
+    showControlsTimeout = null;
   }, 2500);
+};
+
+const onMouseMove = () => {
+  showControls();
+};
+
+const onTouchStart = () => {
+  showControls();
 };
 
 const sourceListOpen = ref(false);
@@ -400,8 +408,8 @@ defineExpose({
 </script>
 
 <template>
-  <div class="player" @mousemove="onMouseMove">
-    <div v-show="canSelectSource && showSources" class="source-selector" @mouseleave="closeSourceList">
+  <div class="player" @mousemove="onMouseMove" @touchstart="onTouchStart">
+    <div v-if="canSelectSource" v-show="isControlsVisible" class="source-selector" @mouseleave="closeSourceList">
       <div v-show="sourceListOpen" class="source-list">
         <button
           v-for="source of sources"
