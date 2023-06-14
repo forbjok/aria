@@ -385,14 +385,22 @@ const onTouchStart = () => {
   showControls();
 };
 
-const sourceListOpen = ref(false);
+const isSourceListOpen = ref(false);
 const openSourceList = () => {
-  sourceListOpen.value = true;
+  isSourceListOpen.value = true;
 };
 
 const closeSourceList = () => {
-  sourceListOpen.value = false;
+  isSourceListOpen.value = false;
 };
+
+watch(isControlsVisible, (v) => {
+  if (!v) {
+    return;
+  }
+
+  isSourceListOpen.value = false;
+});
 
 defineExpose({
   getIsPlaying,
@@ -410,7 +418,7 @@ defineExpose({
 <template>
   <div class="player" @mousemove="onMouseMove" @touchstart="onTouchStart">
     <div v-if="canSelectSource" v-show="isControlsVisible" class="source-selector" @mouseleave="closeSourceList">
-      <div v-show="sourceListOpen" class="source-list">
+      <div v-show="isSourceListOpen" class="source-list">
         <button
           v-for="source of sources"
           :key="source.description"
@@ -421,7 +429,7 @@ defineExpose({
           {{ source.description }}
         </button>
       </div>
-      <div class="current-source" :class="{ open: sourceListOpen }" @mouseenter="openSourceList">
+      <div class="current-source" :class="{ open: isSourceListOpen }" @click="openSourceList">
         {{ currentSource?.description }}
       </div>
     </div>
@@ -527,6 +535,10 @@ defineExpose({
     @extend .source;
 
     cursor: default;
+
+    &:hover {
+      opacity: 0.6;
+    }
 
     &.open {
       opacity: 1;
