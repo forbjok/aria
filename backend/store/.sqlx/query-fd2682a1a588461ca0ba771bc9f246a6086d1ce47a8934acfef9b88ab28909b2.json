@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT create_refresh_token($1);",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "create_refresh_token",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "fd2682a1a588461ca0ba771bc9f246a6086d1ce47a8934acfef9b88ab28909b2"
+}

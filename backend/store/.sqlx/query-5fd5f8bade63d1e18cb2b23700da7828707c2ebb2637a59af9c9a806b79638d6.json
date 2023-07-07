@@ -1,0 +1,117 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT post, image FROM get_recent_posts($1, $2) ORDER BY (post).id DESC LIMIT 50;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "post",
+        "type_info": {
+          "Custom": {
+            "name": "post",
+            "kind": {
+              "Composite": [
+                [
+                  "id",
+                  "Int8"
+                ],
+                [
+                  "created_at",
+                  "Timestamptz"
+                ],
+                [
+                  "updated_at",
+                  "Timestamptz"
+                ],
+                [
+                  "room_id",
+                  "Int4"
+                ],
+                [
+                  "name",
+                  "Text"
+                ],
+                [
+                  "comment",
+                  "Text"
+                ],
+                [
+                  "ip",
+                  "Inet"
+                ],
+                [
+                  "is_deleted",
+                  "Bool"
+                ],
+                [
+                  "user_id",
+                  "Int8"
+                ],
+                [
+                  "admin",
+                  "Bool"
+                ]
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "image",
+        "type_info": {
+          "Custom": {
+            "name": "image",
+            "kind": {
+              "Composite": [
+                [
+                  "id",
+                  "Int8"
+                ],
+                [
+                  "post_id",
+                  "Int8"
+                ],
+                [
+                  "created_at",
+                  "Timestamptz"
+                ],
+                [
+                  "updated_at",
+                  "Timestamptz"
+                ],
+                [
+                  "filename",
+                  "Text"
+                ],
+                [
+                  "hash",
+                  "Text"
+                ],
+                [
+                  "ext",
+                  "Text"
+                ],
+                [
+                  "tn_ext",
+                  "Text"
+                ]
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "5fd5f8bade63d1e18cb2b23700da7828707c2ebb2637a59af9c9a806b79638d6"
+}

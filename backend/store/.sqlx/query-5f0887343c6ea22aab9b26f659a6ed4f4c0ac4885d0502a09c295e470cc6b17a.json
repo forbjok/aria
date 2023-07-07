@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT update_post_images($1, $2, $3);",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "update_post_images",
+        "type_info": "Void"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "5f0887343c6ea22aab9b26f659a6ed4f4c0ac4885d0502a09c295e470cc6b17a"
+}

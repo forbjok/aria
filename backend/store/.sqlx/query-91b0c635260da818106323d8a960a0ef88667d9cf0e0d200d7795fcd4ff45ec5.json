@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT delete_emote($1, $2);",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "delete_emote",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "91b0c635260da818106323d8a960a0ef88667d9cf0e0d200d7795fcd4ff45ec5"
+}

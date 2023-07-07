@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT set_room_content($1, $2::json);",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "set_room_content",
+        "type_info": "Void"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Json"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "34a51b29deb66ef2f8560ca687981acc90677aabca71cb89ecdb241556f8d705"
+}

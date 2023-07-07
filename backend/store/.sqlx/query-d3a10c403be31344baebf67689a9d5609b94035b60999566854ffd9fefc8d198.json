@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT update_emote_images($1, $2);",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "update_emote_images",
+        "type_info": "Void"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "d3a10c403be31344baebf67689a9d5609b94035b60999566854ffd9fefc8d198"
+}

@@ -1,0 +1,170 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT * FROM create_post($1, $2, $3);",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "post",
+        "type_info": {
+          "Custom": {
+            "name": "post",
+            "kind": {
+              "Composite": [
+                [
+                  "id",
+                  "Int8"
+                ],
+                [
+                  "created_at",
+                  "Timestamptz"
+                ],
+                [
+                  "updated_at",
+                  "Timestamptz"
+                ],
+                [
+                  "room_id",
+                  "Int4"
+                ],
+                [
+                  "name",
+                  "Text"
+                ],
+                [
+                  "comment",
+                  "Text"
+                ],
+                [
+                  "ip",
+                  "Inet"
+                ],
+                [
+                  "is_deleted",
+                  "Bool"
+                ],
+                [
+                  "user_id",
+                  "Int8"
+                ],
+                [
+                  "admin",
+                  "Bool"
+                ]
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "image",
+        "type_info": {
+          "Custom": {
+            "name": "image",
+            "kind": {
+              "Composite": [
+                [
+                  "id",
+                  "Int8"
+                ],
+                [
+                  "post_id",
+                  "Int8"
+                ],
+                [
+                  "created_at",
+                  "Timestamptz"
+                ],
+                [
+                  "updated_at",
+                  "Timestamptz"
+                ],
+                [
+                  "filename",
+                  "Text"
+                ],
+                [
+                  "hash",
+                  "Text"
+                ],
+                [
+                  "ext",
+                  "Text"
+                ],
+                [
+                  "tn_ext",
+                  "Text"
+                ]
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        {
+          "Custom": {
+            "name": "new_post",
+            "kind": {
+              "Composite": [
+                [
+                  "name",
+                  "Text"
+                ],
+                [
+                  "comment",
+                  "Text"
+                ],
+                [
+                  "ip",
+                  "Inet"
+                ],
+                [
+                  "user_id",
+                  "Int8"
+                ],
+                [
+                  "admin",
+                  "Bool"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "Custom": {
+            "name": "new_image",
+            "kind": {
+              "Composite": [
+                [
+                  "filename",
+                  "Text"
+                ],
+                [
+                  "hash",
+                  "Text"
+                ],
+                [
+                  "ext",
+                  "Text"
+                ],
+                [
+                  "tn_ext",
+                  "Text"
+                ]
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "b97575fe6c9b82d4f2d222c8649a51f6be5c1f3b88f4298d48517ee4ba11f7b1"
+}

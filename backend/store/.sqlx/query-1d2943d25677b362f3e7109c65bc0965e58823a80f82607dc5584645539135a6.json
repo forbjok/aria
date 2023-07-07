@@ -1,0 +1,79 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT * FROM create_emote($1, $2);",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 2,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 3,
+        "name": "room_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "hash",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "ext",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        {
+          "Custom": {
+            "name": "new_emote",
+            "kind": {
+              "Composite": [
+                [
+                  "name",
+                  "Text"
+                ],
+                [
+                  "hash",
+                  "Text"
+                ],
+                [
+                  "ext",
+                  "Text"
+                ]
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "1d2943d25677b362f3e7109c65bc0965e58823a80f82607dc5584645539135a6"
+}
