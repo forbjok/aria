@@ -9,21 +9,21 @@ edition = "2021"
 aria_core = { path = "../core" }
 aria_models = { path = "../models" }
 aria_shared = { path = "../shared" }
-anyhow = "1.0.71"
-axum = { version = "0.6.18" , features = ["headers", "macros", "multipart"] }
+anyhow = "1.0.75"
+axum = { version = "0.6.20" , features = ["headers", "macros", "multipart"] }
 chrono = "0.4.26"
-clap = { version = "4.3.11", features = ["derive"] }
+clap = { version = "4.3.22", features = ["derive"] }
 futures = "0.3.28"
 futures-channel = "0.3.28"
 jsonwebtoken = "8.3.0"
-regex = "1.9.1"
-serde = "1.0.167"
-serde_derive = "1.0.167"
-serde_json = "1.0.100"
-thiserror = "1.0.43"
-tokio = { version = "1.29.1", features = ["macros", "rt-multi-thread", "signal"] }
-tokio-tungstenite = "0.19.0"
-tower-http = { version = "0.4.1", features = ["fs", "trace"] }
+regex = "1.9.3"
+serde = "1.0.183"
+serde_derive = "1.0.183"
+serde_json = "1.0.105"
+thiserror = "1.0.47"
+tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread", "signal"] }
+tokio-tungstenite = "0.20.0"
+tower-http = { version = "0.4.3", features = ["fs", "trace"] }
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
-uuid = { version = "1.4.0", features = ["serde"] }
+uuid = { version = "1.4.1", features = ["serde"] }

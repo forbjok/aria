@@ -6,12 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.71"
-async-trait = "0.1.71"
+anyhow = "1.0.75"
+async-trait = "0.1.73"
 chrono = "0.4.26"
-serde = "1.0.167"
-serde_derive = "1.0.167"
-sqlx = { version = "0.7.0", features = ["chrono", "ipnetwork", "postgres", "runtime-tokio-rustls", "uuid"] }
-tokio = "1.29.1"
+serde = "1.0.183"
+serde_derive = "1.0.183"
+sqlx = { version = "0.7.1", features = ["chrono", "ipnetwork", "postgres", "runtime-tokio-rustls", "uuid"] }
+tokio = "1.32.0"
 tracing = "0.1.37"
-uuid = "1.4.0"
+uuid = "1.4.1"
