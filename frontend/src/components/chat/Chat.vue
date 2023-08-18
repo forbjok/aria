@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { filesize } from "filesize";
 
 import ChatPost from "./ChatPost.vue";
@@ -19,7 +19,14 @@ const chatStore = useChatStore();
 const postContainer = ref<HTMLDivElement>();
 const postForm = ref<HTMLFormElement>();
 const commentField = ref<HTMLTextAreaElement>();
+const imageFileInput = ref<HTMLInputElement>();
 const confirmDeleteDialog = ref<typeof ConfirmDialog>();
+
+watch(chatStore.newPost, (v) => {
+  if (!v.image) {
+    imageFileInput.value!.value = "";
+  }
+});
 
 const postingProgress = computed(() =>
   chatStore.posting
@@ -28,7 +35,7 @@ const postingProgress = computed(() =>
       : "Posting..."
     : chatStore.postingError
     ? chatStore.postingError
-    : undefined
+    : undefined,
 );
 
 const postingCooldownText = computed(() => {
@@ -92,7 +99,6 @@ const submitOnEnterKeydown = (event: KeyboardEvent) => {
 
 const clearFileOnShiftClick = (event: MouseEvent) => {
   if (event.shiftKey) {
-    (event.target as HTMLInputElement).value = "";
     chatStore.newPost.image = undefined;
 
     event.preventDefault();
@@ -207,6 +213,7 @@ const confirmDeletePost = async (post: Post) => {
             <tr>
               <td>
                 <input
+                  ref="imageFileInput"
                   name="image"
                   type="file"
                   accept="image/*"
@@ -244,6 +251,7 @@ const confirmDeletePost = async (post: Post) => {
             {{ postingCooldownText || postingProgress || "Post" }}
           </button>
           <input
+            ref="imageFileInput"
             name="image"
             type="file"
             accept="image/*"

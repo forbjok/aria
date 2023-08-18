@@ -25,7 +25,11 @@ export const useChatStore = defineStore("chat", () => {
   const postingProgress = ref<number>();
   const postingError = ref<string>();
   const postingCooldown = ref(0);
-  const newPost = ref(createEmptyPost());
+  const newPost = ref({
+    name: roomStore.settings.chatName,
+    comment: "",
+  } as NewPost);
+
   const submitOnCooldown = ref(false);
 
   const canSubmitPost = computed(() => {
@@ -50,15 +54,11 @@ export const useChatStore = defineStore("chat", () => {
     return true;
   });
 
-  function createEmptyPost(): NewPost {
-    return {
-      name: roomStore.settings.chatName,
-      comment: "",
-    };
-  }
-
   function clearNewPost() {
-    newPost.value = createEmptyPost();
+    const _newPost = newPost.value;
+
+    _newPost.comment = "";
+    _newPost.image = undefined;
   }
 
   async function submitPost() {
