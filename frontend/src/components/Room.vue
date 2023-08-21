@@ -142,17 +142,17 @@ const activatePlayerStateCooldown = () => {
 };
 
 const onPlay = async (auto: boolean) => {
-  if (auto) {
-    return;
-  }
-
-  isViewerPaused = false;
-
   if (!roomStore.isMaster || !isPlayerInteractedWith.value) {
     await setPlaybackState(roomStore.serverPlaybackState);
   }
 
   isPlayerInteractedWith.value = true;
+
+  if (auto) {
+    return;
+  }
+
+  isViewerPaused = false;
 
   if (roomStore.isMaster) {
     isMasterInitiatedPlay = true;
