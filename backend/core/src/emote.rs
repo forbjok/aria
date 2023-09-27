@@ -10,7 +10,7 @@ use aria_store::{models as dbm, AriaStore};
 use super::AriaCore;
 use crate::{image::ProcessImageResult, transform::dbm_emote_to_lm, util::thumbnail::ThumbnailGenerator, Notification};
 
-static RE_VALID_EMOTE_NAME: Lazy<Regex> = Lazy::new(|| Regex::new(r#"^[\d\w-]+$"#).unwrap());
+static RE_VALID_EMOTE_NAME: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[\d\w-]+$").unwrap());
 
 impl AriaCore {
     pub async fn get_emotes(&self, room_id: i32) -> Result<Vec<lm::Emote>, anyhow::Error> {

@@ -61,7 +61,7 @@ pub(super) async fn handle_connection(
                         let sv_state = &sv_state;
                         let cn_state = &mut cn_state;
 
-                        let result: Result<(), anyhow::Error> = (|| async move {
+                        let result: Result<(), anyhow::Error> = async move {
                             let tx = &cn_state.tx;
 
                             let msg = msg.to_text().context("Error retrieving message text")?;
@@ -160,7 +160,7 @@ pub(super) async fn handle_connection(
                             }
 
                             Ok(())
-                        })()
+                        }
                         .await;
 
                         if let Err(err) = result {

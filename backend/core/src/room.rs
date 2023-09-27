@@ -9,9 +9,9 @@ use crate::{transform::dbm_room_to_lm, util::password::generate_simple_password,
 use super::AriaCore;
 
 static RE_YOUTUBE_URL: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r#"https?://(?:www|m)\.youtube\.com/watch\?v=([^&]+)"#).unwrap());
-static RE_GDRIVE_URL: Lazy<Regex> = Lazy::new(|| Regex::new(r#"https?://drive.google.com/file/d/(.+)/view"#).unwrap());
-static RE_TWITCH_URL: Lazy<Regex> = Lazy::new(|| Regex::new(r#"https?://(?:www\.)?twitch\.tv/([^#\?]+)"#).unwrap());
+    Lazy::new(|| Regex::new(r"https?://(?:www|m)\.youtube\.com/watch\?v=([^&]+)").unwrap());
+static RE_GDRIVE_URL: Lazy<Regex> = Lazy::new(|| Regex::new(r"https?://drive.google.com/file/d/(.+)/view").unwrap());
+static RE_TWITCH_URL: Lazy<Regex> = Lazy::new(|| Regex::new(r"https?://(?:www\.)?twitch\.tv/([^#\?]+)").unwrap());
 
 impl AriaCore {
     pub async fn get_room(&self, room_id: i32) -> Result<Option<lm::Room>, anyhow::Error> {

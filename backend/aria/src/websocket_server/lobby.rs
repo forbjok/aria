@@ -99,7 +99,7 @@ async fn handle_lobby_requests(
             result = notify_rx.recv() => {
                 match result {
                     Ok(not) => {
-                        let result: Result<(), anyhow::Error> = (|| async {
+                        let result: Result<(), anyhow::Error> = async {
                             match &*not {
                                 Notification::NewPost(room, post) => {
                                     if let Some(room) = state.rooms_by_id.get(room) {
@@ -129,7 +129,7 @@ async fn handle_lobby_requests(
                             }
 
                             Ok(())
-                        })()
+                        }
                         .await;
 
                         if let Err(err) = result {

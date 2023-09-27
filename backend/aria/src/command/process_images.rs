@@ -16,7 +16,7 @@ async fn process_post_images(core: &AriaCore) -> Result<(), anyhow::Error> {
 
     let mut process_images = fs::read_dir(&core.process_image_path).await?;
     while let Some(entry) = process_images.next_entry().await? {
-        let result: Result<(), anyhow::Error> = (|| async {
+        let result: Result<(), anyhow::Error> = async {
             let filename = entry.file_name();
             let path = entry.path();
 
@@ -42,7 +42,7 @@ async fn process_post_images(core: &AriaCore) -> Result<(), anyhow::Error> {
             core.update_post_images(&hash, &ext, &tn_ext).await?;
 
             Ok(())
-        })()
+        }
         .await;
 
         if let Err(err) = result {
@@ -58,7 +58,7 @@ async fn process_emote_images(core: &AriaCore) -> Result<(), anyhow::Error> {
 
     let mut process_images = fs::read_dir(&core.process_emote_path).await?;
     while let Some(entry) = process_images.next_entry().await? {
-        let result: Result<(), anyhow::Error> = (|| async {
+        let result: Result<(), anyhow::Error> = async {
             let filename = entry.file_name();
             let path = entry.path();
 
@@ -82,7 +82,7 @@ async fn process_emote_images(core: &AriaCore) -> Result<(), anyhow::Error> {
             core.update_emote_images(&hash, &ext).await?;
 
             Ok(())
-        })()
+        }
         .await;
 
         if let Err(err) = result {

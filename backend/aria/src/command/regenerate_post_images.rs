@@ -9,7 +9,7 @@ pub async fn regenerate_post_images(core: AriaCore) -> Result<(), anyhow::Error>
 
     let mut original_images = fs::read_dir(&core.original_image_path).await?;
     while let Some(entry) = original_images.next_entry().await? {
-        let result: Result<(), anyhow::Error> = (|| async {
+        let result: Result<(), anyhow::Error> = async {
             let filename = entry.file_name();
             let path = entry.path();
 
@@ -30,7 +30,7 @@ pub async fn regenerate_post_images(core: AriaCore) -> Result<(), anyhow::Error>
             core.update_post_images(hash, ext, &tn_ext).await?;
 
             Ok(())
-        })()
+        }
         .await;
 
         if let Err(err) = result {
