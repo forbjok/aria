@@ -27,7 +27,7 @@ const tabs = ref(
     const content = tab.children as VNode[];
 
     return { index, title, content };
-  })
+  }),
 );
 
 const selectedIndex = ref(defaultIndex?.value || 0);

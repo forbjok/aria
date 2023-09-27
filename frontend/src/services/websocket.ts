@@ -11,7 +11,10 @@ export class AriaWebSocket {
   private ping_interval?: number;
   private listeners: AriaWsListener[] = [];
 
-  constructor(private url: string, private onopen: (() => void) | null) {}
+  constructor(
+    private url: string,
+    private onopen: (() => void) | null,
+  ) {}
 
   public send<T>(msg: string, data?: T) {
     const _data = data ? JSON.stringify(data) : "";

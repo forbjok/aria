@@ -245,7 +245,7 @@ const setContent = async (_content?: Content) => {
           () => {
             isContentLoaded.value = true;
           },
-          { once: true }
+          { once: true },
         );
 
         selectSource(source);

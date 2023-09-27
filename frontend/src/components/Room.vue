@@ -491,7 +491,9 @@ const toggleDetached = () => {
       opacity: 0.1;
       border-radius: 5px;
 
-      transition: opacity 0.2s ease-out, transform 0.2s ease-in;
+      transition:
+        opacity 0.2s ease-out,
+        transform 0.2s ease-in;
 
       button {
         background: none;

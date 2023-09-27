@@ -80,7 +80,7 @@ export const useRoomStore = defineStore("room", () => {
 
       localStorage.setItem(settingsKey.value, JSON.stringify(value || {}));
     },
-    { deep: true }
+    { deep: true },
   );
 
   async function claimRoom(_name: string) {
