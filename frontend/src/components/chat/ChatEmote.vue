@@ -3,6 +3,8 @@ import { ref, toRefs } from "vue";
 
 import type { Emote } from "@/models";
 
+import EmoteComponent from "@/components/common/Emote.vue";
+
 const props = defineProps<{
   emote: Emote;
 }>();
@@ -17,17 +19,19 @@ const toggleExpanded = (): void => {
 </script>
 
 <template>
-  <img
-    class="emote"
+  <EmoteComponent
+    class="chat-emote"
+    :emote="emote"
     :class="{ expanded: expandImage }"
-    :src="emote.url"
     :title="`!${emote.name}`"
     @click="toggleExpanded"
   />
 </template>
 
 <style scoped lang="scss">
-.emote {
+.chat-emote {
+  display: inline-block;
+
   cursor: pointer;
 
   &:not(.expanded) {

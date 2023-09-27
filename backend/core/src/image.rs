@@ -93,6 +93,6 @@ impl AriaCore {
     }
 
     pub fn is_preserve_original(&self, ext: &str) -> bool {
-        ext == "gif"
+        ext == "gif" || ext == "webm"
     }
 }

@@ -2,7 +2,7 @@
 import { defineComponent, h, type VNodeArrayChildren } from "vue";
 import * as P from "parsimmon";
 
-import Emote from "./Emote.vue";
+import ChatEmote from "./ChatEmote.vue";
 
 import { useRoomStore } from "@/stores/room";
 
@@ -46,7 +46,7 @@ export default defineComponent({
         }
 
         flushText();
-        nodes.push(h(Emote, { emote }));
+        nodes.push(h(ChatEmote, { emote }));
       };
 
       const addQuote = (text: string) => {
@@ -66,8 +66,8 @@ export default defineComponent({
                 ctx.emit("clickquotelink", parseInt(text.substring(2)));
               },
             },
-            text
-          )
+            text,
+          ),
         );
       };
 
@@ -110,7 +110,7 @@ export default defineComponent({
             r.link,
             r.text,
             r.newline,
-            r.whitespace
+            r.whitespace,
           ).many(),
         spoilerOpen: () => P.string("[spoiler]").map(beginSpoiler),
         spoilerClose: () => P.string("[/spoiler]").map(endSpoiler),

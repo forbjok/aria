@@ -5,6 +5,8 @@ import { useRoomStore } from "@/stores/room";
 
 import type { Emote } from "@/models";
 
+import EmoteComponent from "@/components/common/Emote.vue";
+
 const emit = defineEmits<{
   (e: "selectemote", name: string): void;
 }>();
@@ -27,8 +29,8 @@ const selectEmote = (emote: Emote) => {
     <div class="emotes-container">
       <div class="emotes">
         <div v-for="e of emotes" :key="e.name" :value="e.name" class="emote">
-          <div class="emote">
-            <img :src="e.url" :title="e.name" @click.stop="selectEmote(e)" />
+          <div class="emote" :title="e.name" @click.stop="selectEmote(e)">
+            <EmoteComponent class="image" :emote="e" />
           </div>
         </div>
       </div>
@@ -81,15 +83,14 @@ const selectEmote = (emote: Emote) => {
     background-color: rgb(13, 13, 13);
     display: flex;
     justify-content: center;
+    align-items: center;
 
     width: 100px;
     height: 100px;
 
     cursor: pointer;
 
-    img {
-      align-self: center;
-
+    .image {
       max-width: 100px;
       max-height: 100px;
     }

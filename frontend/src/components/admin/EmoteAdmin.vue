@@ -11,6 +11,7 @@ import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
 import Button from "@/components/common/Button.vue";
 import Dialog from "@/components/common/Dialog.vue";
 import Toolbar from "@/components/common/Toolbar.vue";
+import EmoteComponent from "@/components/common/Emote.vue";
 
 const MAX_IMAGE_SIZE = 2097152;
 const UPLOADING_TEXT = "Uploading...";
@@ -40,6 +41,23 @@ const emotes = computed((): Emote[] => {
 const newEmoteImage = computed((): string | undefined => {
   const _newEmote = newEmote.value;
   if (!_newEmote || !_newEmote.image) {
+    return;
+  }
+
+  if (!_newEmote.image.type.startsWith("image/")) {
+    return;
+  }
+
+  return URL.createObjectURL(_newEmote.image);
+});
+
+const newEmoteVideo = computed((): string | undefined => {
+  const _newEmote = newEmote.value;
+  if (!_newEmote || !_newEmote.image) {
+    return;
+  }
+
+  if (!_newEmote.image.type.startsWith("video/")) {
     return;
   }
 
@@ -134,7 +152,7 @@ const submitEmote = async () => {
       <div class="emotes">
         <div v-for="e of emotes" :key="e.name" :value="e.name" class="emote" @click="showEmoteDetails(e)">
           <div class="emote-image">
-            <img :src="e.url" :title="e.name" />
+            <EmoteComponent class="image" :emote="e" />
           </div>
           <div class="caption">
             {{ e.name }}
@@ -151,7 +169,7 @@ const submitEmote = async () => {
       <div v-if="selectedEmote" class="emote-details">
         <div class="content">
           <div class="emote-image">
-            <img :src="selectedEmote.url" :title="selectedEmote.name" />
+            <EmoteComponent class="image" :emote="selectedEmote" />
           </div>
           <div class="caption">
             {{ selectedEmote.name }}
@@ -174,8 +192,17 @@ const submitEmote = async () => {
           title="Emote name. Only alphanumeric characters allowed."
           :disabled="adding"
         />
-        <input name="image" type="file" accept="image/*" @change="imageSelected" :disabled="adding" />
+        <input name="image" type="file" accept="image/*, video/webm" @change="imageSelected" :disabled="adding" />
         <img v-show="newEmoteImage" class="image-preview" :src="newEmoteImage" alt="Preview" />
+        <video
+          v-show="newEmoteVideo"
+          class="image-preview"
+          :src="newEmoteVideo"
+          alt="Preview"
+          autoplay
+          loop
+          muted
+        ></video>
         <button class="add-button" type="submit" :disabled="!canSubmitEmote">
           {{ adding ? progressText : "Upload" }}
         </button>
@@ -289,10 +316,13 @@ const submitEmote = async () => {
     }
 
     .emote-image {
+      display: flex;
+      align-items: center;
+
       width: 100px;
       height: 100px;
 
-      img {
+      .image {
         max-width: 100px;
         max-height: 100px;
       }
@@ -314,7 +344,7 @@ const submitEmote = async () => {
 
     overflow: hidden;
 
-    img {
+    .image {
       max-width: 350px;
       max-height: 350px;
     }
