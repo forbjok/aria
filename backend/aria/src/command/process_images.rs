@@ -1,6 +1,6 @@
 use anyhow::Context;
 
-use aria_core::{AriaCore, GeneratePostImageResult, ProcessImageResult};
+use aria_core::{AriaCore, GeneratePostImageResult, ProcessFileResult};
 use tokio::fs;
 use tracing::{error, info};
 
@@ -27,16 +27,16 @@ async fn process_post_images(core: &AriaCore) -> Result<(), anyhow::Error> {
             let file = core.hash_file(&path).await?;
 
             // Process image
-            let ProcessImageResult {
+            let ProcessFileResult {
                 hash,
-                ext,
-                original_image_path,
+                original_ext,
+                original_file_path: original_image_path,
                 ..
-            } = core.process_image(file, filename, &core.original_image_path).await?;
+            } = core.process_file(file, filename, &core.original_image_path).await?;
 
             // Generate image and thumbnail
-            let GeneratePostImageResult { tn_ext } = core
-                .generate_post_image(&original_image_path, &hash, &ext, true)
+            let GeneratePostImageResult { ext, tn_ext } = core
+                .generate_post_image(&original_image_path, &hash, &original_ext, true)
                 .await?;
 
             core.update_post_images(&hash, &ext, &tn_ext).await?;
@@ -69,14 +69,15 @@ async fn process_emote_images(core: &AriaCore) -> Result<(), anyhow::Error> {
             let file = core.hash_file(&path).await?;
 
             // Process image
-            let ProcessImageResult {
+            let ProcessFileResult {
                 hash,
-                ext,
-                original_image_path,
+                original_ext,
+                original_file_path: original_image_path,
                 ..
-            } = core.process_image(file, filename, &core.original_emote_path).await?;
+            } = core.process_file(file, filename, &core.original_emote_path).await?;
 
-            core.generate_emote_image(&original_image_path, &hash, &ext, true)
+            let ext = core
+                .generate_emote_image(&original_image_path, &hash, &original_ext, true)
                 .await?;
 
             core.update_emote_images(&hash, &ext).await?;

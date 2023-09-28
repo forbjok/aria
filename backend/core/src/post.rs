@@ -5,9 +5,12 @@ use aria_models::local as lm;
 use aria_store::{models as dbm, AriaStore};
 
 use super::AriaCore;
-use crate::{image::ProcessImageResult, transform::dbm_post_to_lm, util::thumbnail::ThumbnailGenerator, Notification};
+use crate::{
+    file::ProcessFileResult, transform::dbm_post_to_lm, util::thumbnail::ThumbnailGenerator, Notification, IMAGE_EXT,
+};
 
 pub struct GeneratePostImageResult<'a> {
+    pub ext: Cow<'a, str>,
     pub tn_ext: Cow<'a, str>,
 }
 
@@ -21,24 +24,24 @@ impl AriaCore {
     pub async fn create_post(&self, room_id: i32, post: lm::NewPost<'_>) -> Result<lm::Post, anyhow::Error> {
         let image = if let Some(i) = post.image {
             // Process image
-            let ProcessImageResult {
+            let ProcessFileResult {
                 hash,
-                ext,
-                original_image_path,
+                original_ext,
+                original_file_path,
                 ..
             } = self
-                .process_image(i.file, &i.filename, &self.original_image_path)
+                .process_file(i.file, &i.filename, &self.original_image_path)
                 .await?;
 
             // Generate image and thumbnail
-            let GeneratePostImageResult { tn_ext } = self
-                .generate_post_image(&original_image_path, &hash, &ext, false)
+            let GeneratePostImageResult { ext, tn_ext } = self
+                .generate_post_image(&original_file_path, &hash, &original_ext, false)
                 .await?;
 
             Some(dbm::NewImage {
                 filename: Some(i.filename.to_string()),
                 hash: Some(hash.into()),
-                ext: Some(ext.as_ref().into()),
+                ext: Some(ext.into()),
                 tn_ext: Some(tn_ext.into()),
             })
         } else {
@@ -94,6 +97,7 @@ impl AriaCore {
     ) -> Result<GeneratePostImageResult<'a>, anyhow::Error> {
         let preserve_original = self.is_preserve_original(ext);
 
+        let ext = if preserve_original { ext } else { IMAGE_EXT };
         let tn_ext = ext;
 
         let mut tn_gen = ThumbnailGenerator::new(original_image_path);
@@ -136,6 +140,9 @@ impl AriaCore {
 
         tn_gen.generate().context("Error generating post image and thumbnail")?;
 
-        Ok(GeneratePostImageResult { tn_ext: tn_ext.into() })
+        Ok(GeneratePostImageResult {
+            ext: ext.into(),
+            tn_ext: tn_ext.into(),
+        })
     }
 }

@@ -23,11 +23,9 @@ pub async fn regenerate_post_images(core: AriaCore) -> Result<(), anyhow::Error>
                 .split_once('.')
                 .context("Error determining hash from filename")?;
 
-            let ext = core.image_extension(ext);
+            let GeneratePostImageResult { ext, tn_ext } = core.generate_post_image(&path, hash, ext, true).await?;
 
-            let GeneratePostImageResult { tn_ext } = core.generate_post_image(&path, hash, ext, true).await?;
-
-            core.update_post_images(hash, ext, &tn_ext).await?;
+            core.update_post_images(hash, &ext, &tn_ext).await?;
 
             Ok(())
         }

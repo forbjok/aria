@@ -10,7 +10,7 @@ use aria_store::{AriaStore, PgStore};
 mod auth;
 pub mod config;
 mod emote;
-mod image;
+mod file;
 mod post;
 mod room;
 mod transform;
@@ -18,7 +18,7 @@ mod user;
 mod util;
 
 pub use self::emote::*;
-pub use self::image::*;
+pub use self::file::*;
 pub use self::post::*;
 pub use self::room::*;
 

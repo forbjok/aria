@@ -12,11 +12,13 @@ use futures_core::Stream;
 use super::AriaCore;
 use crate::util::{hash_blake3_file, hash_blake3_to_file_from_stream};
 
-pub struct ProcessImageResult<'a> {
+pub const IMAGE_EXT: &str = "webp";
+pub const VIDEO_EXT: &str = "webm";
+
+pub struct ProcessFileResult<'a> {
     pub hash: Cow<'a, str>,
-    pub ext: Cow<'a, str>,
     pub original_ext: Cow<'a, str>,
-    pub original_image_path: PathBuf,
+    pub original_file_path: PathBuf,
 }
 
 impl AriaCore {
@@ -42,14 +44,14 @@ impl AriaCore {
         })
     }
 
-    /// Process image and move it into the originals directory,
+    /// Process file and move it into the originals directory,
     /// or delete it if it already exists there.
-    pub async fn process_image<'a>(
+    pub async fn process_file<'a>(
         &self,
         file: HashedFile,
         filename: &'a str,
         destination_path: &Path,
-    ) -> Result<ProcessImageResult<'a>, anyhow::Error> {
+    ) -> Result<ProcessFileResult<'a>, anyhow::Error> {
         let (_, original_ext) = filename
             .rsplit_once('.')
             .context("Could not get extension from filename")?;
@@ -74,25 +76,18 @@ impl AriaCore {
             tokio::fs::remove_file(file.path).await?;
         }
 
-        let ext = self.image_extension(original_ext);
-
-        Ok(ProcessImageResult {
+        Ok(ProcessFileResult {
             hash: hash.into(),
-            ext: ext.into(),
             original_ext: original_ext.into(),
-            original_image_path,
+            original_file_path: original_image_path,
         })
     }
 
-    pub fn image_extension<'a>(&self, original_ext: &'a str) -> &'a str {
-        if self.is_preserve_original(original_ext) {
-            original_ext
-        } else {
-            "webp"
-        }
+    pub fn is_preserve_original(&self, ext: &str) -> bool {
+        ext == "gif"
     }
 
-    pub fn is_preserve_original(&self, ext: &str) -> bool {
-        ext == "gif" || ext == "webm"
+    pub fn is_video(&self, ext: &str) -> bool {
+        ext == "webm"
     }
 }

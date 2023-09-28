@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::Context;
 use once_cell::sync::Lazy;
@@ -8,7 +8,15 @@ use aria_models::local as lm;
 use aria_store::{models as dbm, AriaStore};
 
 use super::AriaCore;
-use crate::{image::ProcessImageResult, transform::dbm_emote_to_lm, util::thumbnail::ThumbnailGenerator, Notification};
+use crate::{
+    file::ProcessFileResult,
+    transform::dbm_emote_to_lm,
+    util::{thumbnail::ThumbnailGenerator, video::VideoPreviewGenerator},
+    Notification, IMAGE_EXT, VIDEO_EXT,
+};
+
+const MAX_WIDTH: u32 = 350;
+const MAX_HEIGHT: u32 = 350;
 
 static RE_VALID_EMOTE_NAME: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[\d\w-]+$").unwrap());
 
@@ -27,22 +35,23 @@ impl AriaCore {
         let i = emote.image;
 
         // Process image
-        let ProcessImageResult {
+        let ProcessFileResult {
             hash,
-            ext,
-            original_image_path,
+            original_ext,
+            original_file_path,
             ..
         } = self
-            .process_image(i.file, &i.filename, &self.original_emote_path)
+            .process_file(i.file, &i.filename, &self.original_emote_path)
             .await?;
 
-        self.generate_emote_image(&original_image_path, &hash, &ext, false)
+        let new_ext = self
+            .generate_emote_image(&original_file_path, &hash, &original_ext, false)
             .await?;
 
         let new_emote = dbm::NewEmote {
             name: Some(emote.name.into()),
             hash: Some(hash.into()),
-            ext: Some(ext.into()),
+            ext: Some(new_ext),
         };
 
         let emote = self.store.create_emote(room_id, &new_emote).await?;
@@ -76,11 +85,20 @@ impl AriaCore {
         hash: &str,
         ext: &'a str,
         overwrite: bool,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<String, anyhow::Error> {
         let preserve_original = self.is_preserve_original(ext);
 
-        let emote_filename = format!("{hash}.{ext}");
-        let emote_path = self.public_emote_path.join(emote_filename);
+        let is_video = self.is_video(ext);
+
+        let new_ext = if preserve_original {
+            ext
+        } else if is_video {
+            VIDEO_EXT
+        } else {
+            IMAGE_EXT
+        };
+
+        let emote_path = self.build_emote_path(hash, new_ext);
 
         // If emote image does not already exist, create it.
         let emote_exists = emote_path.exists();
@@ -92,6 +110,10 @@ impl AriaCore {
             if preserve_original {
                 // If preserving original, simply create a hard link to the original file
                 tokio::fs::hard_link(original_image_path, &emote_path).await?;
+            } else if self.is_video(ext) {
+                let mut vp_gen = VideoPreviewGenerator::new(original_image_path);
+                vp_gen.add(&emote_path, MAX_WIDTH, MAX_HEIGHT);
+                vp_gen.generate().context("Error generating emote video")?;
             } else {
                 let mut tn_gen = ThumbnailGenerator::new(original_image_path);
                 tn_gen.add(&emote_path, 350, 350);
@@ -99,6 +121,12 @@ impl AriaCore {
             }
         }
 
-        Ok(())
+        Ok(new_ext.to_owned())
+    }
+
+    fn build_emote_path(&self, hash: &str, ext: &str) -> PathBuf {
+        let emote_filename = format!("{hash}.{ext}");
+
+        self.public_emote_path.join(emote_filename)
     }
 }
