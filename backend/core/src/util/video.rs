@@ -39,7 +39,7 @@ impl<'a> VideoPreviewGenerator<'a> {
         }
 
         for vp in self.previews.iter() {
-            let scale_arg = format!("scale={}:{}", vp.width, vp.height);
+            let scale_arg = format!("scale={}:{}:force_original_aspect_ratio=decrease", vp.width, vp.height);
 
             let status = Command::new("ffmpeg")
                 .arg("-i")
