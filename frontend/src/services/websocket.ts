@@ -14,6 +14,7 @@ export class AriaWebSocket {
   constructor(
     private url: string,
     private onopen: (() => void) | null,
+    private onclose: (() => void) | null,
   ) {}
 
   public send<T>(msg: string, data?: T) {
@@ -77,6 +78,8 @@ export class AriaWebSocket {
       if (!this.is_connected) {
         return;
       }
+
+      this.onclose?.();
 
       console.log("Disconnected from server. Trying to reconnect.");
       setTimeout(() => this.try_connect(), 5000);

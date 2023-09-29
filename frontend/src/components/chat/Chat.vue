@@ -167,6 +167,7 @@ const confirmDeletePost = async (post: Post) => {
       </div>
     </div>
     <div ref="chatControls" class="chat-controls">
+      <div v-show="!roomStore.isConnected" class="disconnected-indicator">NOT CONNECTED</div>
       <form ref="postForm" @submit.prevent="submitPost">
         <div v-if="!useCompactPostForm">
           <table class="chat-controls-table">
@@ -456,5 +457,16 @@ const confirmDeletePost = async (post: Post) => {
 
     overflow-y: auto;
   }
+}
+
+.disconnected-indicator {
+  cursor: default;
+
+  background-color: var(--color-disconnected-background);
+  color: var(--color-disconnected-text);
+  letter-spacing: 0.1rem;
+  text-align: center;
+
+  padding: 0.1rem;
 }
 </style>

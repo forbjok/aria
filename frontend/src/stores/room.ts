@@ -47,6 +47,7 @@ export const useRoomStore = defineStore("room", () => {
   const settings = ref<RoomSettings>(DEFAULT_ROOM_SETTINGS);
 
   const content = ref<Content>();
+  const isConnected = ref(false);
   const isMaster = ref(false);
 
   const serverPlaybackStateTimestamp = ref(0);
@@ -253,9 +254,17 @@ export const useRoomStore = defineStore("room", () => {
   const ws_protocol = window.location.protocol === "https:" ? "wss" : "ws";
   const ws_url = `${ws_protocol}://${window.location.host}/aria-ws`;
 
-  const ws = new AriaWebSocket(ws_url, async () => {
-    ws.send("join", { room: name.value, user: await mainStore.getUser() });
-  });
+  const ws = new AriaWebSocket(
+    ws_url,
+    async () => {
+      isConnected.value = true;
+
+      ws.send("join", { room: name.value, user: await mainStore.getUser() });
+    },
+    async () => {
+      isConnected.value = false;
+    },
+  );
 
   async function authorizeWebsocket() {
     ws.send("auth", await getAccessToken());
@@ -358,6 +367,7 @@ export const useRoomStore = defineStore("room", () => {
     emotes,
     serverPlaybackState,
     serverPlaybackStateTimestamp,
+    isConnected,
     isMaster,
     claimRoom,
     loadRoom,
