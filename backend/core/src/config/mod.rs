@@ -22,6 +22,9 @@ pub struct AriaConfig {
     pub database_uri: Option<String>,
 
     pub jwt_secret: Option<String>,
+
+    pub max_emote_size: Option<usize>,
+    pub max_image_size: Option<usize>,
 }
 
 impl AriaConfig {

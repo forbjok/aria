@@ -5,6 +5,7 @@ use std::sync::Arc;
 use anyhow::Context;
 
 use aria_models::local as lm;
+use aria_models::local::SysConfig;
 use aria_store::{AriaStore, PgStore};
 
 mod auth;
@@ -35,6 +36,7 @@ pub enum Notification {
 
 pub struct AriaCore {
     pub config: AriaConfig,
+    pub sys_config: SysConfig,
     pub temp_path: PathBuf,
     pub process_image_path: PathBuf,
     pub process_emote_path: PathBuf,
@@ -48,8 +50,16 @@ pub struct AriaCore {
     notify_tx: tokio::sync::broadcast::Sender<Arc<Notification>>,
 }
 
+const DEFAULT_MAX_EMOTE_SIZE: usize = 4 * 1024 * 1024;
+const DEFAULT_MAX_IMAGE_SIZE: usize = 2 * 1024 * 1024;
+
 impl AriaCore {
     pub fn new(config: AriaConfig) -> Result<Self, anyhow::Error> {
+        let sys_config = SysConfig {
+            max_emote_size: config.max_emote_size.unwrap_or(DEFAULT_MAX_EMOTE_SIZE),
+            max_image_size: config.max_image_size.unwrap_or(DEFAULT_MAX_IMAGE_SIZE),
+        };
+
         let files_path = config
             .files_path
             .clone()
@@ -90,6 +100,7 @@ impl AriaCore {
 
         Ok(Self {
             config,
+            sys_config,
             temp_path,
             process_image_path,
             process_emote_path,

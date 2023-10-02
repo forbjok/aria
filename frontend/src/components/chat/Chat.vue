@@ -10,7 +10,7 @@ import type { Post } from "@/models";
 
 import { useMainStore } from "@/stores/main";
 import { useRoomStore } from "@/stores/room";
-import { MAX_IMAGE_SIZE, useChatStore } from "@/stores/chat";
+import { useChatStore } from "@/stores/chat";
 
 const mainStore = useMainStore();
 const roomStore = useRoomStore();
@@ -66,8 +66,9 @@ const imageSelected = (event: Event) => {
 
   const image = input.files[0];
 
-  if (image && image.size > MAX_IMAGE_SIZE) {
-    alert(`The selected file is bigger than the maximum allowed size of ${filesize(MAX_IMAGE_SIZE)}`);
+  const max_file_size = mainStore.sysConfig!.max_image_size;
+  if (image && image.size > max_file_size) {
+    alert(`The selected file is bigger than the maximum allowed size of ${filesize(max_file_size)}`);
     return;
   }
 

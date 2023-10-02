@@ -2,3 +2,6 @@
 #files-path = '/PATH/TO/ARIA/FILES'
 
 #jwt-secret = 'sekrit'
+
+#max-emote-size = 4194304 # 4MB
+#max-image-size = 2097152 # 2MB

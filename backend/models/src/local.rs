@@ -5,6 +5,7 @@ use uuid::Uuid;
 
 use crate::api as am;
 
+pub type SysConfig = am::SysConfig;
 pub type ContentMetadata = am::ContentMetadata;
 pub type Content = am::Content;
 pub type Room = am::Room;

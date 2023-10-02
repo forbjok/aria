@@ -1,6 +1,7 @@
 mod auth;
 mod chat;
 mod room;
+mod sys;
 mod user;
 
 use std::sync::Arc;
@@ -15,6 +16,8 @@ use axum::{
 };
 use thiserror::Error;
 use tracing::error;
+
+use aria_models::local as lm;
 
 use crate::auth::{AuthClaims, AuthError, UserClaims};
 
@@ -44,14 +47,16 @@ struct User {
     id: i64,
 }
 
-pub fn router() -> Router<Arc<AriaServer>> {
+pub fn router(config: &lm::SysConfig) -> Router<Arc<AriaServer>> {
     let auth = auth::router();
+    let sys = sys::router();
     let room = room::router();
-    let chat = chat::router();
+    let chat = chat::router(config);
     let user = user::router();
 
     Router::new()
         .nest("/auth", auth)
+        .nest("/sys", sys)
         .nest("/r", room)
         .nest("/chat", chat)
         .nest("/user", user)

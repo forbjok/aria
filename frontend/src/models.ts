@@ -1,3 +1,8 @@
+export interface SysConfig {
+  max_emote_size: number;
+  max_image_size: number;
+}
+
 export interface Room {
   id: number;
   name: string;

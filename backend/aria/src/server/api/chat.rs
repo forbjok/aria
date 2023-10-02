@@ -1,7 +1,6 @@
 use std::{net::SocketAddr, sync::Arc};
 
 use anyhow::Context;
-use aria_models::local as lm;
 use axum::{
     extract::{ConnectInfo, DefaultBodyLimit, Multipart, Path, State},
     handler::Handler,
@@ -10,24 +9,23 @@ use axum::{
     Json, Router,
 };
 
+use aria_models::local as lm;
+
 use crate::server::{
     api::{ApiError, Authorized, User},
     AriaServer,
 };
 
-const MAX_EMOTE_SIZE: usize = 4 * 1024 * 1024; // 4MB
-const MAX_IMAGE_SIZE: usize = 2 * 1024 * 1024; // 2MB
-
-pub fn router() -> Router<Arc<AriaServer>> {
+pub fn router(sys_config: &lm::SysConfig) -> Router<Arc<AriaServer>> {
     Router::new()
         .route(
             "/:room_id/post",
-            post(create_post.layer(DefaultBodyLimit::max(MAX_IMAGE_SIZE))),
+            post(create_post.layer(DefaultBodyLimit::max(sys_config.max_image_size))),
         )
         .route("/:room_id/post/:post_id", delete(delete_post))
         .route(
             "/:room_id/emote",
-            post(create_emote.layer(DefaultBodyLimit::max(MAX_EMOTE_SIZE))),
+            post(create_emote.layer(DefaultBodyLimit::max(sys_config.max_emote_size))),
         )
         .route("/:room_id/emote/:emote_id", delete(delete_emote))
 }

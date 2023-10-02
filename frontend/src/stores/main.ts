@@ -1,8 +1,10 @@
 import { defineStore } from "pinia";
+import { ref } from "vue";
 import { useStorage } from "@vueuse/core";
 import axios from "axios";
 
 import { DEFAULT_SETTINGS, type Settings } from "@/settings";
+import type { SysConfig } from "@/models";
 
 interface NewUserResponse {
   user_id: number;
@@ -12,6 +14,14 @@ interface NewUserResponse {
 export const useMainStore = defineStore("main", () => {
   const settings = useStorage<Settings>("aria_settings", DEFAULT_SETTINGS);
   let userToken: string | null;
+
+  const sysConfig = ref<SysConfig>();
+
+  async function initialize() {
+    const res = await axios.get<SysConfig>("/api/sys/config");
+
+    sysConfig.value = res.data;
+  }
 
   async function getUser() {
     if (!userToken) {
@@ -44,7 +54,9 @@ export const useMainStore = defineStore("main", () => {
   }
 
   return {
+    sysConfig,
     settings,
+    initialize,
     getUser,
   };
 });

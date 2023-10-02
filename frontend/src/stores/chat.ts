@@ -2,6 +2,7 @@ import { computed, ref } from "vue";
 import { defineStore } from "pinia";
 import axios from "axios";
 
+import { useMainStore } from "./main";
 import { useRoomStore } from "./room";
 
 import type { Post } from "@/models";
@@ -13,9 +14,9 @@ export interface NewPost {
 }
 
 const MAX_POSTS = 200;
-export const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
 
 export const useChatStore = defineStore("chat", () => {
+  const mainStore = useMainStore();
   const roomStore = useRoomStore();
 
   const posts = ref<Post[]>([]);
@@ -47,7 +48,7 @@ export const useChatStore = defineStore("chat", () => {
     }
 
     // Disallow posting images bigger than the max image size
-    if (image && image.size > MAX_IMAGE_SIZE) {
+    if (image && image.size > mainStore.sysConfig!.max_image_size) {
       return false;
     }
 

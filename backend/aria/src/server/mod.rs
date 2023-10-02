@@ -30,7 +30,7 @@ impl AriaServer {
 
         let server = Arc::new(self);
 
-        let api = api::router();
+        let api = api::router(&server.core.sys_config);
 
         let mut app = Router::new().nest("/api", api);
 

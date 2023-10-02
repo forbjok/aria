@@ -75,6 +75,12 @@ pub struct Emote {
     pub url: String,
 }
 
+#[derive(Clone, Debug, Serialize)]
+pub struct SysConfig {
+    pub max_emote_size: usize,
+    pub max_image_size: usize,
+}
+
 impl Default for PlaybackState {
     fn default() -> Self {
         Self {
