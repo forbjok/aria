@@ -13,7 +13,7 @@ export interface NewPost {
 }
 
 const MAX_POSTS = 200;
-export const MAX_IMAGE_SIZE = 2097152;
+export const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
 
 export const useChatStore = defineStore("chat", () => {
   const roomStore = useRoomStore();

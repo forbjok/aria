@@ -13,7 +13,7 @@ import Dialog from "@/components/common/Dialog.vue";
 import Toolbar from "@/components/common/Toolbar.vue";
 import EmoteComponent from "@/components/common/Emote.vue";
 
-const MAX_IMAGE_SIZE = 2097152;
+const MAX_IMAGE_SIZE = 4 * 1024 * 1024; // 4MB
 const UPLOADING_TEXT = "Uploading...";
 
 const roomStore = useRoomStore();

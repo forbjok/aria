@@ -15,6 +15,7 @@ use crate::server::{
     AriaServer,
 };
 
+const MAX_EMOTE_SIZE: usize = 4 * 1024 * 1024; // 4MB
 const MAX_IMAGE_SIZE: usize = 2 * 1024 * 1024; // 2MB
 
 pub fn router() -> Router<Arc<AriaServer>> {
@@ -26,7 +27,7 @@ pub fn router() -> Router<Arc<AriaServer>> {
         .route("/:room_id/post/:post_id", delete(delete_post))
         .route(
             "/:room_id/emote",
-            post(create_emote.layer(DefaultBodyLimit::max(MAX_IMAGE_SIZE))),
+            post(create_emote.layer(DefaultBodyLimit::max(MAX_EMOTE_SIZE))),
         )
         .route("/:room_id/emote/:emote_id", delete(delete_emote))
 }
