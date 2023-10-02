@@ -88,6 +88,6 @@ impl AriaCore {
     }
 
     pub fn is_video(&self, ext: &str) -> bool {
-        ext == "webm"
+        matches!(ext, "webm" | "mp4" | "m4v")
     }
 }

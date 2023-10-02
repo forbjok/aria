@@ -192,7 +192,13 @@ const submitEmote = async () => {
           title="Emote name. Only alphanumeric characters allowed."
           :disabled="adding"
         />
-        <input name="image" type="file" accept="image/*, video/webm" @change="imageSelected" :disabled="adding" />
+        <input
+          name="image"
+          type="file"
+          accept="image/*, video/webm, video/mp4"
+          @change="imageSelected"
+          :disabled="adding"
+        />
         <img v-show="newEmoteImage" class="image-preview" :src="newEmoteImage" alt="Preview" />
         <video
           v-show="newEmoteVideo"
