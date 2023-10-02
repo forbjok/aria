@@ -14,6 +14,9 @@ pub struct GeneratePostImageResult<'a> {
     pub tn_ext: Cow<'a, str>,
 }
 
+const MAX_IMAGE_WIDTH: u32 = 350;
+const MAX_IMAGE_HEIGHT: u32 = 350;
+
 impl AriaCore {
     pub async fn get_recent_posts(&self, room_id: i32, count: i32) -> Result<Vec<lm::Post>, anyhow::Error> {
         let posts = self.store.get_recent_posts(room_id, count).await?;
@@ -116,7 +119,7 @@ impl AriaCore {
                 // If preserving original, simply create a hard link to the original file
                 tokio::fs::hard_link(original_image_path, &image_path).await?;
             } else {
-                tn_gen.add(&image_path, 350, 350);
+                tn_gen.add(&image_path, MAX_IMAGE_WIDTH, MAX_IMAGE_HEIGHT);
             }
         }
 

@@ -15,8 +15,8 @@ use crate::{
     Notification, IMAGE_EXT, VIDEO_EXT,
 };
 
-const MAX_WIDTH: u32 = 350;
-const MAX_HEIGHT: u32 = 350;
+const MAX_EMOTE_WIDTH: u32 = 350;
+const MAX_EMOTE_HEIGHT: u32 = 350;
 
 static RE_VALID_EMOTE_NAME: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[\d\w-]+$").unwrap());
 
@@ -112,11 +112,11 @@ impl AriaCore {
                 tokio::fs::hard_link(original_image_path, &emote_path).await?;
             } else if self.is_video(ext) {
                 let mut vp_gen = VideoPreviewGenerator::new(original_image_path);
-                vp_gen.add(&emote_path, MAX_WIDTH, MAX_HEIGHT);
+                vp_gen.add(&emote_path, MAX_EMOTE_WIDTH, MAX_EMOTE_HEIGHT);
                 vp_gen.generate().context("Error generating emote video")?;
             } else {
                 let mut tn_gen = ThumbnailGenerator::new(original_image_path);
-                tn_gen.add(&emote_path, 350, 350);
+                tn_gen.add(&emote_path, MAX_EMOTE_WIDTH, MAX_EMOTE_HEIGHT);
                 tn_gen.generate().context("Error generating emote image")?;
             }
         }
