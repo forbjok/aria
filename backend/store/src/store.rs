@@ -39,6 +39,8 @@ pub trait AriaStore: Send + Sync {
 
     async fn set_room_content(&self, room_id: i32, content: &str) -> Result<(), anyhow::Error>;
 
+    async fn set_room_playback_state(&self, room_id: i32, playback_state: &str) -> Result<(), anyhow::Error>;
+
     async fn update_post_images(&self, hash: &str, ext: &str, tn_ext: &str) -> Result<(), anyhow::Error>;
 
     async fn update_emote_images(&self, hash: &str, ext: &str) -> Result<(), anyhow::Error>;
@@ -182,6 +184,18 @@ impl AriaStore for PgStore {
         sqlx::query_unchecked!(r#"SELECT set_room_content($1, $2::json);"#, room_id, content)
             .execute(&self.pool)
             .await?;
+
+        Ok(())
+    }
+
+    async fn set_room_playback_state(&self, room_id: i32, playback_state: &str) -> Result<(), anyhow::Error> {
+        sqlx::query_unchecked!(
+            r#"SELECT set_room_playback_state($1, $2::json);"#,
+            room_id,
+            playback_state
+        )
+        .execute(&self.pool)
+        .await?;
 
         Ok(())
     }

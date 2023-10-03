@@ -1,6 +1,6 @@
-CREATE FUNCTION set_room_content(
+CREATE FUNCTION set_room_playback_state(
   IN p_room_id integer,
-  IN p_content json
+  IN p_playback_state json
 )
 RETURNS VOID
 LANGUAGE plpgsql
@@ -8,8 +8,7 @@ LANGUAGE plpgsql
 AS $BODY$
 BEGIN
   UPDATE room
-  SET content = p_content,
-      playback_state = NULL
+  SET playback_state = p_playback_state
   WHERE id = p_room_id;
 END;
 $BODY$;

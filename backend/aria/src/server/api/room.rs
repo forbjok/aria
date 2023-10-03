@@ -48,7 +48,7 @@ pub fn router() -> Router<Arc<AriaServer>> {
 async fn get_room(State(server): State<Arc<AriaServer>>, Path(name): Path<String>) -> Result<Json<am::Room>, ApiError> {
     let room = server.core.get_room_by_name(&name).await?;
     if let Some(room) = room {
-        Ok(Json(room))
+        Ok(Json((&room).into()))
     } else {
         Err(ApiError::NotFound)
     }

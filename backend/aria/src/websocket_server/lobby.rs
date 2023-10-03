@@ -166,14 +166,8 @@ async fn handle_join_room(
 ) -> Result<RoomMembership, anyhow::Error> {
     let room = if let Some(room) = state.rooms_by_name.get(&name) {
         room.clone()
-    } else if let Some(room) = Room::load(
-        &core,
-        &name,
-        lobby_request_tx.clone(),
-        shutdown_rx,
-        shutdown_complete_tx,
-    )
-    .await?
+    } else if let Some(room) =
+        Room::load(core, &name, lobby_request_tx.clone(), shutdown_rx, shutdown_complete_tx).await?
     {
         state.rooms_by_id.insert(room.id, room.clone());
         state.rooms_by_name.insert(name.clone(), room.clone());

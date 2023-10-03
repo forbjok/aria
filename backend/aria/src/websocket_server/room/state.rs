@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 use std::collections::VecDeque;
+use std::sync::Arc;
 
 use anyhow::Context;
+use aria_models::local::PlaybackStateAndTimestamp;
 use chrono::{DateTime, Utc};
 use futures_channel::mpsc::UnboundedSender;
 use tokio::sync::broadcast;
@@ -37,7 +39,7 @@ pub(super) struct RoomState {
 
 impl RoomState {
     pub async fn load(
-        core: &AriaCore,
+        core: Arc<AriaCore>,
         name: &str,
         lobby_request_tx: UnboundedSender<LobbyRequest>,
         shutdown_rx: broadcast::Receiver<()>,
@@ -56,6 +58,11 @@ impl RoomState {
             // Prepare emotes
             let emotes = emotes.iter().map(am::Emote::from).collect();
 
+            let PlaybackStateAndTimestamp {
+                state: playback_state,
+                timestamp: playback_state_timestamp,
+            } = room.playback_state.unwrap_or_default();
+
             let state = RoomState {
                 id: room.id,
                 name: room.name.clone(),
@@ -65,14 +72,15 @@ impl RoomState {
                 emotes,
                 master: 0,
                 content: room.content,
-                playback_state_timestamp: Utc::now(),
-                playback_state: am::PlaybackState::default(),
+                playback_state_timestamp,
+                playback_state,
             };
 
             let (tx, rx) = futures_channel::mpsc::unbounded::<RoomRequest>();
 
             // Spawn room request handler
             tokio::spawn(handle_room_requests(
+                core,
                 state,
                 rx,
                 lobby_request_tx,
@@ -224,7 +232,12 @@ impl RoomState {
         Ok(())
     }
 
-    pub fn set_playback_state(&mut self, id: MemberId, ps: &am::PlaybackState) -> Result<(), anyhow::Error> {
+    pub async fn set_playback_state(
+        &mut self,
+        id: MemberId,
+        ps: &am::PlaybackState,
+        core: &AriaCore,
+    ) -> Result<(), anyhow::Error> {
         // Sender is not master. Ignore.
         if id != self.master {
             return Ok(());
@@ -233,6 +246,13 @@ impl RoomState {
         self.playback_state_timestamp = Utc::now();
         self.playback_state = *ps;
         self.broadcast_playback_state()?;
+
+        let pbs_ts = lm::PlaybackStateAndTimestamp {
+            state: self.playback_state,
+            timestamp: self.playback_state_timestamp,
+        };
+
+        core.set_room_playback_state(self.id, &pbs_ts).await?;
 
         Ok(())
     }

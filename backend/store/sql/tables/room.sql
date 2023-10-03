@@ -9,6 +9,7 @@ CREATE TABLE room
   expires_at timestamp with time zone NOT NULL,
   password text NOT NULL,
   content json,
+  playback_state json,
 
   PRIMARY KEY (id),
 

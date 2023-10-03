@@ -2,6 +2,8 @@ mod handler;
 mod membership;
 mod state;
 
+use std::sync::Arc;
+
 use futures_channel::mpsc::UnboundedSender;
 use tokio::sync::broadcast;
 use tokio::sync::mpsc::Sender;
@@ -35,7 +37,7 @@ pub(super) struct Room {
 
 impl Room {
     pub async fn load(
-        core: &AriaCore,
+        core: Arc<AriaCore>,
         name: &str,
         lobby_request_tx: UnboundedSender<LobbyRequest>,
         shutdown_rx: broadcast::Receiver<()>,

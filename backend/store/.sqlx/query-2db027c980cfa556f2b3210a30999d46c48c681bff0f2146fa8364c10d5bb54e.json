@@ -42,6 +42,11 @@
         "ordinal": 7,
         "name": "content",
         "type_info": "Json"
+      },
+      {
+        "ordinal": 8,
+        "name": "playback_state",
+        "type_info": "Json"
       }
     ],
     "parameters": {
@@ -51,6 +56,7 @@
       ]
     },
     "nullable": [
+      null,
       null,
       null,
       null,

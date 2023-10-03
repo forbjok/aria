@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT set_room_playback_state($1, $2::json);",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "set_room_playback_state",
+        "type_info": "Void"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Json"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "6cdb92684eae68490fa78d505ef1e9741ec382385f6bc45495d2bfb90469ae61"
+}

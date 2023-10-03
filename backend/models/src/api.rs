@@ -91,6 +91,16 @@ impl Default for PlaybackState {
     }
 }
 
+impl From<&lm::Room> for Room {
+    fn from(r: &lm::Room) -> Self {
+        Self {
+            id: r.id,
+            name: r.name.clone(),
+            content: r.content.clone(),
+        }
+    }
+}
+
 impl From<&lm::Post> for Post {
     fn from(p: &lm::Post) -> Self {
         Self {

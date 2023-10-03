@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use chrono::{DateTime, Duration, Utc};
 use futures::StreamExt;
 use futures_channel::mpsc::UnboundedReceiver;
@@ -7,6 +9,7 @@ use tokio::sync::mpsc::Sender;
 use tokio::sync::oneshot;
 use tracing::info;
 
+use aria_core::AriaCore;
 use aria_models::api as am;
 use aria_models::local as lm;
 
@@ -68,6 +71,7 @@ pub enum RoomRequest {
 }
 
 pub(super) async fn handle_room_requests(
+    core: Arc<AriaCore>,
     mut state: RoomState,
     mut request_rx: UnboundedReceiver<RoomRequest>,
     lobby_request_tx: UnboundedSender<LobbyRequest>,
@@ -132,7 +136,7 @@ pub(super) async fn handle_room_requests(
                         result_tx.send(res).ok();
                     }
                     RoomRequest::SetPlaybackState { member_id, ps, result_tx } => {
-                        let res = state.set_playback_state(member_id, &ps);
+                        let res = state.set_playback_state(member_id, &ps, &core).await;
                         result_tx.send(res).ok();
                     }
                 }

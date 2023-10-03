@@ -9,6 +9,10 @@ pub fn dbm_room_to_lm(r: &dbm::Room) -> lm::Room {
             .content
             .as_ref()
             .and_then(|c| serde_json::from_str(c).unwrap_or_default()),
+        playback_state: r
+            .playback_state
+            .as_ref()
+            .and_then(|ps| serde_json::from_str(ps).unwrap_or_default()),
     }
 }
 

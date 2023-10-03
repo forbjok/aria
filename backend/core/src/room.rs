@@ -73,4 +73,16 @@ impl AriaCore {
 
         Ok(())
     }
+
+    pub async fn set_room_playback_state(
+        &self,
+        room_id: i32,
+        playback_state: &lm::PlaybackStateAndTimestamp,
+    ) -> Result<(), anyhow::Error> {
+        let json = serde_json::to_string(playback_state)?;
+
+        self.store.set_room_playback_state(room_id, &json).await?;
+
+        Ok(())
+    }
 }

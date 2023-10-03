@@ -1,6 +1,7 @@
 use std::{borrow::Cow, net::IpAddr, path::PathBuf};
 
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::api as am;
@@ -8,7 +9,7 @@ use crate::api as am;
 pub type SysConfig = am::SysConfig;
 pub type ContentMetadata = am::ContentMetadata;
 pub type Content = am::Content;
-pub type Room = am::Room;
+pub type PlaybackState = am::PlaybackState;
 
 #[derive(Debug)]
 pub struct HashedFile {
@@ -83,4 +84,18 @@ pub struct NewRoom<'a> {
 pub struct RefreshRefreshTokenResult<C> {
     pub token: Uuid,
     pub claims: C,
+}
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct PlaybackStateAndTimestamp {
+    pub state: PlaybackState,
+    pub timestamp: DateTime<Utc>,
+}
+
+#[derive(Debug, Default)]
+pub struct Room {
+    pub id: i32,
+    pub name: String,
+    pub content: Option<Content>,
+    pub playback_state: Option<PlaybackStateAndTimestamp>,
 }

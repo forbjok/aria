@@ -14,6 +14,7 @@ pub struct Room {
     pub expires_at: Option<DateTime<Utc>>,
     pub password: Option<String>,
     pub content: Option<String>,
+    pub playback_state: Option<String>,
 }
 
 #[derive(Debug, sqlx::Type)]
