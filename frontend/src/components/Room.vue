@@ -51,8 +51,10 @@ const player = ref<typeof Player>();
 const theaterMode = ref(false);
 
 const isPlayerInteractedWith = ref(false);
+
 let isMasterInitiatedPlay = false;
 let isViewerPaused = false;
+let loadedContentUrl: string | undefined;
 
 onMounted(async () => {
   await roomStore.loadRoom(name.value);
@@ -78,9 +80,12 @@ watch(serverPlaybackState, async (value) => {
 });
 
 const setContent = async (_content?: Content) => {
+  if (isContentLoaded.value && _content?.url === loadedContentUrl) return;
+
   isContentLoaded.value = false;
 
   content.value = _content;
+  loadedContentUrl = content.value?.url;
   if (!content.value) return;
 
   if (content.value.type === "twitch") {
