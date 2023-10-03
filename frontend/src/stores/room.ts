@@ -263,6 +263,7 @@ export const useRoomStore = defineStore("room", () => {
     },
     async () => {
       isConnected.value = false;
+      isMaster.value = false;
     },
   );
 
