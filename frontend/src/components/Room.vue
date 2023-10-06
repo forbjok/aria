@@ -373,6 +373,7 @@ const toggleDetached = () => {
           <button
             class="usercontrol"
             :class="{ 'usercontrol-off': !roomStore.isMaster }"
+            :disabled="!roomStore.isConnected"
             title="Toggle master"
             @click="toggleMaster"
           >
@@ -488,7 +489,7 @@ const toggleDetached = () => {
 
     .usercontrols {
       display: flex;
-      background: linear-gradient(#1d1d1d, #050505);
+      background: linear-gradient(#1d1d1d, #0c0c0c);
       transform: translateY(-95%);
       padding: 10px 10px 4px 10px;
       gap: 5px;
@@ -519,12 +520,18 @@ const toggleDetached = () => {
         text-decoration: none;
         font-size: 1.5rem;
 
-        &:hover {
-          color: #a862f8;
+        &:disabled {
+          color: black;
         }
 
-        &.usercontrol-off {
-          filter: brightness(0.6);
+        &:not(:disabled) {
+          &:hover {
+            color: #a862f8;
+          }
+
+          &.usercontrol-off {
+            filter: brightness(0.6);
+          }
         }
       }
 
