@@ -7,6 +7,43 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug executable 'aria'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=aria",
+                    "--package=aria"
+                ],
+                "filter": {
+                    "name": "aria",
+                    "kind": "bin"
+                }
+            },
+            "args": ["server", "--serve-files"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'aria'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=aria",
+                    "--package=aria"
+                ],
+                "filter": {
+                    "name": "aria",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug unit tests in library 'aria_core'",
             "cargo": {
                 "args": [
@@ -75,80 +112,6 @@
                 "filter": {
                     "name": "aria_store",
                     "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug executable 'aria_server'",
-            "cargo": {
-                "args": [
-                    "build",
-                    "--bin=aria_server",
-                    "--package=aria_server"
-                ],
-                "filter": {
-                    "name": "aria_server",
-                    "kind": "bin"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in executable 'aria_server'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--bin=aria_server",
-                    "--package=aria_server"
-                ],
-                "filter": {
-                    "name": "aria_server",
-                    "kind": "bin"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug executable 'aria_tool'",
-            "cargo": {
-                "args": [
-                    "build",
-                    "--bin=aria_tool",
-                    "--package=aria_tool"
-                ],
-                "filter": {
-                    "name": "aria_tool",
-                    "kind": "bin"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in executable 'aria_tool'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--bin=aria_tool",
-                    "--package=aria_tool"
-                ],
-                "filter": {
-                    "name": "aria_tool",
-                    "kind": "bin"
                 }
             },
             "args": [],
