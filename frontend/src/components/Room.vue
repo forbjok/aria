@@ -51,6 +51,7 @@ const player = ref<typeof Player>();
 const theaterMode = ref(false);
 
 const isPlayerInteractedWith = ref(false);
+const isMasterPaused = ref(false);
 const isViewerPaused = ref(false);
 
 let isMasterInitiatedPlay = false;
@@ -157,14 +158,15 @@ const onPlay = async (auto: boolean) => {
     return;
   }
 
-  isViewerPaused.value = false;
-
   if (roomStore.isMaster) {
     isMasterInitiatedPlay = true;
   }
 };
 
 const onPlaying = async () => {
+  isMasterPaused.value = false;
+  isViewerPaused.value = false;
+
   if (roomStore.isMaster) {
     if (isMasterInitiatedPlay) {
       await broadcastPlaybackState();
@@ -186,7 +188,9 @@ const onPause = async (auto: boolean) => {
   }
 
   if (isPlayerInteractedWith.value) {
-    if (!roomStore.isMaster) {
+    if (roomStore.isMaster) {
+      isMasterPaused.value = true;
+    } else {
       isViewerPaused.value = true;
     }
   } else {
@@ -271,6 +275,7 @@ const setPlaybackState = async (ps: PlaybackState) => {
     }
   } else if (!ps.is_playing) {
     _player.setTime(ps.time);
+    isMasterPaused.value = true;
 
     if (currentPlaybackState.is_playing) {
       if (isPlayerStateCooldown) {
@@ -389,6 +394,7 @@ const toggleDetached = () => {
       <div v-show="theaterMode" class="toast-chat-container">
         <ToastChat ref="toastChat" />
       </div>
+      <div v-show="isMasterPaused" class="paused-text">PAUSED BY MASTER</div>
       <div v-show="isViewerPaused" class="paused-text">PAUSED BY YOU</div>
       <Player
         v-if="contentKind === ContentKind.Video"
