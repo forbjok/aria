@@ -183,6 +183,10 @@ const onPlaying = async () => {
 };
 
 const onPause = async (auto: boolean) => {
+  if (!roomStore.isMaster && !isMasterPaused.value) {
+    isViewerPaused.value = true;
+  }
+
   if (auto) {
     return;
   }
