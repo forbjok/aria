@@ -15,10 +15,10 @@ use aria_models::api as am;
 use aria_models::local as lm;
 
 use crate::websocket_server::lobby::LobbyRequest;
+use crate::websocket_server::ConnectionId;
 
 use super::handler::handle_room_requests;
 use super::handler::RoomRequest;
-use super::MemberId;
 use super::Room;
 use super::{send, Member, Tx};
 
@@ -27,11 +27,10 @@ const MAX_POSTS: usize = 50;
 pub(super) struct RoomState {
     pub id: i32,
     pub name: String,
-    next_member_id: MemberId,
-    members: HashMap<MemberId, Member>,
+    members: HashMap<ConnectionId, Member>,
     posts: VecDeque<lm::Post>,
     emotes: Vec<am::Emote>,
-    master: MemberId,
+    master: ConnectionId,
     content: Option<am::Content>,
     playback_state_timestamp: DateTime<Utc>,
     playback_state: am::PlaybackState,
@@ -66,7 +65,6 @@ impl RoomState {
             let state = RoomState {
                 id: room.id,
                 name: room.name.clone(),
-                next_member_id: 1,
                 members: HashMap::new(),
                 posts: recent_posts.into_iter().collect(),
                 emotes,
@@ -98,17 +96,13 @@ impl RoomState {
         }
     }
 
-    pub fn join(&mut self, user_id: i64, tx: Tx) -> Result<MemberId, anyhow::Error> {
-        // Generate member ID
-        let id = self.next_member_id;
-        self.next_member_id += 1;
-
+    pub fn join(&mut self, connection_id: ConnectionId, user_id: i64, tx: Tx) -> Result<(), anyhow::Error> {
         let member = Member {
             user_id,
             is_admin: false,
             tx: tx.clone(),
         };
-        self.members.insert(id, member);
+        self.members.insert(connection_id, member);
 
         send(&tx, "content", &self.content)?;
         send(&tx, "playbackstate", self.get_playback_state())?;
@@ -117,10 +111,10 @@ impl RoomState {
         self.send_recent_posts(&tx, user_id)?;
         send(&tx, "joined", ())?;
 
-        Ok(id)
+        Ok(())
     }
 
-    pub fn leave(&mut self, id: MemberId) -> Result<(), anyhow::Error> {
+    pub fn leave(&mut self, id: ConnectionId) -> Result<(), anyhow::Error> {
         self.members.remove(&id);
         Ok(())
     }
@@ -190,7 +184,7 @@ impl RoomState {
         Ok(())
     }
 
-    pub fn set_admin(&mut self, id: MemberId) -> Result<(), anyhow::Error> {
+    pub fn set_admin(&mut self, id: ConnectionId) -> Result<(), anyhow::Error> {
         let me = self.members.get_mut(&id).context("Error getting member")?;
 
         me.is_admin = true;
@@ -198,7 +192,7 @@ impl RoomState {
         Ok(())
     }
 
-    pub fn set_master(&mut self, id: MemberId) -> Result<(), anyhow::Error> {
+    pub fn set_master(&mut self, id: ConnectionId) -> Result<(), anyhow::Error> {
         // If already master, return immediately.
         if self.master == id {
             return Ok(());
@@ -220,7 +214,7 @@ impl RoomState {
         Ok(())
     }
 
-    pub fn relinquish_master(&mut self, id: MemberId) -> Result<(), anyhow::Error> {
+    pub fn relinquish_master(&mut self, id: ConnectionId) -> Result<(), anyhow::Error> {
         // If this id is not master, return immediately.
         if self.master != id {
             return Ok(());
@@ -234,7 +228,7 @@ impl RoomState {
 
     pub async fn set_playback_state(
         &mut self,
-        id: MemberId,
+        id: ConnectionId,
         ps: &am::PlaybackState,
         core: &AriaCore,
     ) -> Result<(), anyhow::Error> {

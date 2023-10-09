@@ -65,7 +65,7 @@ export class AriaWebSocket {
     this.ws = ws;
 
     ws.onopen = () => {
-      console.log("Connected to server.");
+      console.log("Connected to server.", ws);
 
       this.onopen?.();
 

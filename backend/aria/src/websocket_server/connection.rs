@@ -90,7 +90,7 @@ pub(super) async fn handle_connection(
                                         // If connection is already joined to another room...
                                         if let Some(room) = cn_state.room.as_ref() {
                                             // If connection is already joined to the same room, return immediately.
-                                            if room.name == room_name {
+                                            if room.room_name == room_name {
                                                 return Ok(());
                                             }
 
@@ -99,13 +99,13 @@ pub(super) async fn handle_connection(
                                         }
 
                                         let room =
-                                            sv_state.lobby.join_room(room_name, tx.clone(), user_id).await?;
+                                            sv_state.lobby.join_room(id, room_name, tx.clone(), user_id).await?;
 
                                         cn_state.room = Some(room);
                                     }
                                     "leave" => {
                                         if let Some(room) = cn_state.room.as_ref() {
-                                            info!("[{id}] Leaving room '{}'...", room.name);
+                                            info!("[{id}] Leaving room '{}'...", room.room_name);
 
                                             room.leave().await?;
                                         } else {
@@ -119,7 +119,7 @@ pub(super) async fn handle_connection(
                                         if let Some(room) = cn_state.room.as_ref() {
                                             let mut is_authorized = false;
                                             if let Ok(claims) = sv_state.auth.verify::<AuthClaims>(&token) {
-                                                if claims.for_room(room.id) {
+                                                if claims.for_room(room.room_id) {
                                                     is_authorized = true;
                                                 }
                                             }

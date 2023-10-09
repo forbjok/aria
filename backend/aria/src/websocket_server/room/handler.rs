@@ -14,9 +14,9 @@ use aria_models::api as am;
 use aria_models::local as lm;
 
 use crate::websocket_server::lobby::LobbyRequest;
+use crate::websocket_server::ConnectionId;
 
 use super::state::RoomState;
-use super::MemberId;
 use super::Tx;
 
 type RoomRequestTx<R> = oneshot::Sender<Result<R, anyhow::Error>>;
@@ -24,11 +24,12 @@ type RoomRequestTx<R> = oneshot::Sender<Result<R, anyhow::Error>>;
 pub enum RoomRequest {
     Join {
         tx: Tx,
+        connection_id: ConnectionId,
         user_id: i64,
-        result_tx: RoomRequestTx<MemberId>,
+        result_tx: RoomRequestTx<()>,
     },
     Leave {
-        member_id: MemberId,
+        connection_id: ConnectionId,
         result_tx: RoomRequestTx<()>,
     },
     Post {
@@ -44,19 +45,19 @@ pub enum RoomRequest {
         result_tx: RoomRequestTx<()>,
     },
     SetAdmin {
-        member_id: MemberId,
+        connection_id: ConnectionId,
         result_tx: RoomRequestTx<()>,
     },
     SetMaster {
-        member_id: MemberId,
+        connection_id: ConnectionId,
         result_tx: RoomRequestTx<()>,
     },
     RelinquishMaster {
-        member_id: MemberId,
+        connection_id: ConnectionId,
         result_tx: RoomRequestTx<()>,
     },
     SetPlaybackState {
-        member_id: MemberId,
+        connection_id: ConnectionId,
         ps: am::PlaybackState,
         result_tx: RoomRequestTx<()>,
     },
@@ -87,14 +88,14 @@ pub(super) async fn handle_room_requests(
             // Handle room requests
             req = request_rx.select_next_some() => {
                 match req {
-                    RoomRequest::Join { tx, user_id, result_tx } => {
-                        let res = state.join(user_id, tx);
+                    RoomRequest::Join { tx, connection_id, user_id, result_tx } => {
+                        let res = state.join(connection_id, user_id, tx);
                         result_tx.send(res).ok();
 
                         unload_at = None;
                     }
-                    RoomRequest::Leave { member_id, result_tx } => {
-                        let res = state.leave(member_id);
+                    RoomRequest::Leave { connection_id, result_tx } => {
+                        let res = state.leave(connection_id);
                         result_tx.send(res).ok();
 
                         if state.is_deserted() {
@@ -123,20 +124,20 @@ pub(super) async fn handle_room_requests(
                         let res = state.set_content(content);
                         result_tx.send(res).ok();
                     }
-                    RoomRequest::SetAdmin { member_id, result_tx } => {
-                        let res = state.set_admin(member_id);
+                    RoomRequest::SetAdmin { connection_id, result_tx } => {
+                        let res = state.set_admin(connection_id);
                         result_tx.send(res).ok();
                     }
-                    RoomRequest::SetMaster { member_id, result_tx } => {
-                        let res = state.set_master(member_id);
+                    RoomRequest::SetMaster { connection_id, result_tx } => {
+                        let res = state.set_master(connection_id);
                         result_tx.send(res).ok();
                     }
-                    RoomRequest::RelinquishMaster { member_id, result_tx } => {
-                        let res = state.relinquish_master(member_id);
+                    RoomRequest::RelinquishMaster { connection_id, result_tx } => {
+                        let res = state.relinquish_master(connection_id);
                         result_tx.send(res).ok();
                     }
-                    RoomRequest::SetPlaybackState { member_id, ps, result_tx } => {
-                        let res = state.set_playback_state(member_id, &ps, &core).await;
+                    RoomRequest::SetPlaybackState { connection_id, ps, result_tx } => {
+                        let res = state.set_playback_state(connection_id, &ps, &core).await;
                         result_tx.send(res).ok();
                     }
                 }

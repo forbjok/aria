@@ -10,6 +10,7 @@ use tracing::{error, info, warn};
 use aria_core::{AriaCore, Notification};
 
 use super::room::RoomMembership;
+use super::ConnectionId;
 use super::{room::Room, Tx};
 
 pub(super) struct Lobby {
@@ -24,6 +25,7 @@ struct LobbyState {
 
 pub(super) enum LobbyRequest {
     JoinRoom {
+        connection_id: ConnectionId,
         name: String,
         member_tx: Tx,
         user_id: i64,
@@ -51,10 +53,17 @@ impl Lobby {
         Self { tx }
     }
 
-    pub async fn join_room(&self, name: String, member_tx: Tx, user_id: i64) -> Result<RoomMembership, anyhow::Error> {
+    pub async fn join_room(
+        &self,
+        connection_id: ConnectionId,
+        name: String,
+        member_tx: Tx,
+        user_id: i64,
+    ) -> Result<RoomMembership, anyhow::Error> {
         let (result_tx, result_rx) = oneshot::channel::<Result<RoomMembership, anyhow::Error>>();
 
         self.tx.unbounded_send(LobbyRequest::JoinRoom {
+            connection_id,
             name,
             member_tx,
             result_tx,
@@ -83,8 +92,8 @@ async fn handle_lobby_requests(
             // Handle lobby requests
             req = request_rx.select_next_some() => {
                 match req {
-                    LobbyRequest::JoinRoom { name, member_tx, user_id, result_tx } => {
-                        result_tx.send(handle_join_room(&mut state, core.clone(), &request_tx, name, member_tx, user_id, room_shutdown_tx.subscribe(), shutdown_complete_tx.clone()).await).map_err(|_| {
+                    LobbyRequest::JoinRoom { connection_id, name, member_tx, user_id, result_tx } => {
+                        result_tx.send(handle_join_room(&mut state, core.clone(), &request_tx, connection_id, name, member_tx, user_id, room_shutdown_tx.subscribe(), shutdown_complete_tx.clone()).await).map_err(|_| {
                             warn!("Lobby request sender dropped.");
                         }).ok();
                     }
@@ -158,6 +167,7 @@ async fn handle_join_room(
     state: &mut LobbyState,
     core: Arc<AriaCore>,
     lobby_request_tx: &UnboundedSender<LobbyRequest>,
+    connection_id: ConnectionId,
     name: String,
     member_tx: Tx,
     user_id: i64,
@@ -177,7 +187,7 @@ async fn handle_join_room(
         return Err(anyhow!("Room '{name}' does not exist"));
     };
 
-    room.join(member_tx, user_id).await
+    room.join(connection_id, member_tx, user_id).await
 }
 
 fn handle_unload_room(state: &mut LobbyState, room_id: i32) -> Result<(), anyhow::Error> {

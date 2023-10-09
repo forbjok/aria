@@ -18,9 +18,8 @@ pub use self::membership::RoomMembership;
 use self::state::RoomState;
 
 use super::lobby::LobbyRequest;
+use super::ConnectionId;
 use super::{send, Tx};
-
-pub type MemberId = u64;
 
 struct Member {
     user_id: i64,
@@ -46,13 +45,24 @@ impl Room {
         RoomState::load(core, name, lobby_request_tx, shutdown_rx, shutdown_complete_tx).await
     }
 
-    pub async fn join(&self, tx: Tx, user_id: i64) -> Result<RoomMembership, anyhow::Error> {
-        let member_id = send_room_request(&self.tx, |result_tx| RoomRequest::Join { tx, user_id, result_tx }).await?;
+    pub async fn join(
+        &self,
+        connection_id: ConnectionId,
+        tx: Tx,
+        user_id: i64,
+    ) -> Result<RoomMembership, anyhow::Error> {
+        send_room_request(&self.tx, |result_tx| RoomRequest::Join {
+            tx,
+            connection_id,
+            user_id,
+            result_tx,
+        })
+        .await?;
 
         Ok(RoomMembership {
-            id: self.id,
-            name: self.name.clone(),
-            member_id,
+            room_id: self.id,
+            room_name: self.name.clone(),
+            connection_id,
             tx: self.tx.clone(),
         })
     }
