@@ -51,9 +51,9 @@ const player = ref<typeof Player>();
 const theaterMode = ref(false);
 
 const isPlayerInteractedWith = ref(false);
+const isViewerPaused = ref(false);
 
 let isMasterInitiatedPlay = false;
-let isViewerPaused = false;
 let loadedContentUrl: string | undefined;
 
 onMounted(async () => {
@@ -157,7 +157,7 @@ const onPlay = async (auto: boolean) => {
     return;
   }
 
-  isViewerPaused = false;
+  isViewerPaused.value = false;
 
   if (roomStore.isMaster) {
     isMasterInitiatedPlay = true;
@@ -187,7 +187,7 @@ const onPause = async (auto: boolean) => {
 
   if (isPlayerInteractedWith.value) {
     if (!roomStore.isMaster) {
-      isViewerPaused = true;
+      isViewerPaused.value = true;
     }
   } else {
     isPlayerInteractedWith.value = true;
@@ -239,7 +239,7 @@ const setPlaybackState = async (ps: PlaybackState) => {
     return;
   }
 
-  if (isViewerPaused || !isPlayerInteractedWith.value) {
+  if (isViewerPaused.value || !isPlayerInteractedWith.value) {
     return;
   }
 
@@ -389,6 +389,7 @@ const toggleDetached = () => {
       <div v-show="theaterMode" class="toast-chat-container">
         <ToastChat ref="toastChat" />
       </div>
+      <div v-show="isViewerPaused" class="paused-text">PAUSED BY YOU</div>
       <Player
         v-if="contentKind === ContentKind.Video"
         ref="player"
@@ -444,6 +445,22 @@ const toggleDetached = () => {
     // Needed to prevent children with absolute positioning from
     // ending up outside the parent.
     position: relative;
+
+    .paused-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+
+      pointer-events: none;
+
+      font-size: 1.8rem;
+      font-weight: bold;
+      letter-spacing: 0.4rem;
+      text-shadow: 0 0 1rem white;
+
+      z-index: 999;
+    }
 
     .video-container {
       background-color: black;
