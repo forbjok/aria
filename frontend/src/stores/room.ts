@@ -229,25 +229,19 @@ export const useRoomStore = defineStore("room", () => {
     });
   }
 
-  async function action(action: any) {
+  async function setContent(url: string, duration?: number) {
     if (!isAuthorized.value) {
       console.log("User not authorized to perform action.");
       return;
     }
 
     const data = {
-      action: action,
+      url,
+      duration,
     };
 
-    return await axios.post(`/api/r/i/${id.value}/control`, data, {
+    return await axios.post(`/api/r/i/${id.value}/setcontent`, data, {
       headers: await getAuthHeaders(),
-    });
-  }
-
-  async function setContentUrl(url: string) {
-    return await action({
-      action: "set content url",
-      url: url,
     });
   }
 
@@ -378,7 +372,7 @@ export const useRoomStore = defineStore("room", () => {
     deletePost,
     deleteEmote,
     submitEmote,
-    setContentUrl,
+    setContent,
     broadcastPlaybackState,
     setMaster,
   };

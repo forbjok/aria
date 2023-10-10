@@ -15,11 +15,8 @@ import { useRoomStore, type PlaybackState } from "@/stores/room";
 
 import type { Content } from "@/models";
 import { getTimestamp } from "@/utils/timestamp";
-
-enum ContentKind {
-  Video = "video",
-  Other = "other",
-}
+import { getContentInfo } from "@/utils/content";
+import { delay } from "@/utils/delay";
 
 const AdminPanel = defineAsyncComponent(() => import("@/components/admin/AdminPanel.vue"));
 
@@ -36,9 +33,7 @@ const roomStore = useRoomStore();
 
 const isRoomLoaded = ref(false);
 const isContentLoaded = ref(false);
-const contentKind = ref<ContentKind>();
 const isDetached = ref(false);
-const contentUrl = ref<string>();
 
 const logInDialog = ref<typeof Dialog>();
 const roomControlsDialog = ref<typeof Dialog>();
@@ -87,20 +82,15 @@ const setContent = async (_content?: Content) => {
 
   content.value = _content;
   loadedContentUrl = content.value?.url;
-  if (!content.value) return;
+  if (!content.value || !loadedContentUrl) return;
 
-  if (content.value.type === "twitch") {
-    contentKind.value = ContentKind.Other;
-    contentUrl.value = `https://player.twitch.tv/?channel=${content.value.meta.channel}&parent=${window.location.hostname}`;
-    return;
-  }
+  const contentInfo = getContentInfo(loadedContentUrl);
+  if (!contentInfo) return;
 
-  contentKind.value = ContentKind.Video;
+  await delay(100);
 
-  setTimeout(() => {
-    player.value?.setContent(_content);
-    isPlayerInteractedWith.value = false;
-  }, 100);
+  player.value?.setContent(contentInfo);
+  isPlayerInteractedWith.value = false;
 };
 
 const reloadContent = async () => {
@@ -113,14 +103,14 @@ const reloadContent = async () => {
 
   // The restoration needs to go in a 1 second timeout, because otherwise it
   // doesn't work for some types of content.
-  setTimeout(() => {
-    // Restore content to reload
-    setContent(original_content);
+  await delay(1);
 
-    setTimeout(() => {
-      setPlaybackState(playbackState);
-    }, 1);
-  }, 1);
+  // Restore content to reload
+  setContent(original_content);
+
+  await delay(1);
+
+  setPlaybackState(playbackState);
 };
 
 const toggleTheaterMode = () => {
@@ -140,11 +130,12 @@ const showAdminPanel = () => {
 };
 
 let isPlayerStateCooldown = false;
-const activatePlayerStateCooldown = () => {
+const activatePlayerStateCooldown = async () => {
   isPlayerStateCooldown = true;
-  setTimeout(() => {
-    isPlayerStateCooldown = false;
-  }, 100);
+
+  await delay(100);
+
+  isPlayerStateCooldown = false;
 };
 
 const onPlay = async (auto: boolean) => {
@@ -177,16 +168,18 @@ const onPlaying = async () => {
     }
   }
 
-  setTimeout(() => {
-    setPlaybackState(roomStore.serverPlaybackState);
-  }, 1);
+  await delay(1);
+
+  setPlaybackState(roomStore.serverPlaybackState);
+};
+
+const onLiveStream = async () => {
+  isPlayerInteractedWith.value = true;
+  isMasterPaused.value = false;
+  isViewerPaused.value = false;
 };
 
 const onPause = async (auto: boolean) => {
-  if (!roomStore.isMaster && !isMasterPaused.value) {
-    isViewerPaused.value = true;
-  }
-
   if (auto) {
     return;
   }
@@ -241,9 +234,9 @@ const setPlaybackState = async (ps: PlaybackState) => {
 
   const _player = player.value;
   if (!_player || !_player.getIsContentLoaded()) {
-    setTimeout(() => {
-      setPlaybackState(ps);
-    }, 1000);
+    await delay(1000);
+
+    setPlaybackState(ps);
     return;
   }
 
@@ -401,25 +394,17 @@ const toggleDetached = () => {
       <div v-show="isMasterPaused" class="paused-text">PAUSED BY MASTER</div>
       <div v-show="isViewerPaused" class="paused-text">PAUSED BY YOU</div>
       <Player
-        v-if="contentKind === ContentKind.Video"
         ref="player"
         class="video-container"
         @contentloaded="isContentLoaded = true"
         @contenterror="isContentLoaded = false"
         @play="onPlay"
         @playing="onPlaying"
+        @livestream="onLiveStream"
         @pause="onPause"
         @seek="onSeek"
         @ratechange="onRateChange"
       />
-      <iframe
-        v-if="contentKind === ContentKind.Other"
-        class="video-container"
-        :src="contentUrl"
-        frameborder="0"
-        allowfullscreen="true"
-        scrolling="no"
-      ></iframe>
     </div>
 
     <!-- Dialogs -->

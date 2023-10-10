@@ -10,11 +10,8 @@ export interface Room {
 }
 
 export interface Content {
-  type: string;
   url: string;
-  meta: {
-    [key: string]: any;
-  };
+  duration?: number;
 }
 
 export interface Image {

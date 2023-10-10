@@ -26,14 +26,9 @@ struct ClaimResponse {
 }
 
 #[derive(Debug, Deserialize)]
-struct RoomControlAction {
-    pub action: String,
+struct SetContentRequest {
     pub url: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct RoomControlRequest {
-    pub action: RoomControlAction,
+    pub duration: Option<f64>,
 }
 
 pub fn router() -> Router<Arc<AriaServer>> {
@@ -41,7 +36,7 @@ pub fn router() -> Router<Arc<AriaServer>> {
         .route("/room/:name", get(get_room))
         .route("/claim", post(claim))
         .route("/i/:room_id/loggedin", post(logged_in))
-        .route("/i/:room_id/control", post(control))
+        .route("/i/:room_id/setcontent", post(set_content))
 }
 
 #[axum::debug_handler(state = Arc<AriaServer>)]
@@ -93,19 +88,17 @@ async fn logged_in(auth: Authorized, Path(room_id): Path<i32>) -> Result<(), Api
 }
 
 #[axum::debug_handler(state = Arc<AriaServer>)]
-async fn control(
+async fn set_content(
     auth: Authorized,
     State(server): State<Arc<AriaServer>>,
     Path(room_id): Path<i32>,
-    Json(req): Json<RoomControlRequest>,
+    Json(req): Json<SetContentRequest>,
 ) -> Result<(), ApiError> {
     if !auth.for_room(room_id) {
         return Err(ApiError::Unauthorized);
     }
 
-    if req.action.action == "set content url" {
-        server.core.set_room_content(room_id, &req.action.url).await?;
-    }
+    server.core.set_room_content(room_id, &req.url, req.duration).await?;
 
     Ok(())
 }

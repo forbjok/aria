@@ -6,6 +6,7 @@ import { useMainStore } from "./main";
 import { useRoomStore } from "./room";
 
 import type { Post } from "@/models";
+import { delay } from "@/utils/delay";
 
 export interface NewPost {
   name: string;
@@ -149,7 +150,7 @@ export const useChatStore = defineStore("chat", () => {
 
   const ws_listener = roomStore.createWebsocketListener();
 
-  ws_listener.on("post", (post: Post) => {
+  ws_listener.on("post", async (post: Post) => {
     const _posts = posts.value;
     if (_posts.length >= MAX_POSTS) {
       _posts.splice(0, 2);
@@ -158,9 +159,9 @@ export const useChatStore = defineStore("chat", () => {
     _posts.push(post);
 
     recentPosts.value.push(post);
-    setTimeout(() => {
-      recentPosts.value.shift();
-    }, 4000);
+
+    await delay(4000);
+    recentPosts.value.shift();
   });
 
   ws_listener.on("delete-post", (postId: number) => {

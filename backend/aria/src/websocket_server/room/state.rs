@@ -176,6 +176,7 @@ impl RoomState {
 
         // Reset playback time
         self.playback_state.time = 0.;
+        self.playback_state_timestamp = Utc::now();
 
         // Broadcast content change to members
         self.send_content()?;

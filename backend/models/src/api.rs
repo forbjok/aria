@@ -11,28 +11,9 @@ pub struct Room {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(rename_all = "lowercase")]
-#[serde(tag = "type", content = "meta")]
-pub enum ContentMetadata {
-    Unknown,
-    YouTube {
-        id: String,
-    },
-    #[serde(rename = "google_drive")]
-    GoogleDrive {
-        id: String,
-    },
-    Twitch {
-        channel: String,
-    },
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Content {
     pub url: String,
-
-    #[serde(flatten)]
-    pub meta: ContentMetadata,
+    pub duration: Option<f64>,
 }
 
 #[derive(Clone, Debug, Serialize)]

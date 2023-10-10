@@ -5,9 +5,11 @@ import YouTubePlayer from "youtube-player";
 import PlayerStates from "youtube-player/dist/constants/PlayerStates";
 import videojs from "video.js";
 
-import type { Content } from "@/models";
+import { ContentType, type ContentInfo } from "@/utils/content";
+import { delay } from "@/utils/delay";
 
 interface PlaybackController {
+  getDuration(): Promise<number>;
   getTime(): Promise<number>;
   getRate(): Promise<number>;
   setTime(time: number): void;
@@ -26,7 +28,7 @@ interface UserscriptDetails {
   content: {
     contentType: string;
     url: string;
-    meta: {
+    meta?: {
       [key: string]: any;
     };
   };
@@ -39,12 +41,14 @@ const emit = defineEmits<{
   (e: "contenterror"): void;
   (e: "play", auto: boolean): void;
   (e: "playing"): void;
+  (e: "livestream"): void;
   (e: "pause", auto: boolean): void;
   (e: "seek", auto: boolean, time: number): void;
   (e: "ratechange", auto: boolean, rate: number): void;
 }>();
 
-const content = ref<Content>();
+const content = ref<ContentInfo>();
+const contentUrl = ref<string>();
 
 let isAutoUpdate = false;
 let isPlaying = false;
@@ -68,25 +72,28 @@ watch(isContentLoaded, () => {
   }
 });
 
-const beginAuto = () => {
+const beginAuto = async () => {
   isAutoUpdate = true;
 
-  setTimeout(() => {
-    isAutoUpdate = false;
-  }, 2000);
+  await delay(2000);
+  isAutoUpdate = false;
 };
 
-const setContent = async (_content?: Content) => {
+const setContent = async (_content?: ContentInfo) => {
   await pause();
   isContentLoaded.value = false;
   currentSource.value = null;
   setSource.value = null;
   canSelectSource.value = false;
 
-  content.value = _content;
-  if (content.value == null) return;
+  content.value = undefined;
+  if (!_content) return;
 
-  if (content.value.type === "youtube") {
+  await delay(1);
+
+  content.value = _content;
+
+  if (content.value.type === ContentType.YouTube) {
     if (isYouTubePlayerLoaded) {
       // Reload page.
       // This is a workaround for the YouTube player breaking on use.
@@ -94,189 +101,212 @@ const setContent = async (_content?: Content) => {
       location.reload();
     }
 
-    setTimeout(() => {
-      const ytp = YouTubePlayer(youtubePlayer.value as HTMLElement, {
-        videoId: content.value?.meta.id,
-      });
+    await delay(100);
 
-      isYouTubePlayerLoaded = true;
+    const ytp = YouTubePlayer(youtubePlayer.value as HTMLElement, {
+      videoId: content.value?.meta?.id,
+    });
 
-      playbackController = {
-        getTime: async (): Promise<number> => {
-          return await ytp.getCurrentTime();
-        },
-        getRate: async (): Promise<number> => {
-          return await ytp.getPlaybackRate();
-        },
-        setTime: async (time) => {
-          await ytp.seekTo(time, true);
-        },
-        setRate: async (rate) => {
-          await ytp.setPlaybackRate(rate);
-        },
-        play: async () => {
-          await ytp.playVideo();
-        },
-        pause: async () => {
-          await ytp.pauseVideo();
-        },
-      };
+    isYouTubePlayerLoaded = true;
 
-      ytp.on("stateChange", (event) => {
-        if (event.data === PlayerStates.PLAYING) {
-          onPlay();
-          onPlaying();
-        } else if (event.data === PlayerStates.PAUSED) {
-          onPause();
-        }
-      });
+    playbackController = {
+      getDuration: async (): Promise<number> => {
+        return await ytp.getDuration();
+      },
+      getTime: async (): Promise<number> => {
+        return await ytp.getCurrentTime();
+      },
+      getRate: async (): Promise<number> => {
+        return await ytp.getPlaybackRate();
+      },
+      setTime: async (time) => {
+        await ytp.seekTo(time, true);
+      },
+      setRate: async (rate) => {
+        await ytp.setPlaybackRate(rate);
+      },
+      play: async () => {
+        await ytp.playVideo();
+      },
+      pause: async () => {
+        await ytp.pauseVideo();
+      },
+    };
 
-      ytp.on("playbackRateChange", () => {
-        onRateChange();
-      });
-
-      ytp.on("ready", () => {
-        isContentLoaded.value = true;
-      });
-
-      ytp.on("error", () => {
-        emit("contenterror");
-      });
-    }, 100);
-
-    return;
-  }
-
-  if (content.value.type === "google_drive") {
-    setTimeout(() => {
-      if (!content.value) {
-        return;
+    ytp.on("stateChange", (event) => {
+      if (event.data === PlayerStates.PLAYING) {
+        onPlay();
+        onPlaying();
+      } else if (event.data === PlayerStates.PAUSED) {
+        onPause();
       }
+    });
 
-      const embeddedVideo = googleDriveVideo.value;
+    ytp.on("playbackRateChange", () => {
+      onRateChange();
+    });
 
-      const detail: UserscriptDetails = {
-        content: {
-          contentType: content.value.type,
-          url: content.value.url,
-          meta: content.value.meta,
-        },
-        onLoaded: (_sources) => {
-          console.log("Google Drive Userscript successfully retrieved sources.", _sources);
-          sources.value = _sources;
+    ytp.on("ready", () => {
+      isContentLoaded.value = true;
+    });
 
-          setTimeout(() => {
-            if (!embeddedVideo) {
-              return;
-            }
-
-            const player = videojs(embeddedVideo, { controls: true }, () => {
-              selectSource(_sources[0]);
-            });
-
-            setSource.value = (source) => {
-              player.src({ src: source.url, type: source.mediaType });
-            };
-
-            canSelectSource.value = true;
-
-            playbackController = {
-              getTime: async (): Promise<number> => {
-                return embeddedVideo.currentTime;
-              },
-              getRate: async (): Promise<number> => {
-                return embeddedVideo.playbackRate;
-              },
-              setTime: (time) => {
-                embeddedVideo.currentTime = time;
-              },
-              setRate: async (rate) => {
-                embeddedVideo.playbackRate = rate;
-              },
-              play: () => {
-                embeddedVideo.play();
-              },
-              pause: () => {
-                embeddedVideo.pause();
-              },
-            };
-
-            setTimeout(() => {
-              isContentLoaded.value = true;
-            }, 1);
-          }, 100);
-        },
-        onError: (message) => {
-          alert(`Google Drive Userscript failed: ${message}`);
-        },
-      };
-
-      const contentLoadingEvent = new CustomEvent("contentLoading", { detail });
-
-      document.dispatchEvent(contentLoadingEvent);
-    }, 1);
+    ytp.on("error", () => {
+      emit("contenterror");
+    });
 
     return;
   }
 
-  setTimeout(() => {
+  if (content.value.type === ContentType.GoogleDrive) {
+    await delay(1);
+
     if (!content.value) {
       return;
     }
 
-    const source = {
-      url: content.value.url,
-      mediaType: "",
-      description: "Source",
+    const video = googleDriveVideo.value;
+
+    const detail: UserscriptDetails = {
+      content: {
+        contentType: content.value.type,
+        url: content.value.url,
+        meta: content.value.meta,
+      },
+      onLoaded: async (_sources) => {
+        console.log("Google Drive Userscript successfully retrieved sources.", _sources);
+        sources.value = _sources;
+
+        await delay(100);
+
+        if (!video) {
+          return;
+        }
+
+        const player = videojs(video, { controls: true }, () => {
+          video.addEventListener(
+            "canplay",
+            () => {
+              isContentLoaded.value = true;
+            },
+            { once: true },
+          );
+
+          selectSource(_sources[0]);
+        });
+
+        setSource.value = (source) => {
+          player.src({ src: source.url, type: source.mediaType });
+        };
+
+        canSelectSource.value = true;
+
+        playbackController = {
+          getDuration: async (): Promise<number> => {
+            return video.duration;
+          },
+          getTime: async (): Promise<number> => {
+            return video.currentTime;
+          },
+          getRate: async (): Promise<number> => {
+            return video.playbackRate;
+          },
+          setTime: (time) => {
+            video.currentTime = time;
+          },
+          setRate: async (rate) => {
+            video.playbackRate = rate;
+          },
+          play: () => {
+            video.play();
+          },
+          pause: () => {
+            video.pause();
+          },
+        };
+      },
+      onError: (message) => {
+        alert(`Google Drive Userscript failed: ${message}`);
+      },
     };
 
-    sources.value = [source];
+    const contentLoadingEvent = new CustomEvent("contentLoading", { detail });
 
-    const video = embeddedVideo.value;
+    document.dispatchEvent(contentLoadingEvent);
 
-    setTimeout(() => {
-      if (!video) {
-        return;
-      }
+    return;
+  }
 
-      const player = videojs(video, { controls: true }, () => {
-        video.addEventListener(
-          "canplay",
-          () => {
-            isContentLoaded.value = true;
-          },
-          { once: true },
-        );
+  if (content.value.type === ContentType.Twitch) {
+    playbackController = null;
 
-        selectSource(source);
-      });
+    contentUrl.value = `https://player.twitch.tv/?channel=${content.value.meta?.channel}&parent=${window.location.hostname}`;
+    isContentLoaded.value = true;
 
-      setSource.value = (source) => {
-        player.src({ src: source.url, type: source.mediaType });
-      };
+    emit("livestream");
+    return;
+  }
 
-      playbackController = {
-        getTime: async (): Promise<number> => {
-          return video.currentTime;
-        },
-        getRate: async (): Promise<number> => {
-          return video.playbackRate;
-        },
-        setTime: (time) => {
-          video.currentTime = time;
-        },
-        setRate: async (rate) => {
-          video.playbackRate = rate;
-        },
-        play: () => {
-          video.play();
-        },
-        pause: () => {
-          video.pause();
-        },
-      };
-    }, 100);
-  }, 1);
+  await delay(1);
+
+  if (!content.value) {
+    return;
+  }
+
+  const source = {
+    url: content.value.url,
+    mediaType: "",
+    description: "Source",
+  };
+
+  sources.value = [source];
+
+  const video = embeddedVideo.value;
+
+  await delay(100);
+
+  if (!video) {
+    return;
+  }
+
+  const player = videojs(video, { controls: true }, () => {
+    video.addEventListener(
+      "canplay",
+      () => {
+        isContentLoaded.value = true;
+      },
+      { once: true },
+    );
+
+    selectSource(source);
+  });
+
+  setSource.value = (source) => {
+    player.src({ src: source.url, type: source.mediaType });
+  };
+
+  playbackController = {
+    getDuration: async (): Promise<number> => {
+      return video.duration;
+    },
+    getTime: async (): Promise<number> => {
+      return video.currentTime;
+    },
+    getRate: async (): Promise<number> => {
+      return video.playbackRate;
+    },
+    setTime: (time) => {
+      video.currentTime = time;
+    },
+    setRate: async (rate) => {
+      video.playbackRate = rate;
+    },
+    play: () => {
+      video.play();
+    },
+    pause: () => {
+      video.pause();
+    },
+  };
 };
 
 const getIsContentLoaded = (): boolean => {
@@ -297,6 +327,10 @@ const pause = async () => {
   beginAuto();
 
   return await playbackController?.pause();
+};
+
+const getDuration = async (): Promise<number> => {
+  return (await playbackController?.getDuration()) || 0;
 };
 
 const getTime = async (): Promise<number> => {
@@ -408,6 +442,7 @@ defineExpose({
   getIsContentLoaded,
   play,
   pause,
+  getDuration,
   getTime,
   setTime,
   getRate,
@@ -459,10 +494,16 @@ defineExpose({
           @pause="onPause"
           @seeked="onSeek"
           @ratechange="onRateChange"
-        >
-          <source v-for="source of sources" :key="source.description" :src="source.url" :type="source.mediaType" />
-        </video>
+        ></video>
       </div>
+      <iframe
+        v-if="content.type == 'twitch'"
+        class="video-container"
+        :src="contentUrl"
+        frameborder="0"
+        allowfullscreen="true"
+        scrolling="no"
+      ></iframe>
     </div>
   </div>
 </template>
