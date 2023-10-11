@@ -143,6 +143,8 @@ pub(super) async fn handle_room_requests(
                 }
             }
             _ = tokio::time::sleep(std::time::Duration::from_secs(state.get_content_duration_remaining().map(|v| v as u64 + 1).unwrap_or(u64::MAX))) => {
+                dbg!("CONTENT END");
+
                 // Check whether content playback actually finished
                 if let Some(remaining_duration) = state.get_content_duration_remaining() {
                     // If content is not actually finished, do nothing.
