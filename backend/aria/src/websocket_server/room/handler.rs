@@ -142,6 +142,23 @@ pub(super) async fn handle_room_requests(
                     }
                 }
             }
+            _ = tokio::time::sleep(std::time::Duration::from_secs(state.get_content_duration_remaining().map(|v| v as u64 + 1).unwrap_or(u64::MAX))) => {
+                // Check whether content playback actually finished
+                if let Some(remaining_duration) = state.get_content_duration_remaining() {
+                    // If content is not actually finished, do nothing.
+                    if remaining_duration > 0. {
+                        continue;
+                    }
+                } else {
+                    // If no remaining duration could be retrieved (no duration known, or not currently playing),
+                    // do nothing.
+                    continue;
+                }
+
+                // Reset server playback state
+                let pbs = am::PlaybackState::default();
+                state.set_playback_state(0, &pbs, &core).await.ok();
+            }
             _ = unload_check_interval.tick() => {
                 if let Some(unload_at) = unload_at {
                     if Utc::now() > unload_at {

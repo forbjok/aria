@@ -364,6 +364,15 @@ const onPlaying = async () => {
 
 const onPause = async () => {
   isPlaying = false;
+
+  // If playback stops due to reaching the end of the content,
+  // treat it as automatic.
+  const duration = await playbackController?.getDuration();
+  const time = await playbackController?.getTime();
+  if (!!duration && !!time && duration - time < 1) {
+    beginAuto();
+  }
+
   emit("pause", isAutoUpdate);
 };
 

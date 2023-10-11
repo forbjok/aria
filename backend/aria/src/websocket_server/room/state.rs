@@ -229,12 +229,12 @@ impl RoomState {
 
     pub async fn set_playback_state(
         &mut self,
-        id: ConnectionId,
+        connection_id: ConnectionId,
         ps: &am::PlaybackState,
         core: &AriaCore,
     ) -> Result<(), anyhow::Error> {
         // Sender is not master. Ignore.
-        if id != self.master {
+        if connection_id != self.master && connection_id != 0 {
             return Ok(());
         }
 
@@ -295,7 +295,23 @@ impl RoomState {
         self.members.is_empty()
     }
 
-    fn get_playback_state(&self) -> am::PlaybackState {
+    pub fn get_content_duration_remaining(&self) -> Option<f64> {
+        self.content.as_ref().and_then(|c| {
+            c.duration.and_then(|duration| {
+                let pbs = self.get_playback_state();
+
+                if pbs.is_playing {
+                    let remaining = duration - pbs.time;
+
+                    Some(remaining / pbs.rate)
+                } else {
+                    None
+                }
+            })
+        })
+    }
+
+    pub fn get_playback_state(&self) -> am::PlaybackState {
         let rate = self.playback_state.rate;
 
         let time = if self.playback_state.is_playing {
