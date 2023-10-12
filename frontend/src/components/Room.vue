@@ -53,6 +53,8 @@ const isViewerPaused = ref(false);
 
 let isMasterInitiatedPlay = false;
 let loadedContentUrl: string | undefined;
+let lastBufferDuration = 0;
+let bufferStartedAt: number | undefined;
 
 onMounted(async () => {
   await roomStore.loadRoom(name.value);
@@ -157,6 +159,11 @@ const onPlay = async (auto: boolean) => {
 };
 
 const onPlaying = async () => {
+  if (bufferStartedAt) {
+    lastBufferDuration = ((getTimestamp() - bufferStartedAt) / 1000 + lastBufferDuration) / 2;
+    bufferStartedAt = undefined;
+  }
+
   isMasterPaused.value = false;
   isViewerPaused.value = false;
 
@@ -246,6 +253,18 @@ const setPlaybackState = async (ps: PlaybackState) => {
     return;
   }
 
+  const setTime = (newTime: number) => {
+    bufferStartedAt = getTimestamp();
+
+    // If video is playing, try to compensate
+    // for buffering time.
+    if (ps.is_playing) {
+      newTime += lastBufferDuration;
+    }
+
+    _player.setTime(newTime);
+  };
+
   const currentPlaybackState = await getPlaybackState();
 
   if (ps.is_playing) {
@@ -256,14 +275,15 @@ const setPlaybackState = async (ps: PlaybackState) => {
       _player.setRate(ps.rate);
     }
 
+    const allowedDivergence = Math.max(MAX_DIVERGENCE, lastBufferDuration);
     const timeDiff = Math.abs(currentPlaybackState.time - newTime);
-    if (timeDiff > MAX_DIVERGENCE) {
+    if (timeDiff > allowedDivergence) {
       console.log("Synchronizing to server time.", timeDiff);
-      _player.setTime(newTime);
+      setTime(newTime);
     }
 
     if (!currentPlaybackState.is_playing) {
-      _player.setTime(newTime);
+      setTime(newTime);
 
       if (isPlayerStateCooldown) {
         return;
@@ -273,7 +293,7 @@ const setPlaybackState = async (ps: PlaybackState) => {
       activatePlayerStateCooldown();
     }
   } else if (!ps.is_playing) {
-    _player.setTime(ps.time);
+    setTime(ps.time);
     isMasterPaused.value = true;
 
     if (currentPlaybackState.is_playing) {
