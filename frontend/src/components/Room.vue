@@ -20,6 +20,8 @@ import { delay } from "@/utils/delay";
 
 const AdminPanel = defineAsyncComponent(() => import("@/components/admin/AdminPanel.vue"));
 
+const MAX_DIVERGENCE = 4;
+
 const props = defineProps<{
   name: string;
 }>();
@@ -255,7 +257,7 @@ const setPlaybackState = async (ps: PlaybackState) => {
     }
 
     const timeDiff = Math.abs(currentPlaybackState.time - newTime);
-    if (timeDiff > 2) {
+    if (timeDiff > MAX_DIVERGENCE) {
       console.log("Synchronizing to server time.", timeDiff);
       _player.setTime(newTime);
     }
