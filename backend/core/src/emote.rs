@@ -11,8 +11,8 @@ use super::AriaCore;
 use crate::{
     file::ProcessFileResult,
     transform::dbm_emote_to_lm,
-    util::{thumbnail::ThumbnailGenerator, video::VideoPreviewGenerator},
-    Notification, IMAGE_EXT, VIDEO_EXT,
+    util::{anim_thumbnail::AnimatedThumbnailGenerator, thumbnail::ThumbnailGenerator, video::VideoPreviewGenerator},
+    FileKind, Notification, ANIM_IMAGE_EXT, IMAGE_EXT, VIDEO_EXT,
 };
 
 const MAX_EMOTE_WIDTH: u32 = 350;
@@ -86,16 +86,19 @@ impl AriaCore {
         ext: &'a str,
         overwrite: bool,
     ) -> Result<String, anyhow::Error> {
-        let preserve_original = self.is_preserve_original(ext);
+        let file_kind = self.identify_file(ext, original_image_path);
 
-        let is_video = self.is_video(ext);
+        // Animated WebP can't be transcoded, as ffmpeg doesn't support decoding it
+        let preserve_original = file_kind == FileKind::AnimatedImage && ext == "webp";
 
         let new_ext = if preserve_original {
             ext
-        } else if is_video {
-            VIDEO_EXT
         } else {
-            IMAGE_EXT
+            match file_kind {
+                FileKind::Image => IMAGE_EXT,
+                FileKind::AnimatedImage => ANIM_IMAGE_EXT,
+                FileKind::Video => VIDEO_EXT,
+            }
         };
 
         let emote_path = self.build_emote_path(hash, new_ext);
@@ -110,14 +113,24 @@ impl AriaCore {
             if preserve_original {
                 // If preserving original, simply create a hard link to the original file
                 tokio::fs::hard_link(original_image_path, &emote_path).await?;
-            } else if self.is_video(ext) {
-                let mut vp_gen = VideoPreviewGenerator::new(original_image_path);
-                vp_gen.add(&emote_path, MAX_EMOTE_WIDTH, MAX_EMOTE_HEIGHT);
-                vp_gen.generate().context("Error generating emote video")?;
             } else {
-                let mut tn_gen = ThumbnailGenerator::new(original_image_path);
-                tn_gen.add(&emote_path, MAX_EMOTE_WIDTH, MAX_EMOTE_HEIGHT);
-                tn_gen.generate().context("Error generating emote image")?;
+                match file_kind {
+                    FileKind::Image => {
+                        let mut tn_gen = ThumbnailGenerator::new(original_image_path);
+                        tn_gen.add(&emote_path, MAX_EMOTE_WIDTH, MAX_EMOTE_HEIGHT);
+                        tn_gen.generate().context("Error generating emote image")?;
+                    }
+                    FileKind::AnimatedImage => {
+                        let mut tn_gen = AnimatedThumbnailGenerator::new(original_image_path);
+                        tn_gen.add(&emote_path, MAX_EMOTE_WIDTH, MAX_EMOTE_HEIGHT);
+                        tn_gen.generate().context("Error generating animated emote image")?;
+                    }
+                    FileKind::Video => {
+                        let mut vp_gen = VideoPreviewGenerator::new(original_image_path);
+                        vp_gen.add(&emote_path, MAX_EMOTE_WIDTH, MAX_EMOTE_HEIGHT);
+                        vp_gen.generate().context("Error generating emote video")?;
+                    }
+                }
             }
         }
 

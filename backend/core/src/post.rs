@@ -6,7 +6,8 @@ use aria_store::{models as dbm, AriaStore};
 
 use super::AriaCore;
 use crate::{
-    file::ProcessFileResult, transform::dbm_post_to_lm, util::thumbnail::ThumbnailGenerator, Notification, IMAGE_EXT,
+    file::ProcessFileResult, transform::dbm_post_to_lm, util::thumbnail::ThumbnailGenerator, FileKind, Notification,
+    IMAGE_EXT,
 };
 
 pub struct GeneratePostImageResult<'a> {
@@ -98,7 +99,8 @@ impl AriaCore {
         ext: &'a str,
         overwrite: bool,
     ) -> Result<GeneratePostImageResult<'a>, anyhow::Error> {
-        let preserve_original = self.is_preserve_original(ext);
+        let file_kind = self.identify_file(ext, original_image_path);
+        let preserve_original = file_kind == FileKind::AnimatedImage;
 
         let ext = if preserve_original { ext } else { IMAGE_EXT };
         let tn_ext = ext;

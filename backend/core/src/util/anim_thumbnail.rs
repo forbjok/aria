@@ -3,67 +3,57 @@ use std::{path::Path, process::Command};
 use anyhow::{anyhow, Context};
 
 #[derive(Debug)]
-struct PreviewSpec<'a> {
+struct ThumbnailSpec<'a> {
     dst_path: &'a Path,
     width: u32,
     height: u32,
 }
 
 #[derive(Debug)]
-pub struct VideoPreviewGenerator<'a> {
+pub struct AnimatedThumbnailGenerator<'a> {
     source: &'a Path,
-    previews: Vec<PreviewSpec<'a>>,
+    thumbnails: Vec<ThumbnailSpec<'a>>,
 }
 
-impl<'a> VideoPreviewGenerator<'a> {
+impl<'a> AnimatedThumbnailGenerator<'a> {
     pub fn new(source: &'a Path) -> Self {
         Self {
             source,
-            previews: Vec::new(),
+            thumbnails: Vec::new(),
         }
     }
 
-    /// Add preview spec to be generated
+    /// Add thumbnail spec to be generated
     pub fn add(&mut self, dst_path: &'a Path, width: u32, height: u32) {
-        self.previews.push(PreviewSpec {
+        self.thumbnails.push(ThumbnailSpec {
             dst_path,
             width,
             height,
         });
     }
 
-    /// Generate previews
+    /// Generate thumbnails
     pub fn generate(self) -> Result<(), anyhow::Error> {
-        if self.previews.is_empty() {
+        if self.thumbnails.is_empty() {
             return Ok(());
         }
 
-        for vp in self.previews.iter() {
+        for vp in self.thumbnails.iter() {
             let filter_arg = format!(
-                r"scale=min({}\,iw):min({}\,ih):force_original_aspect_ratio=decrease,format=yuv420p",
+                r"scale=min({}\,iw):min({}\,ih):force_original_aspect_ratio=decrease,format=yuva420p",
                 vp.width, vp.height
             );
 
             let status = Command::new("ffmpeg")
                 .arg("-i")
                 .arg(self.source)
-                .args([
-                    "-map_metadata",
-                    "-1",
-                    "-filter:v",
-                    &filter_arg,
-                    "-c:v",
-                    "libvpx-vp9",
-                    "-crf",
-                    "42",
-                    "-an",
-                ])
+                .args(["-map_metadata", "-1", "-filter:v", &filter_arg, "-loop", "0"])
                 .arg(vp.dst_path)
                 .status()
                 .context("Executing ffmpeg")?;
 
             if !status.success() {
-                return Err(anyhow!("Error generating video preview"));
+                return Err(anyhow!("Error generating animated thumbnail"));
             }
         }
 

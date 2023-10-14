@@ -1,18 +1,22 @@
 use std::{
     borrow::Cow,
+    io::Read,
     path::{Path, PathBuf},
 };
 
 use anyhow::Context;
-use aria_models::local::HashedFile;
-use aria_shared::util;
 use bytes::Bytes;
 use futures_core::Stream;
+use once_cell::sync::Lazy;
+
+use aria_models::local::HashedFile;
+use aria_shared::util;
 
 use super::AriaCore;
 use crate::util::{hash_blake3_file, hash_blake3_to_file_from_stream};
 
 pub const IMAGE_EXT: &str = "webp";
+pub const ANIM_IMAGE_EXT: &str = "webp";
 pub const VIDEO_EXT: &str = "webm";
 
 pub struct ProcessFileResult<'a> {
@@ -20,6 +24,16 @@ pub struct ProcessFileResult<'a> {
     pub original_ext: Cow<'a, str>,
     pub original_file_path: PathBuf,
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FileKind {
+    Image,
+    AnimatedImage,
+    Video,
+}
+
+static RE_IS_ANIMATED_WEBP: Lazy<regex::bytes::Regex> =
+    Lazy::new(|| regex::bytes::Regex::new(r"^(?s-u:RIFF.{4}WEBPVP8X.{14}ANIM)").unwrap());
 
 impl AriaCore {
     pub async fn hash_file(&self, path: &Path) -> Result<HashedFile, anyhow::Error> {
@@ -83,11 +97,35 @@ impl AriaCore {
         })
     }
 
-    pub fn is_preserve_original(&self, ext: &str) -> bool {
-        ext == "gif"
+    pub fn identify_file(&self, ext: &str, path: &Path) -> FileKind {
+        match ext {
+            "gif" => FileKind::AnimatedImage,
+            "webp" => {
+                if is_animated_webp(path) {
+                    FileKind::AnimatedImage
+                } else {
+                    FileKind::Image
+                }
+            }
+            "webm" | "mp4" | "m4v" => FileKind::Video,
+            _ => FileKind::Image,
+        }
+    }
+}
+
+fn is_animated_webp(path: &Path) -> bool {
+    let Ok(mut file) = std::fs::File::open(path) else {
+        return false;
+    };
+
+    let mut buf: [u8; 34] = [0; 34];
+    if file.read_exact(&mut buf).is_err() {
+        return false;
     }
 
-    pub fn is_video(&self, ext: &str) -> bool {
-        matches!(ext, "webm" | "mp4" | "m4v")
+    if !RE_IS_ANIMATED_WEBP.is_match(&buf) {
+        return false;
     }
+
+    true
 }

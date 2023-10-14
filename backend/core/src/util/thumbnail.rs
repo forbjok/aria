@@ -3,7 +3,7 @@ use std::{cmp, path::Path};
 use anyhow::Context;
 
 #[derive(Debug)]
-struct Thumbnail<'a> {
+struct ThumbnailSpec<'a> {
     dst_path: &'a Path,
     width: u32,
     height: u32,
@@ -12,7 +12,7 @@ struct Thumbnail<'a> {
 #[derive(Debug)]
 pub struct ThumbnailGenerator<'a> {
     source: &'a Path,
-    thumbnails: Vec<Thumbnail<'a>>,
+    thumbnails: Vec<ThumbnailSpec<'a>>,
 }
 
 impl<'a> ThumbnailGenerator<'a> {
@@ -25,7 +25,7 @@ impl<'a> ThumbnailGenerator<'a> {
 
     /// Add thumbnail spec to be generated
     pub fn add(&mut self, dst_path: &'a Path, width: u32, height: u32) {
-        self.thumbnails.push(Thumbnail {
+        self.thumbnails.push(ThumbnailSpec {
             dst_path,
             width,
             height,

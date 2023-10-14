@@ -1,3 +1,4 @@
+pub mod anim_thumbnail;
 mod hash;
 pub mod password;
 pub mod thumbnail;
