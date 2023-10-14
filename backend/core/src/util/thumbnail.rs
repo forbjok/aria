@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{cmp, path::Path};
 
 use anyhow::Context;
 
@@ -41,8 +41,14 @@ impl<'a> ThumbnailGenerator<'a> {
         // Open image file
         let img = image::open(self.source)?;
 
+        let o_width = img.width();
+        let o_height = img.height();
+
         for tn in self.thumbnails.iter() {
-            let tn_img = img.thumbnail(tn.width, tn.height);
+            let tn_width = cmp::min(tn.width, o_width);
+            let tn_height = cmp::min(tn.height, o_height);
+
+            let tn_img = img.thumbnail(tn_width, tn_height);
             tn_img
                 .into_rgba8()
                 .save(tn.dst_path)
