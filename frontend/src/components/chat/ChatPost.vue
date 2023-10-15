@@ -181,7 +181,8 @@ button {
     max-width: 100px;
     max-height: 100px;
 
-    @media screen and (orientation: portrait) {
+    // Portrait orientation
+    @media screen and (max-aspect-ratio: 13/10) {
       max-width: 50px;
       max-height: 50px;
     }

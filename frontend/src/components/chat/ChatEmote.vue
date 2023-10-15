@@ -40,7 +40,8 @@ const toggleExpanded = (): void => {
   &:not(.expanded) {
     max-height: 100px;
 
-    @media screen and (orientation: portrait) {
+    // Portrait orientation
+    @media screen and (max-aspect-ratio: 13/10) {
       max-height: 50px;
     }
   }

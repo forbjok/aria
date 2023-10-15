@@ -486,7 +486,8 @@ const toggleDetached = () => {
     }
   }
 
-  @media screen and (orientation: landscape) {
+  // Landscape orientation
+  @media screen and (min-aspect-ratio: 13/10) {
     .chat-container {
       border-right: 1px solid black;
 
@@ -498,7 +499,8 @@ const toggleDetached = () => {
     }
   }
 
-  @media screen and (orientation: portrait) {
+  // Portrait orientation
+  @media screen and (max-aspect-ratio: 13/10) {
     flex-direction: column-reverse;
 
     .chat-container {

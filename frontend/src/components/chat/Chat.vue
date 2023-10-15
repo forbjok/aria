@@ -429,7 +429,8 @@ const confirmDeletePost = async (post: Post) => {
     max-width: 36vw;
     height: 33vh;
 
-    @media screen and (orientation: portrait) {
+    // Portrait orientation
+    @media screen and (max-aspect-ratio: 13/10) {
       left: 3vw;
 
       max-width: 94vw;
