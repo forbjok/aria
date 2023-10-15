@@ -177,8 +177,6 @@ button {
   max-width: 100%;
 
   .thumbnail {
-    display: block;
-    border: none;
     padding-right: 4px;
     max-width: 100px;
     max-height: 100px;
@@ -190,7 +188,6 @@ button {
   }
 
   .expanded-image {
-    display: block;
     max-width: 100%;
   }
 
