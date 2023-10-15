@@ -2,7 +2,7 @@ use std::{path::Path, process::Command};
 
 use anyhow::{anyhow, Context};
 
-use super::ThumbnailGenerator;
+use super::{ThumbnailGenerator, ThumbnailQuality};
 
 #[derive(Debug)]
 struct ThumbnailSpec<'a> {
@@ -14,13 +14,15 @@ struct ThumbnailSpec<'a> {
 #[derive(Debug)]
 pub struct AnimatedThumbnailGenerator<'a> {
     source: &'a Path,
+    quality: ThumbnailQuality,
     thumbnails: Vec<ThumbnailSpec<'a>>,
 }
 
 impl<'a> AnimatedThumbnailGenerator<'a> {
-    pub fn new(source: &'a Path) -> Self {
+    pub fn new(source: &'a Path, quality: ThumbnailQuality) -> Self {
         Self {
             source,
+            quality,
             thumbnails: Vec::new(),
         }
     }
@@ -40,6 +42,11 @@ impl<'a> ThumbnailGenerator<'a> for AnimatedThumbnailGenerator<'a> {
             return Ok(());
         }
 
+        let quality_args = match self.quality {
+            ThumbnailQuality::Emote => ["-compression_level", "5", "-quality", "70"],
+            ThumbnailQuality::Post => ["-compression_level", "4", "-quality", "40"],
+        };
+
         for vp in self.thumbnails.iter() {
             let filter_arg = format!(
                 r"scale=min({}\,iw):min({}\,ih):force_original_aspect_ratio=decrease,format=yuva420p",
@@ -47,9 +54,12 @@ impl<'a> ThumbnailGenerator<'a> for AnimatedThumbnailGenerator<'a> {
             );
 
             let status = Command::new("ffmpeg")
+                .args(["-hide_banner", "-y"])
                 .arg("-i")
                 .arg(self.source)
-                .args(["-map_metadata", "-1", "-filter:v", &filter_arg, "-loop", "0"])
+                .args(["-map_metadata", "-1", "-filter:v", &filter_arg])
+                .args(quality_args)
+                .args(["-loop", "0"])
                 .arg(vp.dst_path)
                 .status()
                 .context("Executing ffmpeg")?;

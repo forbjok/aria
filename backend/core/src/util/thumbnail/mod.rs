@@ -15,3 +15,9 @@ pub trait ThumbnailGenerator<'a>: Send {
     /// Generate thumbnails
     fn generate(&self) -> Result<(), anyhow::Error>;
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ThumbnailQuality {
+    Emote,
+    Post,
+}

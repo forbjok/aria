@@ -8,7 +8,7 @@ use super::AriaCore;
 use crate::{
     file::ProcessFileResult,
     transform::dbm_post_to_lm,
-    util::thumbnail::{AnimatedThumbnailGenerator, StaticThumbnailGenerator, ThumbnailGenerator},
+    util::thumbnail::{AnimatedThumbnailGenerator, StaticThumbnailGenerator, ThumbnailGenerator, ThumbnailQuality},
     FileKind, Notification, ANIM_IMAGE_EXT, IMAGE_EXT,
 };
 
@@ -129,7 +129,10 @@ impl AriaCore {
 
         let mut tn_gen: Box<dyn ThumbnailGenerator> = match file_kind {
             FileKind::Image => Box::new(StaticThumbnailGenerator::new(original_image_path)),
-            FileKind::AnimatedImage | FileKind::Video => Box::new(AnimatedThumbnailGenerator::new(original_image_path)),
+            FileKind::AnimatedImage | FileKind::Video => Box::new(AnimatedThumbnailGenerator::new(
+                original_image_path,
+                ThumbnailQuality::Post,
+            )),
         };
 
         // If image does not already exist, create it.

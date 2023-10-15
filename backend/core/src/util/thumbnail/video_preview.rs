@@ -47,6 +47,7 @@ impl<'a> ThumbnailGenerator<'a> for VideoPreviewGenerator<'a> {
             );
 
             let status = Command::new("ffmpeg")
+                .args(["-hide_banner", "-y"])
                 .arg("-i")
                 .arg(self.source)
                 .args([

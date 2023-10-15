@@ -12,7 +12,8 @@ use crate::{
     file::ProcessFileResult,
     transform::dbm_emote_to_lm,
     util::thumbnail::{
-        AnimatedThumbnailGenerator, StaticThumbnailGenerator, ThumbnailGenerator, VideoPreviewGenerator,
+        AnimatedThumbnailGenerator, StaticThumbnailGenerator, ThumbnailGenerator, ThumbnailQuality,
+        VideoPreviewGenerator,
     },
     FileKind, Notification, ANIM_IMAGE_EXT, IMAGE_EXT, VIDEO_EXT,
 };
@@ -118,7 +119,10 @@ impl AriaCore {
             } else {
                 let mut tn_gen: Box<dyn ThumbnailGenerator> = match file_kind {
                     FileKind::Image => Box::new(StaticThumbnailGenerator::new(original_image_path)),
-                    FileKind::AnimatedImage => Box::new(AnimatedThumbnailGenerator::new(original_image_path)),
+                    FileKind::AnimatedImage => Box::new(AnimatedThumbnailGenerator::new(
+                        original_image_path,
+                        ThumbnailQuality::Emote,
+                    )),
                     FileKind::Video => Box::new(VideoPreviewGenerator::new(original_image_path)),
                 };
 
