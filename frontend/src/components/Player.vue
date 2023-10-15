@@ -7,6 +7,7 @@ import videojs from "video.js";
 
 import { ContentType, type ContentInfo } from "@/utils/content";
 import { delay } from "@/utils/delay";
+import type VideojsPlayer from "video.js/dist/types/player";
 
 interface PlaybackController {
   getDuration(): Promise<number>;
@@ -54,6 +55,7 @@ let isAutoUpdate = false;
 let isPlaying = false;
 let isYouTubePlayerLoaded = false;
 let playbackController: PlaybackController | null;
+let videojsPlayer: VideojsPlayer | null;
 
 const isContentLoaded = ref(false);
 const sources = ref<Source[]>([]);
@@ -80,7 +82,10 @@ const beginAuto = async () => {
 };
 
 const setContent = async (_content?: ContentInfo) => {
-  await pause();
+  // Dispose old Video.js player
+  videojsPlayer?.dispose();
+  videojsPlayer = null;
+
   isContentLoaded.value = false;
   currentSource.value = null;
   setSource.value = null;
@@ -182,7 +187,7 @@ const setContent = async (_content?: ContentInfo) => {
           return;
         }
 
-        const player = videojs(video, { controls: true }, () => {
+        videojsPlayer = videojs(video, { controls: true }, () => {
           video.addEventListener(
             "canplay",
             () => {
@@ -195,7 +200,7 @@ const setContent = async (_content?: ContentInfo) => {
         });
 
         setSource.value = (source) => {
-          player.src({ src: source.url, type: source.mediaType });
+          videojsPlayer?.src({ src: source.url, type: source.mediaType });
         };
 
         canSelectSource.value = true;
@@ -268,7 +273,7 @@ const setContent = async (_content?: ContentInfo) => {
     return;
   }
 
-  const player = videojs(video, { controls: true }, () => {
+  videojsPlayer = videojs(video, { controls: true }, () => {
     video.addEventListener(
       "canplay",
       () => {
@@ -281,7 +286,7 @@ const setContent = async (_content?: ContentInfo) => {
   });
 
   setSource.value = (source) => {
-    player.src({ src: source.url, type: source.mediaType });
+    videojsPlayer?.src({ src: source.url, type: source.mediaType });
   };
 
   playbackController = {
