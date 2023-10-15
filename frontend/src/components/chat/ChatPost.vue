@@ -177,7 +177,7 @@ button {
   max-width: 100%;
 
   .thumbnail {
-    padding-right: 4px;
+    margin-right: 4px;
     max-width: 100px;
     max-height: 100px;
 
