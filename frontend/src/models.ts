@@ -12,6 +12,7 @@ export interface Room {
 export interface Content {
   url: string;
   duration?: number;
+  is_livestream?: boolean;
 }
 
 export interface Image {

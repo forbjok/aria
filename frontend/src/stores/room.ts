@@ -229,7 +229,7 @@ export const useRoomStore = defineStore("room", () => {
     });
   }
 
-  async function setContent(url: string, duration?: number) {
+  async function setContent(url: string, options?: { duration?: number; isLivestream?: boolean }) {
     if (!isAuthorized.value) {
       console.log("User not authorized to perform action.");
       return;
@@ -237,7 +237,8 @@ export const useRoomStore = defineStore("room", () => {
 
     const data = {
       url,
-      duration,
+      duration: options?.duration,
+      is_livestream: options?.isLivestream,
     };
 
     return await axios.post(`/api/r/i/${id.value}/setcontent`, data, {

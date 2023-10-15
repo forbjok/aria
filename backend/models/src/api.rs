@@ -14,6 +14,7 @@ pub struct Room {
 pub struct Content {
     pub url: String,
     pub duration: Option<f64>,
+    pub is_livestream: Option<bool>,
 }
 
 #[derive(Clone, Debug, Serialize)]

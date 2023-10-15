@@ -15,7 +15,7 @@ import { useRoomStore, type PlaybackState } from "@/stores/room";
 
 import type { Content } from "@/models";
 import { getTimestamp } from "@/utils/timestamp";
-import { getContentInfo } from "@/utils/content";
+import { ContentKind, getContentInfo, type ContentInfo } from "@/utils/content";
 import { delay } from "@/utils/delay";
 
 const AdminPanel = defineAsyncComponent(() => import("@/components/admin/AdminPanel.vue"));
@@ -51,8 +51,8 @@ const isPlayerInteractedWith = ref(false);
 const isMasterPaused = ref(false);
 const isViewerPaused = ref(false);
 
+let contentInfo: ContentInfo | undefined;
 let isMasterInitiatedPlay = false;
-let loadedContentUrl: string | undefined;
 let lastBufferDuration = 0;
 let bufferStartedAt: number | undefined;
 
@@ -80,16 +80,19 @@ watch(serverPlaybackState, async (value) => {
 });
 
 const setContent = async (_content?: Content) => {
-  if (isContentLoaded.value && _content?.url === loadedContentUrl) return;
+  if (isContentLoaded.value && _content?.url === contentInfo?.url) return;
 
+  contentInfo = undefined;
   isContentLoaded.value = false;
 
-  content.value = _content;
-  loadedContentUrl = content.value?.url;
-  if (!content.value || !loadedContentUrl) return;
+  if (!_content || !_content.url) return;
 
-  const contentInfo = getContentInfo(loadedContentUrl);
+  contentInfo = getContentInfo(_content.url);
   if (!contentInfo) return;
+
+  if (_content?.is_livestream) {
+    contentInfo.kind = ContentKind.Livestream;
+  }
 
   await delay(100);
 
@@ -194,7 +197,7 @@ const onPause = async (auto: boolean) => {
   }
 
   if (isPlayerInteractedWith.value) {
-    if (roomStore.isMaster) {
+    if (roomStore.isMaster && contentInfo?.kind !== ContentKind.Livestream) {
       isMasterPaused.value = true;
     } else {
       isViewerPaused.value = true;
@@ -250,6 +253,11 @@ const setPlaybackState = async (ps: PlaybackState) => {
   }
 
   if (isViewerPaused.value || !isPlayerInteractedWith.value) {
+    return;
+  }
+
+  // Don't try to control playback state of livestreams
+  if (content.value?.is_livestream) {
     return;
   }
 

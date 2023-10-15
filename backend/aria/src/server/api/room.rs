@@ -29,6 +29,7 @@ struct ClaimResponse {
 struct SetContentRequest {
     pub url: String,
     pub duration: Option<f64>,
+    pub is_livestream: Option<bool>,
 }
 
 pub fn router() -> Router<Arc<AriaServer>> {
@@ -98,7 +99,10 @@ async fn set_content(
         return Err(ApiError::Unauthorized);
     }
 
-    server.core.set_room_content(room_id, &req.url, req.duration).await?;
+    server
+        .core
+        .set_room_content(room_id, &req.url, req.duration, req.is_livestream)
+        .await?;
 
     Ok(())
 }

@@ -41,10 +41,12 @@ impl AriaCore {
         room_id: i32,
         content_url: &str,
         duration: Option<f64>,
+        is_livestream: Option<bool>,
     ) -> Result<(), anyhow::Error> {
         let content = lm::Content {
             url: content_url.to_owned(),
             duration,
+            is_livestream,
         };
 
         let content_json = serde_json::to_string(&content)?;

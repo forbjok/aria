@@ -7,7 +7,8 @@ export enum ContentType {
 
 export enum ContentKind {
   Video = "video",
-  Stream = "stream",
+  Livestream = "stream",
+  LivestreamOrVod = "livestream_or_vod",
 }
 
 export interface ContentInfo {
@@ -58,11 +59,19 @@ export function getContentInfo(url: string): ContentInfo {
 
     return {
       type: ContentType.Twitch,
-      kind: ContentKind.Stream,
+      kind: ContentKind.Livestream,
       url,
       meta: {
         channel: channelName,
       },
+    };
+  }
+
+  if (url.endsWith(".m3u8")) {
+    return {
+      type: ContentType.Unknown,
+      kind: ContentKind.LivestreamOrVod,
+      url,
     };
   }
 
