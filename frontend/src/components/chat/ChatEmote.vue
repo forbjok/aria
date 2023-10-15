@@ -32,6 +32,9 @@ const toggleExpanded = (): void => {
 .chat-emote {
   display: inline-block;
 
+  // Prevent line spacing between emotes
+  vertical-align: bottom;
+
   cursor: pointer;
 
   &:not(.expanded) {
