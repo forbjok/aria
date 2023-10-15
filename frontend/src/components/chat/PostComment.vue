@@ -142,8 +142,6 @@ export default defineComponent({
 
 <style scoped lang="scss">
 .comment {
-  word-wrap: break-word;
-
   a {
     color: var(--color-post-comment-link);
     text-decoration: none;
