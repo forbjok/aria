@@ -420,8 +420,10 @@ const toggleDetached = () => {
       <div v-show="theaterMode" class="toast-chat-container">
         <ToastChat ref="toastChat" />
       </div>
-      <div v-show="isMasterPaused" class="paused-text">PAUSED BY MASTER</div>
-      <div v-show="isViewerPaused" class="paused-text">PAUSED BY YOU</div>
+      <div class="content-overlay">
+        <div v-show="isMasterPaused" class="paused-text">PAUSED BY MASTER</div>
+        <div v-show="isViewerPaused" class="paused-text">PAUSED BY YOU</div>
+      </div>
       <Player
         ref="player"
         class="video-container"
@@ -470,20 +472,27 @@ const toggleDetached = () => {
     // ending up outside the parent.
     position: relative;
 
-    .paused-text {
+    .content-overlay {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+      left: 0;
+      top: 0;
+      right: 0;
+      bottom: 0;
 
       pointer-events: none;
 
+      z-index: 999;
+    }
+
+    .paused-text {
       font-size: 1.8rem;
       font-weight: bold;
       letter-spacing: 0.4rem;
       text-shadow: 0 0 1rem white;
-
-      z-index: 999;
     }
 
     .video-container {
