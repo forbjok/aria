@@ -11,7 +11,9 @@ use super::AriaCore;
 use crate::{
     file::ProcessFileResult,
     transform::dbm_emote_to_lm,
-    util::{anim_thumbnail::AnimatedThumbnailGenerator, thumbnail::ThumbnailGenerator, video::VideoPreviewGenerator},
+    util::thumbnail::{
+        AnimatedThumbnailGenerator, StaticThumbnailGenerator, ThumbnailGenerator, VideoPreviewGenerator,
+    },
     FileKind, Notification, ANIM_IMAGE_EXT, IMAGE_EXT, VIDEO_EXT,
 };
 
@@ -114,23 +116,14 @@ impl AriaCore {
                 // If preserving original, simply create a hard link to the original file
                 tokio::fs::hard_link(original_image_path, &emote_path).await?;
             } else {
-                match file_kind {
-                    FileKind::Image => {
-                        let mut tn_gen = ThumbnailGenerator::new(original_image_path);
-                        tn_gen.add(&emote_path, MAX_EMOTE_WIDTH, MAX_EMOTE_HEIGHT);
-                        tn_gen.generate().context("Error generating emote image")?;
-                    }
-                    FileKind::AnimatedImage => {
-                        let mut tn_gen = AnimatedThumbnailGenerator::new(original_image_path);
-                        tn_gen.add(&emote_path, MAX_EMOTE_WIDTH, MAX_EMOTE_HEIGHT);
-                        tn_gen.generate().context("Error generating animated emote image")?;
-                    }
-                    FileKind::Video => {
-                        let mut vp_gen = VideoPreviewGenerator::new(original_image_path);
-                        vp_gen.add(&emote_path, MAX_EMOTE_WIDTH, MAX_EMOTE_HEIGHT);
-                        vp_gen.generate().context("Error generating emote video")?;
-                    }
-                }
+                let mut tn_gen: Box<dyn ThumbnailGenerator> = match file_kind {
+                    FileKind::Image => Box::new(StaticThumbnailGenerator::new(original_image_path)),
+                    FileKind::AnimatedImage => Box::new(AnimatedThumbnailGenerator::new(original_image_path)),
+                    FileKind::Video => Box::new(VideoPreviewGenerator::new(original_image_path)),
+                };
+
+                tn_gen.add(&emote_path, MAX_EMOTE_WIDTH, MAX_EMOTE_HEIGHT);
+                tn_gen.generate().context("Error generating emote image")?;
             }
         }
 

@@ -6,8 +6,10 @@ use aria_store::{models as dbm, AriaStore};
 
 use super::AriaCore;
 use crate::{
-    file::ProcessFileResult, transform::dbm_post_to_lm, util::thumbnail::ThumbnailGenerator, FileKind, Notification,
-    IMAGE_EXT,
+    file::ProcessFileResult,
+    transform::dbm_post_to_lm,
+    util::thumbnail::{AnimatedThumbnailGenerator, StaticThumbnailGenerator, ThumbnailGenerator},
+    FileKind, Notification, ANIM_IMAGE_EXT, IMAGE_EXT,
 };
 
 pub struct GeneratePostImageResult<'a> {
@@ -17,6 +19,8 @@ pub struct GeneratePostImageResult<'a> {
 
 const MAX_IMAGE_WIDTH: u32 = 350;
 const MAX_IMAGE_HEIGHT: u32 = 350;
+const THUMBNAIL_WIDTH: u32 = 100;
+const THUMBNAIL_HEIGHT: u32 = 100;
 
 impl AriaCore {
     pub async fn get_recent_posts(&self, room_id: i32, count: i32) -> Result<Vec<lm::Post>, anyhow::Error> {
@@ -100,15 +104,33 @@ impl AriaCore {
         overwrite: bool,
     ) -> Result<GeneratePostImageResult<'a>, anyhow::Error> {
         let file_kind = self.identify_file(ext, original_image_path);
-        let preserve_original = file_kind == FileKind::AnimatedImage;
+
+        // Animated WebP can't be transcoded, as ffmpeg doesn't support decoding it
+        let preserve_original = file_kind == FileKind::AnimatedImage && ext == "webp";
 
         let ext = if preserve_original { ext } else { IMAGE_EXT };
-        let tn_ext = ext;
 
-        let mut tn_gen = ThumbnailGenerator::new(original_image_path);
+        let new_ext = if preserve_original {
+            ext
+        } else {
+            match file_kind {
+                FileKind::Image => IMAGE_EXT,
+                FileKind::AnimatedImage | FileKind::Video => ANIM_IMAGE_EXT,
+            }
+        };
 
-        let image_filename = format!("{hash}.{ext}");
+        let tn_ext = new_ext;
+
+        let image_filename = format!("{hash}.{new_ext}");
         let image_path = self.public_image_path.join(image_filename);
+
+        let thumbnail_filename = format!("{hash}.{tn_ext}");
+        let thumbnail_path = self.public_thumbnail_path.join(thumbnail_filename);
+
+        let mut tn_gen: Box<dyn ThumbnailGenerator> = match file_kind {
+            FileKind::Image => Box::new(StaticThumbnailGenerator::new(original_image_path)),
+            FileKind::AnimatedImage | FileKind::Video => Box::new(AnimatedThumbnailGenerator::new(original_image_path)),
+        };
 
         // If image does not already exist, create it.
         let image_exists = image_path.exists();
@@ -125,9 +147,6 @@ impl AriaCore {
             }
         }
 
-        let thumbnail_filename = format!("{hash}.{tn_ext}");
-        let thumbnail_path = self.public_thumbnail_path.join(thumbnail_filename);
-
         // If thumbnail does not already exist, create it.
         let thumbnail_exists = thumbnail_path.exists();
         if overwrite || !thumbnail_exists {
@@ -139,14 +158,14 @@ impl AriaCore {
                 // If preserving original, simply create a hard link to the original file
                 tokio::fs::hard_link(&original_image_path, &thumbnail_path).await?;
             } else {
-                tn_gen.add(&thumbnail_path, 100, 100);
+                tn_gen.add(&thumbnail_path, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT);
             }
         }
 
         tn_gen.generate().context("Error generating post image and thumbnail")?;
 
         Ok(GeneratePostImageResult {
-            ext: ext.into(),
+            ext: new_ext.into(),
             tn_ext: tn_ext.into(),
         })
     }

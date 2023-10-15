@@ -2,6 +2,8 @@ use std::{path::Path, process::Command};
 
 use anyhow::{anyhow, Context};
 
+use super::ThumbnailGenerator;
+
 #[derive(Debug)]
 struct PreviewSpec<'a> {
     dst_path: &'a Path,
@@ -22,9 +24,10 @@ impl<'a> VideoPreviewGenerator<'a> {
             previews: Vec::new(),
         }
     }
+}
 
-    /// Add preview spec to be generated
-    pub fn add(&mut self, dst_path: &'a Path, width: u32, height: u32) {
+impl<'a> ThumbnailGenerator<'a> for VideoPreviewGenerator<'a> {
+    fn add(&mut self, dst_path: &'a Path, width: u32, height: u32) {
         self.previews.push(PreviewSpec {
             dst_path,
             width,
@@ -32,8 +35,7 @@ impl<'a> VideoPreviewGenerator<'a> {
         });
     }
 
-    /// Generate previews
-    pub fn generate(self) -> Result<(), anyhow::Error> {
+    fn generate(&self) -> Result<(), anyhow::Error> {
         if self.previews.is_empty() {
             return Ok(());
         }

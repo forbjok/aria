@@ -2,6 +2,8 @@ use std::{cmp, path::Path};
 
 use anyhow::Context;
 
+use super::ThumbnailGenerator;
+
 #[derive(Debug)]
 struct ThumbnailSpec<'a> {
     dst_path: &'a Path,
@@ -10,21 +12,22 @@ struct ThumbnailSpec<'a> {
 }
 
 #[derive(Debug)]
-pub struct ThumbnailGenerator<'a> {
+pub struct StaticThumbnailGenerator<'a> {
     source: &'a Path,
     thumbnails: Vec<ThumbnailSpec<'a>>,
 }
 
-impl<'a> ThumbnailGenerator<'a> {
+impl<'a> StaticThumbnailGenerator<'a> {
     pub fn new(source: &'a Path) -> Self {
         Self {
             source,
             thumbnails: Vec::new(),
         }
     }
+}
 
-    /// Add thumbnail spec to be generated
-    pub fn add(&mut self, dst_path: &'a Path, width: u32, height: u32) {
+impl<'a> ThumbnailGenerator<'a> for StaticThumbnailGenerator<'a> {
+    fn add(&mut self, dst_path: &'a Path, width: u32, height: u32) {
         self.thumbnails.push(ThumbnailSpec {
             dst_path,
             width,
@@ -32,8 +35,7 @@ impl<'a> ThumbnailGenerator<'a> {
         });
     }
 
-    /// Generate thumbnails
-    pub fn generate(self) -> Result<(), anyhow::Error> {
+    fn generate(&self) -> Result<(), anyhow::Error> {
         if self.thumbnails.is_empty() {
             return Ok(());
         }
