@@ -72,7 +72,7 @@ watch(content, (value) => {
 });
 
 watch(serverPlaybackState, async (value) => {
-  if (roomStore.isMaster && isPlayerInteractedWith) {
+  if (roomStore.isMaster && isPlayerInteractedWith.value) {
     return;
   }
 
@@ -146,11 +146,10 @@ const activatePlayerStateCooldown = async () => {
 };
 
 const onPlay = async (auto: boolean) => {
-  if (!roomStore.isMaster || !isPlayerInteractedWith.value) {
+  if (!isPlayerInteractedWith.value) {
+    isPlayerInteractedWith.value = true;
     await setPlaybackState(roomStore.serverPlaybackState);
   }
-
-  isPlayerInteractedWith.value = true;
 
   if (auto) {
     return;
