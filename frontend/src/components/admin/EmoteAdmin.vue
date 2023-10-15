@@ -12,7 +12,7 @@ import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
 import Button from "@/components/common/Button.vue";
 import Dialog from "@/components/common/Dialog.vue";
 import Toolbar from "@/components/common/Toolbar.vue";
-import EmoteComponent from "@/components/common/Emote.vue";
+import Image from "@/components/common/Image.vue";
 
 const UPLOADING_TEXT = "Uploading...";
 
@@ -154,7 +154,7 @@ const submitEmote = async () => {
       <div class="emotes">
         <div v-for="e of emotes" :key="e.name" :value="e.name" class="emote" @click="showEmoteDetails(e)">
           <div class="emote-image">
-            <EmoteComponent class="image" :emote="e" />
+            <Image class="image" :src="e.url" />
           </div>
           <div class="caption">
             {{ e.name }}
@@ -171,7 +171,7 @@ const submitEmote = async () => {
       <div v-if="selectedEmote" class="emote-details">
         <div class="content">
           <div class="emote-image">
-            <EmoteComponent class="image" :emote="selectedEmote" />
+            <Image class="image" :src="selectedEmote.url" />
           </div>
           <div class="caption">
             {{ selectedEmote.name }}

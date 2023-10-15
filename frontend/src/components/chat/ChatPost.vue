@@ -2,6 +2,8 @@
 import { ref, toRefs } from "vue";
 import { format, isSameDay, isSameYear, parseJSON } from "date-fns";
 
+import Image from "@/components/common/Image.vue";
+
 import PostComment from "./PostComment.vue";
 
 import { useRoomStore } from "@/stores/room";
@@ -90,8 +92,8 @@ const formatTime = (value: string): string => {
     <div v-if="!post.isDeleted" class="post-body">
       <div v-if="post.image" class="post-image" :class="{ expanded: expandImage }">
         <a :href="post.image.url" @click.prevent="toggleExpandImage" target="_blank">
-          <img class="thumbnail" :src="post.image.tn_url" :title="post.image.filename" />
-          <img v-if="expandImage" class="expanded-image" :src="post.image.url" />
+          <Image class="thumbnail" :src="post.image.tn_url" :title="post.image.filename" />
+          <Image v-if="expandImage" class="expanded-image" :src="post.image.url" />
         </a>
         <div class="filename">{{ post.image.filename }}</div>
       </div>

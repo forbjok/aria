@@ -5,7 +5,7 @@ import { useRoomStore } from "@/stores/room";
 
 import type { Emote } from "@/models";
 
-import EmoteComponent from "@/components/common/Emote.vue";
+import Image from "@/components/common/Image.vue";
 
 const emit = defineEmits<{
   (e: "selectemote", name: string): void;
@@ -30,7 +30,7 @@ const selectEmote = (emote: Emote) => {
       <div class="emotes">
         <div v-for="e of emotes" :key="e.name" :value="e.name" class="emote">
           <div class="emote" :title="e.name" @click.stop="selectEmote(e)">
-            <EmoteComponent class="image" :emote="e" />
+            <Image class="image" :src="e.url" />
           </div>
         </div>
       </div>
