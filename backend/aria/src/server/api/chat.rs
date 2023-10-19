@@ -1,8 +1,8 @@
-use std::{net::SocketAddr, sync::Arc};
+use std::sync::Arc;
 
 use anyhow::Context;
 use axum::{
-    extract::{ConnectInfo, DefaultBodyLimit, Multipart, Path, State},
+    extract::{DefaultBodyLimit, Multipart, Path, State},
     handler::Handler,
     http::StatusCode,
     routing::{delete, post},
@@ -10,6 +10,7 @@ use axum::{
 };
 
 use aria_models::local as lm;
+use axum_client_ip::SecureClientIp;
 
 use crate::server::{
     api::{ApiError, Authorized, User},
@@ -35,7 +36,7 @@ async fn create_post(
     user: User,
     auth: Option<Authorized>,
     State(server): State<Arc<AriaServer>>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    SecureClientIp(ip): SecureClientIp,
     Path(room_id): Path<i32>,
     mut multipart: Multipart,
 ) -> Result<Json<i64>, ApiError> {
@@ -98,7 +99,7 @@ async fn create_post(
             .map(|v| v.into()),
         comment: comment.map(|v| v.into()),
         image,
-        ip: addr.ip(),
+        ip,
         user_id: user.id,
         admin,
     };

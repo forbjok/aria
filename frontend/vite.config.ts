@@ -17,6 +17,7 @@ export default defineConfig({
     proxy: {
       "/api/": {
         target: "http://localhost:3000",
+        xfwd: true,
       },
       "/f/": {
         target: "http://localhost:3000",
@@ -24,6 +25,7 @@ export default defineConfig({
       "/aria-ws": {
         target: "ws://localhost:3001",
         ws: true,
+        xfwd: true,
       },
     },
   },

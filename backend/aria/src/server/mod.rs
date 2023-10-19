@@ -1,9 +1,10 @@
 mod api;
 
-use std::{net::SocketAddr, sync::Arc};
+use std::sync::Arc;
 
 use aria_core::AriaCore;
 use axum::Router;
+use axum_client_ip::SecureClientIpSource;
 use futures::Future;
 use tower_http::services::ServeDir;
 use tracing::info;
@@ -44,13 +45,14 @@ impl AriaServer {
 
         let app = app
             .layer(tower_http::trace::TraceLayer::new_for_http())
+            .layer(SecureClientIpSource::RightmostXForwardedFor.into_extension())
             .with_state(server);
 
         let addr = "[::]:3000".parse().unwrap();
 
         info!("Web server listening on: {addr}");
         axum::Server::bind(&addr)
-            .serve(app.into_make_service_with_connect_info::<SocketAddr>())
+            .serve(app.into_make_service())
             .with_graceful_shutdown(shutdown)
             .await?;
 
