@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { defineAsyncComponent, onMounted, ref, toRefs, watch } from "vue";
-import { useRouter } from "vue-router";
+import { defineAsyncComponent, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 
 import Chat from "@/components/chat/Chat.vue";
@@ -22,18 +21,9 @@ const AdminPanel = defineAsyncComponent(() => import("@/components/admin/AdminPa
 
 const MAX_DIVERGENCE = 4;
 
-const props = defineProps<{
-  name: string;
-}>();
-
-const { name } = toRefs(props);
-
-const router = useRouter();
-
 const mainStore = useMainStore();
 const roomStore = useRoomStore();
 
-const isRoomLoaded = ref(false);
 const isContentLoaded = ref(false);
 const isDetached = ref(false);
 
@@ -55,16 +45,6 @@ let contentInfo: ContentInfo | undefined;
 let isMasterInitiatedPlay = false;
 let lastBufferDuration = 0;
 let bufferStartedAt: number | undefined;
-
-onMounted(async () => {
-  await roomStore.loadRoom(name.value);
-  if (!roomStore.exists) {
-    router.push({ name: "claim", params: { room: name.value } });
-    return;
-  }
-
-  isRoomLoaded.value = true;
-});
 
 const { content, serverPlaybackState } = storeToRefs(roomStore);
 watch(content, (value) => {
@@ -360,7 +340,12 @@ const toggleDetached = () => {
 </script>
 
 <template>
-  <div v-if="isRoomLoaded" ref="room" class="room" :class="{ 'right-side-chat': mainStore.settings.isRightSideChat }">
+  <div
+    v-if="roomStore.isLoaded"
+    ref="room"
+    class="room"
+    :class="{ 'right-side-chat': mainStore.settings.isRightSideChat }"
+  >
     <div v-if="isPlayerInteractedWith || !isContentLoaded" class="usercontrols-activationzone">
       <div class="usercontrols">
         <button class="usercontrol" title="Reload" @click="reloadContent">

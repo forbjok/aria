@@ -41,6 +41,9 @@ export interface PlaybackState {
 export const useRoomStore = defineStore("room", () => {
   const mainStore = useMainStore();
 
+  const isLoaded = ref(false);
+  const loadError = ref("");
+
   const name = ref<string>();
   const id = ref(0);
   const auth = ref<LoginResponse>();
@@ -105,9 +108,19 @@ export const useRoomStore = defineStore("room", () => {
       const res = await axios.get<Room>(`/api/r/room/${name.value}`);
 
       id.value = res.data.id;
-    } catch {
+
+      isLoaded.value = true;
+    } catch (_err: any) {
+      const err = _err as AxiosError;
+
+      if (err.response?.status === 404) return;
+
       name.value = undefined;
       id.value = 0;
+
+      isLoaded.value = false;
+      loadError.value = err.message;
+      return;
     }
 
     await loadRoomAuth();
@@ -354,6 +367,8 @@ export const useRoomStore = defineStore("room", () => {
   }
 
   return {
+    isLoaded,
+    loadError,
     name,
     id,
     exists,

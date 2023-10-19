@@ -4,6 +4,8 @@ import { RouterView } from "vue-router";
 
 import { useMainStore } from "@/stores/main";
 
+import Loading from "@/components/common/Loading.vue";
+
 const isInitialized = ref(false);
 const isLoading = ref(true);
 const errorMessage = ref<string>();
@@ -25,26 +27,7 @@ onBeforeMount(async () => {
 
 <template>
   <RouterView v-if="isInitialized" />
-  <div v-if="!isInitialized" class="loading">
-    <div v-show="isLoading" class="loading-text">LOADING</div>
-    <div v-show="errorMessage" class="error-text">{{ errorMessage }}</div>
-  </div>
+  <Loading v-if="!isInitialized" class="loading" :is-loading="isLoading" :error-message="errorMessage" />
 </template>
 
-<style scoped lang="scss">
-.loading {
-  font-size: 1.4rem;
-
-  padding: 2rem;
-
-  text-align: center;
-
-  .loading-text {
-    color: white;
-  }
-
-  .error-text {
-    color: red;
-  }
-}
-</style>
+<style scoped lang="scss"></style>

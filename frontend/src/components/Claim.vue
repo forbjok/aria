@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, toRefs } from "vue";
+import { ref, toRefs } from "vue";
 import { useRouter } from "vue-router";
 
 import { useRoomStore, type ClaimInfo } from "@/stores/room";
@@ -14,8 +14,6 @@ const router = useRouter();
 
 const roomStore = useRoomStore();
 
-const isRoomLoaded = ref(false);
-
 const claimInfo = ref<ClaimInfo>();
 const claimError = ref<string>();
 
@@ -28,23 +26,12 @@ const claim = async () => {
 };
 
 const enterRoom = () => {
-  router.push({ name: "room", params: { name: roomStore.name } });
+  router.push({ name: "room" });
 };
-
-onMounted(async () => {
-  await roomStore.loadRoom(room.value);
-
-  if (roomStore.exists) {
-    enterRoom();
-    return;
-  }
-
-  isRoomLoaded.value = true;
-});
 </script>
 
 <template>
-  <div v-if="isRoomLoaded" class="claim">
+  <div class="claim">
     <div v-if="!claimInfo" class="unclaimed">
       <p class="unclaimed-text">This room has not yet been claimed.</p>
       <button type="button" name="claim" class="claim-button" @click="claim">Claim</button>
