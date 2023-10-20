@@ -1,5 +1,4 @@
-import { defineConfig } from "npm:vite@^4.4.11";
-//import basicSsl from "npm:@vitejs/plugin-basic-ssl"; // Not working with Deno currently
+import { defineConfig } from "npm:vite@^4.5.0";
 import vue from "npm:@vitejs/plugin-vue@^4.4.0";
 import { fileURLToPath, URL } from "node:url";
 
@@ -25,11 +24,12 @@ export default defineConfig({
     },
   },
   server: {
-    https: true,
     proxy: {
       "/api/": {
         target: "http://localhost:3000",
-        xfwd: true,
+        headers: {
+          "X-Forwarded-For": "127.0.0.1",
+        },
       },
       "/f/": {
         target: "http://localhost:3000",
@@ -37,7 +37,6 @@ export default defineConfig({
       "/aria-ws": {
         target: "ws://localhost:3001",
         ws: true,
-        xfwd: true,
       },
     },
   },
