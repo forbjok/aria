@@ -4,5 +4,9 @@
     "build": "deno run -A --node-modules-dir npm:vite build",
     "preview": "deno run -A --node-modules-dir npm:vite preview",
     "serve": "deno run --allow-net --allow-read https://deno.land/std@0.157.0/http/file_server.ts dist/"
+  },
+  "imports": {
+    "@fortawesome/fontawesome-free": "npm:@fortawesome/fontawesome-free@^6.4.2",
+    "ress": "npm:ress@^5.0.2"
   }
 }
