@@ -3,6 +3,7 @@
   "packages": {
     "specifiers": {
       "npm:@fortawesome/fontawesome-free@^6.4.2": "npm:@fortawesome/fontawesome-free@6.4.2",
+      "npm:@types/node": "npm:@types/node@18.16.19",
       "npm:@vitejs/plugin-basic-ssl": "npm:@vitejs/plugin-basic-ssl@1.0.1_vite@4.5.0_sass@1.69.4",
       "npm:@vitejs/plugin-vue@^4.4.0": "npm:@vitejs/plugin-vue@4.4.0_vite@4.5.0_vue@3.3.6",
       "npm:@vueuse/core@^10.4.1": "npm:@vueuse/core@10.5.0_vue@3.3.6",
@@ -126,6 +127,10 @@
       },
       "@jridgewell/sourcemap-codec@1.4.15": {
         "integrity": "sha512-eF2rxCRulEKXHTRiDrDy6erMYWqNw4LPdQ8UQA4huuxaQsVeRPFl2oM8oDGxMFhJUWZf9McpLtJasDDZb/Bpeg==",
+        "dependencies": {}
+      },
+      "@types/node@18.16.19": {
+        "integrity": "sha512-IXl7o+R9iti9eBW4Wg2hx1xQDig183jj7YLn8F7udNceyfkbn1ZxmzZXuak20gR40D7pIkIY1kYGx5VIGbaHKA==",
         "dependencies": {}
       },
       "@types/web-bluetooth@0.0.18": {
