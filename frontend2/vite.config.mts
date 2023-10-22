@@ -2,17 +2,17 @@ import { defineConfig } from "npm:vite@^4.5.0";
 import vue from "npm:@vitejs/plugin-vue@^4.4.0";
 import { fileURLToPath, URL } from "node:url";
 
-import "npm:@fortawesome/fontawesome-free@^6.4.2";
-import "npm:@vueuse/core@^10.4.1";
-import "npm:axios@^1.5.1";
+import "@fortawesome/fontawesome-free";
+import "@vueuse/core";
+import "axios";
 import "npm:date-fns@^2.30.0";
 import "npm:filesize@^10.1.0";
 import "npm:parsimmon@^1.18.1";
-import "npm:pinia@^2.1.6";
-import "npm:sass@^1.69.0";
+import "pinia";
+import "sass";
 import "npm:video.js@^8.5.2";
-import "npm:vue@^3.3.4";
-import "npm:vue-router@4";
+import "vue";
+import "vue-router";
 import "npm:youtube-player@^5.6.0";
 
 // https://vitejs.dev/config/

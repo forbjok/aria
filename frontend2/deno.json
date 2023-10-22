@@ -8,7 +8,17 @@
   "imports": {
     "@/": "./src/",
     "@fortawesome/fontawesome-free": "npm:@fortawesome/fontawesome-free@^6.4.2",
-    "axios": "npm:axios",
-    "ress": "npm:ress@^5.0.2"
+    "@vueuse/core": "npm:@vueuse/core@^10.4.1",
+    "axios": "npm:axios@^1.5.1",
+    "date-fns": "npm:date-fns@^2.30.0",
+    "filesize": "npm:filesize@^10.1.0",
+    "parsimmon": "npm:parsimmon@^1.18.1",
+    "pinia": "npm:pinia@^2.1.6",
+    "ress": "npm:ress@^5.0.2",
+    "sass": "npm:sass@^1.69.0",
+    "video.js": "npm:video.js@^8.5.2",
+    "vue":  "npm:vue@^3.3.4",
+    "vue-router": "npm:vue-router@4",
+    "youtube-player": "npm:youtube-player@^5.6.0"
   }
 }
