@@ -23,6 +23,24 @@ impl RoomMembership {
         .await
     }
 
+    pub async fn send_emotes(&self, since_id: i32) -> Result<(), anyhow::Error> {
+        send_room_request(&self.tx, |result_tx| RoomRequest::SendEmotes {
+            connection_id: self.connection_id,
+            since_id,
+            result_tx,
+        })
+        .await
+    }
+
+    pub async fn send_recent_posts(&self, since_id: i64) -> Result<(), anyhow::Error> {
+        send_room_request(&self.tx, |result_tx| RoomRequest::SendRecentPosts {
+            connection_id: self.connection_id,
+            since_id,
+            result_tx,
+        })
+        .await
+    }
+
     pub async fn set_admin(&self) -> Result<(), anyhow::Error> {
         send_room_request(&self.tx, |result_tx| RoomRequest::SetAdmin {
             connection_id: self.connection_id,

@@ -27,6 +27,11 @@ struct JoinRequest {
     user: String,
 }
 
+#[derive(Debug, Deserialize)]
+struct GetSinceIdRequest<T> {
+    since: T,
+}
+
 pub(super) async fn handle_connection(
     id: ConnectionId,
     sv_state: Arc<ServerState>,
@@ -151,6 +156,20 @@ pub(super) async fn handle_connection(
                                                 .set_playback_state(ps)
                                                 .await
                                                 .context("setting playback state")?;
+                                        }
+                                    }
+                                    "get-emotes" => {
+                                        let req: GetSinceIdRequest<i32> = serde_json::from_str(data).context("Error deserializing request data")?;
+
+                                        if let Some(room) = cn_state.room.as_ref() {
+                                            room.send_emotes(req.since).await.context("getting emotes")?;
+                                        }
+                                    }
+                                    "get-recent-posts" => {
+                                        let req: GetSinceIdRequest<i64> = serde_json::from_str(data).context("Error deserializing request data")?;
+
+                                        if let Some(room) = cn_state.room.as_ref() {
+                                            room.send_recent_posts(req.since).await.context("getting recent posts")?;
                                         }
                                     }
                                     _ => {

@@ -282,6 +282,12 @@ export const useRoomStore = defineStore("room", () => {
   const ws_listener = ws.create_listener();
 
   ws_listener.on("joined", async () => {
+    const last_emote_id = Object.values(emotes.value)
+      .map((e) => e.id)
+      .reduce((p, c) => (c > p ? c : p), 0);
+
+    ws.send("get-emotes", { since: last_emote_id });
+
     if (isAuthorized.value) {
       await authorizeWebsocket();
     } else {
@@ -380,6 +386,7 @@ export const useRoomStore = defineStore("room", () => {
     serverPlaybackStateTimestamp,
     isConnected,
     isMaster,
+    ws,
     claimRoom,
     loadRoom,
     createWebsocketListener,

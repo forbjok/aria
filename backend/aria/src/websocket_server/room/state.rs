@@ -107,8 +107,6 @@ impl RoomState {
         send(&tx, "content", &self.content)?;
         send(&tx, "playbackstate", self.get_playback_state())?;
 
-        self.send_emotes(&tx)?;
-        self.send_recent_posts(&tx, user_id)?;
         send(&tx, "joined", ())?;
 
         Ok(())
@@ -119,19 +117,35 @@ impl RoomState {
         Ok(())
     }
 
-    pub fn send_recent_posts(&self, tx: &Tx, user_id: i64) -> Result<(), anyhow::Error> {
+    pub fn send_emotes(&self, connection_id: ConnectionId, since_id: i32) -> Result<(), anyhow::Error> {
+        let Some(member) = self.members.get(&connection_id) else {
+            return Err(anyhow::anyhow!("No member with connection ID {connection_id}!"));
+        };
+
+        let emotes: Vec<_> = self.emotes.iter().filter(|e| e.id > since_id).collect();
+        send(&member.tx, "emotes", emotes)?;
+
+        Ok(())
+    }
+
+    pub fn send_recent_posts(&self, connection_id: ConnectionId, since_id: i64) -> Result<(), anyhow::Error> {
+        let Some(member) = self.members.get(&connection_id) else {
+            return Err(anyhow::anyhow!("No member with connection ID {connection_id}!"));
+        };
+
         let posts: Vec<_> = self
             .posts
             .iter()
+            .filter(|p| p.id > since_id)
             .map(|p| {
                 let mut post = am::Post::from(p);
-                post.you = p.user_id == user_id;
+                post.you = p.user_id == member.user_id;
 
                 post
             })
             .collect();
 
-        send(tx, "oldposts", posts)?;
+        send(&member.tx, "oldposts", posts)?;
 
         Ok(())
     }
@@ -335,12 +349,6 @@ impl RoomState {
                 send(&m.tx, "content", content).map_err(|err| error!("{err:?}")).ok();
             }
         }
-
-        Ok(())
-    }
-
-    fn send_emotes(&self, tx: &Tx) -> Result<(), anyhow::Error> {
-        send(tx, "emotes", &self.emotes)?;
 
         Ok(())
     }

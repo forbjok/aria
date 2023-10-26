@@ -28,6 +28,16 @@ pub enum RoomRequest {
         user_id: i64,
         result_tx: RoomRequestTx<()>,
     },
+    SendEmotes {
+        connection_id: ConnectionId,
+        since_id: i32,
+        result_tx: RoomRequestTx<()>,
+    },
+    SendRecentPosts {
+        connection_id: ConnectionId,
+        since_id: i64,
+        result_tx: RoomRequestTx<()>,
+    },
     Leave {
         connection_id: ConnectionId,
         result_tx: RoomRequestTx<()>,
@@ -93,6 +103,14 @@ pub(super) async fn handle_room_requests(
                         result_tx.send(res).ok();
 
                         unload_at = None;
+                    }
+                    RoomRequest::SendEmotes { connection_id, since_id, result_tx } => {
+                        let res = state.send_emotes(connection_id, since_id);
+                        result_tx.send(res).ok();
+                    }
+                    RoomRequest::SendRecentPosts { connection_id, since_id, result_tx } => {
+                        let res = state.send_recent_posts(connection_id, since_id);
+                        result_tx.send(res).ok();
                     }
                     RoomRequest::Leave { connection_id, result_tx } => {
                         let res = state.leave(connection_id);

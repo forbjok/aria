@@ -148,7 +148,14 @@ export const useChatStore = defineStore("chat", () => {
     }, 1000);
   }
 
+  const ws = roomStore.ws;
   const ws_listener = roomStore.createWebsocketListener();
+
+  ws_listener.on("joined", async () => {
+    const last_post_id = posts.value[posts.value.length - 1]?.id || 0;
+
+    ws.send("get-recent-posts", { since: last_post_id });
+  });
 
   ws_listener.on("post", async (post: Post) => {
     const _posts = posts.value;
