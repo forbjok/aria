@@ -52,11 +52,11 @@ impl AriaConfig {
         let config_file_path = Self::path_from_location(path)?;
 
         if config_file_path.exists() {
-            let config = AriaConfig::from_file(&config_file_path)?;
+            let config = Self::from_file(&config_file_path)?;
 
             Ok(config)
         } else {
-            Ok(AriaConfig::load_default()?)
+            Ok(Self::load_default()?)
         }
     }
 
@@ -102,7 +102,7 @@ impl FromStr for AriaConfig {
     }
 }
 
-pub fn get_default_config_path() -> Option<PathBuf> {
+fn get_default_config_path() -> Option<PathBuf> {
     let config_path = env::var("ARIA_CONFIG_PATH")
         .ok()
         .map(PathBuf::from)
@@ -113,10 +113,4 @@ pub fn get_default_config_path() -> Option<PathBuf> {
     }
 
     config_path
-}
-
-pub fn generate_default_config() -> Result<(), anyhow::Error> {
-    AriaConfig::write_default()?;
-
-    Ok(())
 }
