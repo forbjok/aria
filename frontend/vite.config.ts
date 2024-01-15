@@ -13,7 +13,6 @@ export default defineConfig({
     },
   },
   server: {
-    https: true,
     proxy: {
       "/api/": {
         target: "http://localhost:3000",

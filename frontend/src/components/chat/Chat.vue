@@ -34,8 +34,8 @@ const postingProgress = computed(() =>
       ? `${chatStore.postingProgress}%`
       : "Posting..."
     : chatStore.postingError
-    ? chatStore.postingError
-    : undefined,
+      ? chatStore.postingError
+      : undefined,
 );
 
 const postingCooldownText = computed(() => {
