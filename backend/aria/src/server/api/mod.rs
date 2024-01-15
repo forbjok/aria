@@ -8,11 +8,14 @@ use std::sync::Arc;
 
 use axum::{
     async_trait,
-    extract::{FromRequestParts, TypedHeader},
-    headers::{authorization::Bearer, Authorization},
+    extract::FromRequestParts,
     http::{request::Parts, StatusCode},
     response::{IntoResponse, Response},
     Router,
+};
+use axum_extra::{
+    headers::{authorization::Bearer, Authorization},
+    TypedHeader,
 };
 use thiserror::Error;
 use tracing::error;

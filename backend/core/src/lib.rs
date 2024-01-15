@@ -18,10 +18,8 @@ mod transform;
 mod user;
 mod util;
 
-pub use self::emote::*;
 pub use self::file::*;
 pub use self::post::*;
-pub use self::room::*;
 
 use self::config::AriaConfig;
 
