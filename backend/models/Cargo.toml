@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 aria_shared = { path = "../shared" }
-chrono = { version = "0.4.38", features = ["serde"] }
-serde = "1.0.203"
-serde_derive = "1.0.203"
-uuid = "1.8.0"
+chrono = { workspace = true, features = ["serde"] }
+serde = { workspace = true }
+serde_derive = { workspace = true }
+uuid = { workspace = true }
