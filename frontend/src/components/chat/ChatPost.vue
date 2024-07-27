@@ -215,6 +215,9 @@ button {
 .post {
   background-color: var(--color-post-background);
 
+  overflow: hidden;
+  padding: 5px;
+
   &:nth-child(odd) {
     background-color: var(--color-post-alt-background);
   }
@@ -222,9 +225,6 @@ button {
   &.highlight {
     background-color: var(--color-post-highlight-background);
   }
-
-  overflow: hidden;
-  padding: 5px;
 
   &:hover {
     .action-button {
