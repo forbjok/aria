@@ -12,7 +12,7 @@ interface NewUserResponse {
 }
 
 export const useMainStore = defineStore("main", () => {
-  const settings = useStorage<Settings>("aria_settings", DEFAULT_SETTINGS);
+  const settings = useStorage<Settings>("aria_settings", DEFAULT_SETTINGS, undefined, { mergeDefaults: true });
   let userToken: string | null;
 
   const sysConfig = ref<SysConfig>();
