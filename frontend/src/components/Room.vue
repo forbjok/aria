@@ -604,8 +604,8 @@ const toggleDetached = () => {
 
   .toast-chat-container {
     position: absolute;
-    left: 10px;
-    bottom: 50px;
+    left: 3vmin;
+    bottom: 3vmin;
 
     width: 350px;
 
