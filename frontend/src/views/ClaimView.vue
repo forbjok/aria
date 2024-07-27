@@ -37,11 +37,15 @@ onBeforeMount(async () => {
     isLoading.value = false;
   }
 });
+
+const enter = (room: string) => {
+  router.push({ name: "room", params: { name: room } });
+};
 </script>
 
 <template>
   <main>
-    <Claim v-if="isLoaded" :room="room" class="claim" />
+    <Claim v-if="isLoaded" :room="room" @enter="enter" class="claim" />
     <Loading v-if="!isLoaded" class="loading" :is-loading="isLoading" :error-message="roomStore.loadError" />
   </main>
 </template>

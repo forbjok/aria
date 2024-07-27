@@ -8,6 +8,10 @@ const props = defineProps<{
   room: string;
 }>();
 
+const emit = defineEmits<{
+  (e: "enter", room: string): void;
+}>();
+
 const { room } = toRefs(props);
 
 const router = useRouter();
@@ -26,7 +30,7 @@ const claim = async () => {
 };
 
 const enterRoom = () => {
-  router.push({ name: "room" });
+  emit("enter", room.value);
 };
 </script>
 
