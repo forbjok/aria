@@ -14,7 +14,7 @@ const mainStore = useMainStore();
 
 onBeforeMount(async () => {
   try {
-    await mainStore.initialize();
+    await mainStore.isInitialized();
 
     isInitialized.value = true;
   } catch (err) {

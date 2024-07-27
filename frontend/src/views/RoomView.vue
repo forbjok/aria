@@ -23,6 +23,8 @@ const isLoading = ref(true);
 
 onBeforeMount(async () => {
   try {
+    await roomStore.isInitialized();
+
     await roomStore.loadRoom(name.value);
     if (roomStore.loadError) return;
 

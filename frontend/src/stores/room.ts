@@ -67,6 +67,8 @@ export const useRoomStore = defineStore("room", () => {
 
   const emotes = ref<Record<string, Emote>>({});
 
+  var ws: AriaWebSocket = undefined!; // Will be set in initialize()
+
   watch(auth, (value) => {
     if (!authKey.value) {
       return;
@@ -259,74 +261,6 @@ export const useRoomStore = defineStore("room", () => {
     });
   }
 
-  const ws_protocol = window.location.protocol === "https:" ? "wss" : "ws";
-  const ws_url = `${ws_protocol}://${window.location.host}/aria-ws`;
-
-  const ws = new AriaWebSocket(
-    ws_url,
-    async () => {
-      isConnected.value = true;
-
-      ws.send("join", { room: name.value, user: await mainStore.getUser() });
-    },
-    async () => {
-      isConnected.value = false;
-      isMaster.value = false;
-    },
-  );
-
-  async function authorizeWebsocket() {
-    ws.send("auth", await getAccessToken());
-  }
-
-  const ws_listener = ws.create_listener();
-
-  ws_listener.on("joined", async () => {
-    const last_emote_id = Object.values(emotes.value)
-      .map((e) => e.id)
-      .reduce((p, c) => (c > p ? c : p), 0);
-
-    ws.send("get-emotes", { since: last_emote_id });
-
-    if (isAuthorized.value) {
-      await authorizeWebsocket();
-    } else {
-      const unwatch = watch(isAuthorized, async () => {
-        await authorizeWebsocket();
-        unwatch();
-      });
-    }
-  });
-
-  ws_listener.on("emotes", async (_emotes: Emote[]) => {
-    for (const e of _emotes) {
-      emotes.value[e.name] = e;
-    }
-  });
-
-  ws_listener.on("emote", async (emote: Emote) => {
-    emotes.value[emote.name] = emote;
-  });
-
-  ws_listener.on("delete-emote", async (name: string) => {
-    delete emotes.value[name];
-  });
-
-  ws_listener.on("content", async (_content: Content) => {
-    content.value = _content;
-  });
-
-  ws_listener.on("not-master", () => {
-    isMaster.value = false;
-  });
-
-  ws_listener.on("playbackstate", async (ps: PlaybackState) => {
-    serverPlaybackStateTimestamp.value = getTimestamp();
-
-    ps.time += ws.latency * ps.rate;
-    serverPlaybackState.value = ps;
-  });
-
   function createWebsocketListener() {
     return ws.create_listener();
   }
@@ -372,6 +306,82 @@ export const useRoomStore = defineStore("room", () => {
     });
   }
 
+  async function initialize() {
+    const ws_protocol = window.location.protocol === "https:" ? "wss" : "ws";
+    const ws_url = `${ws_protocol}://${window.location.host}/aria-ws`;
+
+    ws = new AriaWebSocket(
+      ws_url,
+      async () => {
+        isConnected.value = true;
+
+        ws.send("join", { room: name.value, user: await mainStore.getUser() });
+      },
+      async () => {
+        isConnected.value = false;
+        isMaster.value = false;
+      },
+    );
+
+    async function authorizeWebsocket() {
+      ws.send("auth", await getAccessToken());
+    }
+
+    const ws_listener = ws.create_listener();
+
+    ws_listener.on("joined", async () => {
+      const last_emote_id = Object.values(emotes.value)
+        .map((e) => e.id)
+        .reduce((p, c) => (c > p ? c : p), 0);
+
+      ws.send("get-emotes", { since: last_emote_id });
+
+      if (isAuthorized.value) {
+        await authorizeWebsocket();
+      } else {
+        const unwatch = watch(isAuthorized, async () => {
+          await authorizeWebsocket();
+          unwatch();
+        });
+      }
+    });
+
+    ws_listener.on("emotes", async (_emotes: Emote[]) => {
+      for (const e of _emotes) {
+        emotes.value[e.name] = e;
+      }
+    });
+
+    ws_listener.on("emote", async (emote: Emote) => {
+      emotes.value[emote.name] = emote;
+    });
+
+    ws_listener.on("delete-emote", async (name: string) => {
+      delete emotes.value[name];
+    });
+
+    ws_listener.on("content", async (_content: Content) => {
+      content.value = _content;
+    });
+
+    ws_listener.on("not-master", () => {
+      isMaster.value = false;
+    });
+
+    ws_listener.on("playbackstate", async (ps: PlaybackState) => {
+      serverPlaybackStateTimestamp.value = getTimestamp();
+
+      ps.time += ws.latency * ps.rate;
+      serverPlaybackState.value = ps;
+    });
+  }
+
+  const initializePromise = initialize();
+
+  async function isInitialized() {
+    await initializePromise;
+  }
+
   return {
     isLoaded,
     loadError,
@@ -398,5 +408,6 @@ export const useRoomStore = defineStore("room", () => {
     setContent,
     broadcastPlaybackState,
     setMaster,
+    isInitialized,
   };
 });

@@ -148,51 +148,61 @@ export const useChatStore = defineStore("chat", () => {
     }, 1000);
   }
 
-  const ws = roomStore.ws;
-  const ws_listener = roomStore.createWebsocketListener();
+  async function initialize() {
+    await roomStore.isInitialized();
 
-  ws_listener.on("joined", async () => {
-    const last_post_id = posts.value[posts.value.length - 1]?.id || 0;
+    const ws = roomStore.ws;
+    const ws_listener = roomStore.createWebsocketListener();
 
-    ws.send("get-recent-posts", { since: last_post_id });
-  });
+    ws_listener.on("joined", async () => {
+      const last_post_id = posts.value[posts.value.length - 1]?.id || 0;
 
-  ws_listener.on("post", async (post: Post) => {
-    const _posts = posts.value;
-    if (_posts.length >= MAX_POSTS) {
-      _posts.splice(0, 2);
-    }
+      ws.send("get-recent-posts", { since: last_post_id });
+    });
 
-    _posts.push(post);
+    ws_listener.on("post", async (post: Post) => {
+      const _posts = posts.value;
+      if (_posts.length >= MAX_POSTS) {
+        _posts.splice(0, 2);
+      }
 
-    recentPosts.value.push(post);
+      _posts.push(post);
 
-    await delay(4000);
-    recentPosts.value.shift();
-  });
+      recentPosts.value.push(post);
 
-  ws_listener.on("delete-post", (postId: number) => {
-    const _posts = posts.value;
-    const post = _posts.find((p) => p.id === postId);
-    if (!post) {
-      return;
-    }
+      await delay(4000);
+      recentPosts.value.shift();
+    });
 
-    post.isDeleted = true;
-  });
+    ws_listener.on("delete-post", (postId: number) => {
+      const _posts = posts.value;
+      const post = _posts.find((p) => p.id === postId);
+      if (!post) {
+        return;
+      }
 
-  ws_listener.on("oldposts", (__posts: Post[]) => {
-    const _posts = posts.value;
-    let newPosts: Post[];
-    if (_posts.length > 0) {
-      const lastPost = _posts[_posts.length - 1];
-      newPosts = __posts.filter((p) => p.id > lastPost.id);
-    } else {
-      newPosts = __posts;
-    }
+      post.isDeleted = true;
+    });
 
-    _posts.push(...newPosts);
-  });
+    ws_listener.on("oldposts", (__posts: Post[]) => {
+      const _posts = posts.value;
+      let newPosts: Post[];
+      if (_posts.length > 0) {
+        const lastPost = _posts[_posts.length - 1];
+        newPosts = __posts.filter((p) => p.id > lastPost.id);
+      } else {
+        newPosts = __posts;
+      }
+
+      _posts.push(...newPosts);
+    });
+  }
+
+  const initializePromise = initialize();
+
+  async function isInitialized() {
+    await initializePromise;
+  }
 
   return {
     posts,
@@ -206,5 +216,6 @@ export const useChatStore = defineStore("chat", () => {
     submitOnCooldown,
     clearNewPost,
     submitPost,
+    isInitialized,
   };
 });

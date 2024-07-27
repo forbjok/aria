@@ -17,7 +17,7 @@ export const useMainStore = defineStore("main", () => {
 
   const sysConfig = ref<SysConfig>();
 
-  async function initialize() {
+  async function fetchSysConfig() {
     const res = await axios.get<SysConfig>("/api/sys/config");
 
     sysConfig.value = res.data;
@@ -53,10 +53,20 @@ export const useMainStore = defineStore("main", () => {
     return userToken;
   }
 
+  async function initialize() {
+    await fetchSysConfig();
+  }
+
+  const initializePromise = initialize();
+
+  async function isInitialized() {
+    await initializePromise;
+  }
+
   return {
     sysConfig,
     settings,
-    initialize,
     getUser,
+    isInitialized,
   };
 });
