@@ -155,16 +155,8 @@ const confirmDeletePost = async (post: Post) => {
   <div class="chat">
     <div class="chat-posts">
       <div ref="postContainer" class="post-container">
-        <ChatPost
-          :post="post"
-          v-for="post of chatStore.posts"
-          :key="post.id"
-          :highlight="highlightedPost === post.id"
-          :actions="true"
-          @quotepost="quotePost"
-          @clickquotelink="highlightPost"
-          @delete="confirmDeletePost(post)"
-        />
+        <ChatPost :post="post" v-for="post of chatStore.posts" :key="post.id" :highlight="highlightedPost === post.id"
+          :actions="true" @quotepost="quotePost" @clickquotelink="highlightPost" @delete="confirmDeletePost(post)" />
       </div>
     </div>
     <div ref="chatControls" class="chat-controls">
@@ -172,96 +164,55 @@ const confirmDeletePost = async (post: Post) => {
       <form ref="postForm" @submit.prevent="submitPost">
         <div v-if="!useCompactPostForm">
           <table class="chat-controls-table">
-            <tr>
-              <td>
-                <input
-                  name="name"
-                  type="text"
-                  v-model="chatStore.newPost.name"
-                  placeholder="Anonymous"
-                  :readonly="chatStore.posting"
-                />
-                <div class="badges">
-                  <button
-                    v-if="roomStore.isAuthorized"
-                    class="admin badge"
-                    :class="{ off: !roomStore.settings.postBadges.room_admin }"
-                    @click.prevent="
-                      roomStore.settings.postBadges.room_admin = !roomStore.settings.postBadges.room_admin
-                    "
-                    title="Room Admin"
-                  >
-                    <i class="fa-solid fa-star"></i>
+            <tbody>
+              <tr>
+                <td>
+                  <input name="name" type="text" v-model="chatStore.newPost.name" placeholder="Anonymous"
+                    :readonly="chatStore.posting" />
+                  <div class="badges">
+                    <button v-if="roomStore.isAuthorized" class="admin badge"
+                      :class="{ off: !roomStore.settings.postBadges.room_admin }" @click.prevent="
+                        roomStore.settings.postBadges.room_admin = !roomStore.settings.postBadges.room_admin
+                        " title="Room Admin">
+                      <i class="fa-solid fa-star"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <textarea ref="commentField" name="comment" v-model="chatStore.newPost.comment" placeholder="Comment"
+                    maxlength="600" class="comment-field" wrap="soft" :readonly="chatStore.posting"
+                    @keydown="submitOnEnterKeydown" autofocus></textarea>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <input ref="imageFileInput" name="image" type="file" accept="image/*" @change="imageSelected"
+                    :disabled="chatStore.posting" @keydown="submitOnEnterKeydown" @click="clearFileOnShiftClick" />
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <button class="post-button" type="submit" :disabled="!chatStore.canSubmitPost">
+                    {{ postingCooldownText || "Post" }}
                   </button>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <textarea
-                  ref="commentField"
-                  name="comment"
-                  v-model="chatStore.newPost.comment"
-                  placeholder="Comment"
-                  maxlength="600"
-                  class="comment-field"
-                  wrap="soft"
-                  :readonly="chatStore.posting"
-                  @keydown="submitOnEnterKeydown"
-                  autofocus
-                ></textarea>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <input
-                  ref="imageFileInput"
-                  name="image"
-                  type="file"
-                  accept="image/*"
-                  @change="imageSelected"
-                  :disabled="chatStore.posting"
-                  @keydown="submitOnEnterKeydown"
-                  @click="clearFileOnShiftClick"
-                />
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <button class="post-button" type="submit" :disabled="!chatStore.canSubmitPost">
-                  {{ postingCooldownText || "Post" }}
-                </button>
-                <span class="progress">{{ postingProgress }}</span>
-              </td>
-            </tr>
+                  <span class="progress">{{ postingProgress }}</span>
+                </td>
+              </tr>
+            </tbody>
           </table>
         </div>
         <div v-if="useCompactPostForm" class="chat-controls-table">
-          <textarea
-            ref="commentField"
-            name="comment"
-            v-model="chatStore.newPost.comment"
-            placeholder="Comment"
-            maxlength="600"
-            class="comment-field"
-            wrap="soft"
-            :readonly="chatStore.posting"
-            @keydown="submitOnEnterKeydown($event)"
-            autofocus
-          ></textarea>
+          <textarea ref="commentField" name="comment" v-model="chatStore.newPost.comment" placeholder="Comment"
+            maxlength="600" class="comment-field" wrap="soft" :readonly="chatStore.posting"
+            @keydown="submitOnEnterKeydown($event)" autofocus></textarea>
           <button class="post-button" type="submit" :disabled="!chatStore.canSubmitPost">
             {{ postingCooldownText || postingProgress || "Post" }}
           </button>
-          <input
-            ref="imageFileInput"
-            name="image"
-            type="file"
-            accept="image/*"
-            @change="imageSelected($event)"
-            :disabled="chatStore.posting"
-            @keydown="submitOnEnterKeydown($event)"
-            @click="clearFileOnShiftClick($event)"
-          />
+          <input ref="imageFileInput" name="image" type="file" accept="image/*" @change="imageSelected($event)"
+            :disabled="chatStore.posting" @keydown="submitOnEnterKeydown($event)"
+            @click="clearFileOnShiftClick($event)" />
         </div>
       </form>
       <div class="options">
@@ -271,12 +222,8 @@ const confirmDeletePost = async (post: Post) => {
         <select v-if="!useCompactPostForm" class="theme-selector" v-model="mainStore.settings.theme">
           <option v-for="theme of themes" :key="theme.name" :value="theme.name">{{ theme.description }}</option>
         </select>
-        <button
-          type="button"
-          class="toggle-compact-button"
-          title="Toggle compact post form"
-          @click="toggleCompactPostForm"
-        >
+        <button type="button" class="toggle-compact-button" title="Toggle compact post form"
+          @click="toggleCompactPostForm">
           <span class="fa" :class="useCompactPostForm ? 'fa-caret-up' : 'fa-caret-down'"></span>
         </button>
       </div>
