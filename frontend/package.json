@@ -10,31 +10,31 @@
     "preview": "rsbuild preview"
   },
   "dependencies": {
-    "@fortawesome/fontawesome-free": "^6.6.0",
-    "@fortawesome/free-regular-svg-icons": "^6.6.0",
-    "@fortawesome/free-solid-svg-icons": "^6.6.0",
-    "@vueuse/core": "^11.1.0",
-    "axios": "^1.7.7",
+    "@fortawesome/fontawesome-free": "^6.7.2",
+    "@fortawesome/free-regular-svg-icons": "^6.7.2",
+    "@fortawesome/free-solid-svg-icons": "^6.7.2",
+    "@vueuse/core": "^12.4.0",
+    "axios": "^1.7.9",
     "date-fns": "^4.1.0",
     "filesize": "^10.1.6",
     "parsimmon": "^1.18.1",
-    "pinia": "^2.2.2",
+    "pinia": "^2.3.0",
     "ress": "^5.0.2",
-    "video.js": "^8.17.4",
-    "vue": "^3.5.8",
-    "vue-router": "^4.4.5",
+    "video.js": "^8.21.0",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0",
     "youtube-player": "^5.6.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.2",
-    "@rsbuild/core": "1.0.7",
+    "@biomejs/biome": "^1.9.4",
+    "@rsbuild/core": "1.1.13",
     "@rsbuild/plugin-basic-ssl": "^1.1.1",
-    "@rsbuild/plugin-sass": "1.0.1",
-    "@rsbuild/plugin-vue": "1.0.1",
-    "@types/node": "^22.7.0",
+    "@rsbuild/plugin-sass": "1.1.2",
+    "@rsbuild/plugin-vue": "1.0.5",
+    "@types/node": "^22.10.7",
     "@types/parsimmon": "^1.10.9",
     "@types/video.js": "^7.3.58",
     "@types/youtube-player": "^5.5.11",
-    "typescript": "^5.6.2"
+    "typescript": "^5.7.3"
   }
 }
