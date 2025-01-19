@@ -82,11 +82,11 @@ impl AriaCore {
     }
 
     /// Generate image and thumbnail
-    pub async fn generate_emote_image<'a>(
+    pub async fn generate_emote_image(
         &self,
         original_image_path: &Path,
         hash: &str,
-        ext: &'a str,
+        ext: &str,
         overwrite: bool,
     ) -> Result<String, anyhow::Error> {
         let file_kind = self.identify_file(ext, original_image_path);

@@ -7,11 +7,10 @@ mod user;
 use std::sync::Arc;
 
 use axum::{
-    async_trait,
-    extract::FromRequestParts,
+    extract::{FromRequestParts, OptionalFromRequestParts},
     http::{request::Parts, StatusCode},
     response::{IntoResponse, Response},
-    Router,
+    RequestPartsExt, Router,
 };
 use axum_extra::{
     headers::{authorization::Bearer, Authorization},
@@ -93,25 +92,28 @@ impl IntoResponse for ApiError {
     }
 }
 
-#[async_trait]
-impl FromRequestParts<Arc<AriaServer>> for Authorized {
+impl OptionalFromRequestParts<Arc<AriaServer>> for Authorized {
     type Rejection = AuthError;
 
-    async fn from_request_parts(parts: &mut Parts, state: &Arc<AriaServer>) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(parts: &mut Parts, state: &Arc<AriaServer>) -> Result<Option<Self>, Self::Rejection> {
         // Extract the token from the authorization header
-        let TypedHeader(Authorization(bearer)) = TypedHeader::<Authorization<Bearer>>::from_request_parts(parts, state)
+        let auth_header = parts
+            .extract::<Option<TypedHeader<Authorization<Bearer>>>>()
             .await
             .map_err(|_| AuthError::InvalidToken)?;
+
+        let Some(TypedHeader(Authorization(bearer))) = auth_header else {
+            return Ok(None);
+        };
 
         let token = bearer.token();
 
         let claims = state.auth.verify::<AuthClaims>(token)?;
 
-        Ok(Authorized { claims })
+        Ok(Some(Authorized { claims }))
     }
 }
 
-#[async_trait]
 impl FromRequestParts<Arc<AriaServer>> for User {
     type Rejection = StatusCode;
 

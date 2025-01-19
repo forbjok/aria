@@ -11,6 +11,7 @@ use tokio::{
 
 const BUFFER_SIZE: usize = 65536;
 
+#[allow(dead_code)]
 pub struct HashResult {
     pub hash: String,
     pub size: usize,

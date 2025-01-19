@@ -34,10 +34,10 @@ struct SetContentRequest {
 
 pub fn router() -> Router<Arc<AriaServer>> {
     Router::new()
-        .route("/room/:name", get(get_room))
+        .route("/room/{name}", get(get_room))
         .route("/claim", post(claim))
-        .route("/i/:room_id/loggedin", post(logged_in))
-        .route("/i/:room_id/setcontent", post(set_content))
+        .route("/i/{room_id}/loggedin", post(logged_in))
+        .route("/i/{room_id}/setcontent", post(set_content))
 }
 
 #[axum::debug_handler(state = Arc<AriaServer>)]
@@ -80,7 +80,11 @@ async fn claim(
 }
 
 #[axum::debug_handler(state = Arc<AriaServer>)]
-async fn logged_in(auth: Authorized, Path(room_id): Path<i32>) -> Result<(), ApiError> {
+async fn logged_in(auth: Option<Authorized>, Path(room_id): Path<i32>) -> Result<(), ApiError> {
+    let Some(auth) = auth else {
+        return Err(ApiError::Unauthorized);
+    };
+
     if auth.for_room(room_id) {
         return Ok(());
     }
@@ -90,11 +94,15 @@ async fn logged_in(auth: Authorized, Path(room_id): Path<i32>) -> Result<(), Api
 
 #[axum::debug_handler(state = Arc<AriaServer>)]
 async fn set_content(
-    auth: Authorized,
+    auth: Option<Authorized>,
     State(server): State<Arc<AriaServer>>,
     Path(room_id): Path<i32>,
     Json(req): Json<SetContentRequest>,
 ) -> Result<(), ApiError> {
+    let Some(auth) = auth else {
+        return Err(ApiError::Unauthorized);
+    };
+
     if !auth.for_room(room_id) {
         return Err(ApiError::Unauthorized);
     }

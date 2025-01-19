@@ -78,7 +78,7 @@ pub async fn run_server(auth: Arc<AriaAuth>, core: Arc<AriaCore>, shutdown: impl
 }
 
 fn send_raw(tx: &Tx, msg: &str, data: &str) -> Result<(), anyhow::Error> {
-    let msg = Message::Text(format!("{msg}|{data}"));
+    let msg = Message::Text(format!("{msg}|{data}").into());
     tx.unbounded_send(msg)?;
 
     Ok(())
