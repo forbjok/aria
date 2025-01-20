@@ -8,11 +8,9 @@ import Toolbar from "@/components/common/Toolbar.vue";
 import Player from "./Player.vue";
 
 import { useRoomStore } from "@/stores/room";
-import { ContentKind, getContentInfo, type ContentInfo } from "@/utils/content";
+import { type ContentInfo, ContentKind, getContentInfo } from "@/utils/content";
 
-const emit = defineEmits<{
-  (e: "set-content", url: string): void;
-}>();
+const emit = defineEmits<(e: "set-content", url: string) => void>();
 
 const roomStore = useRoomStore();
 

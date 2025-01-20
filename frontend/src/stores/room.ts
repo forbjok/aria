@@ -1,14 +1,14 @@
-import { ref, computed, watch } from "vue";
-import { defineStore } from "pinia";
 import axios, { AxiosError, type AxiosProgressEvent, type RawAxiosRequestHeaders } from "axios";
+import { defineStore } from "pinia";
+import { computed, ref, watch } from "vue";
 
 import { useMainStore } from "./main";
 
-import { DEFAULT_ROOM_SETTINGS, type RoomSettings } from "@/settings";
 import type { Content, Emote, Room } from "@/models";
 import { AriaWebSocket } from "@/services/websocket";
-import { getTimestamp } from "@/utils/timestamp";
+import { DEFAULT_ROOM_SETTINGS, type RoomSettings } from "@/settings";
 import { tryParseJson } from "@/utils/json";
+import { getTimestamp } from "@/utils/timestamp";
 
 export interface ClaimRequest {
   name: string;
@@ -67,7 +67,7 @@ export const useRoomStore = defineStore("room", () => {
 
   const emotes = ref<Record<string, Emote>>({});
 
-  var ws: AriaWebSocket = undefined!; // Will be set in initialize()
+  let ws: AriaWebSocket = undefined!; // Will be set in initialize()
 
   watch(auth, (value) => {
     if (!authKey.value) {
@@ -91,7 +91,7 @@ export const useRoomStore = defineStore("room", () => {
 
   async function claimRoom(_name: string) {
     const req: ClaimRequest = { name: _name };
-    const res = await axios.post<ClaimInfo>(`/api/r/claim`, req);
+    const res = await axios.post<ClaimInfo>("/api/r/claim", req);
     const data = await res.data;
 
     name.value = data.name;
@@ -181,7 +181,7 @@ export const useRoomStore = defineStore("room", () => {
     };
 
     try {
-      const response = await axios.post<LoginResponse>(`/api/auth/refresh`, data);
+      const response = await axios.post<LoginResponse>("/api/auth/refresh", data);
       auth.value = response.data;
     } catch (e) {
       // If refresh request returns unauthorized, clear auth info.
@@ -228,7 +228,7 @@ export const useRoomStore = defineStore("room", () => {
     };
 
     try {
-      const response = await axios.post<LoginResponse>(`/api/auth/login`, data);
+      const response = await axios.post<LoginResponse>("/api/auth/login", data);
       auth.value = response.data;
 
       return true;

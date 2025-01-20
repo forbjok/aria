@@ -7,9 +7,7 @@ import type { Emote } from "@/models";
 
 import Image from "@/components/common/Image.vue";
 
-const emit = defineEmits<{
-  (e: "selectemote", name: string): void;
-}>();
+const emit = defineEmits<(e: "selectemote", name: string) => void>();
 
 const roomStore = useRoomStore();
 

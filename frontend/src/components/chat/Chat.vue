@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
 import { filesize } from "filesize";
+import { computed, ref, watch } from "vue";
 
+import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
 import ChatPost from "./ChatPost.vue";
 import EmoteSelector from "./EmoteSelector.vue";
-import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
 
 import type { Post } from "@/models";
 
+import { useChatStore } from "@/stores/chat";
 import { useMainStore } from "@/stores/main";
 import { useRoomStore } from "@/stores/room";
-import { useChatStore } from "@/stores/chat";
 
 const mainStore = useMainStore();
 const roomStore = useRoomStore();

@@ -3,9 +3,7 @@ import { ref } from "vue";
 
 import { useRoomStore } from "@/stores/room";
 
-const emit = defineEmits<{
-  (e: "logged-in"): void;
-}>();
+const emit = defineEmits<(e: "logged-in") => void>();
 
 const roomStore = useRoomStore();
 

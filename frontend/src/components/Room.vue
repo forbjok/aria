@@ -1,21 +1,21 @@
 <script setup lang="ts">
-import { defineAsyncComponent, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
+import { defineAsyncComponent, ref, watch } from "vue";
 
+import LogIn from "@/components/admin/LogIn.vue";
 import Chat from "@/components/chat/Chat.vue";
 import ToastChat from "@/components/chat/ToastChat.vue";
-import Player from "./Player.vue";
 import Dialog from "@/components/common/Dialog.vue";
-import LogIn from "@/components/admin/LogIn.vue";
+import Player from "./Player.vue";
 import RoomControls from "./RoomControls.vue";
 
 import { useMainStore } from "@/stores/main";
-import { useRoomStore, type PlaybackState } from "@/stores/room";
+import { type PlaybackState, useRoomStore } from "@/stores/room";
 
 import type { Content } from "@/models";
-import { getTimestamp } from "@/utils/timestamp";
-import { ContentKind, getContentInfo, type ContentInfo } from "@/utils/content";
+import { type ContentInfo, ContentKind, getContentInfo } from "@/utils/content";
 import { delay } from "@/utils/delay";
+import { getTimestamp } from "@/utils/timestamp";
 
 const AdminPanel = defineAsyncComponent(() => import("@/components/admin/AdminPanel.vue"));
 

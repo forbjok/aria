@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { h, ref, toRefs, useSlots, type VNode } from "vue";
+import { type VNode, h, ref, toRefs, useSlots } from "vue";
 
 import Button from "./Button.vue";
 
@@ -13,9 +13,7 @@ const props = defineProps<{
   defaultIndex?: number;
 }>();
 
-const emit = defineEmits<{
-  (e: "change", newId: number, prevId: number): void;
-}>();
+const emit = defineEmits<(e: "change", newId: number, prevId: number) => void>();
 
 const { defaultIndex } = toRefs(props);
 

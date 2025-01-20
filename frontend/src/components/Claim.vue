@@ -2,15 +2,13 @@
 import { ref, toRefs } from "vue";
 import { useRouter } from "vue-router";
 
-import { useRoomStore, type ClaimInfo } from "@/stores/room";
+import { type ClaimInfo, useRoomStore } from "@/stores/room";
 
 const props = defineProps<{
   room: string;
 }>();
 
-const emit = defineEmits<{
-  (e: "enter", room: string): void;
-}>();
+const emit = defineEmits<(e: "enter", room: string) => void>();
 
 const { room } = toRefs(props);
 

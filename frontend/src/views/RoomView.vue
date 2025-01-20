@@ -2,8 +2,8 @@
 import { onBeforeMount, ref, toRefs } from "vue";
 import { useRouter } from "vue-router";
 
-import Loading from "@/components/common/Loading.vue";
 import Room from "@/components/Room.vue";
+import Loading from "@/components/common/Loading.vue";
 
 import { useMainStore } from "@/stores/main";
 import { useRoomStore } from "@/stores/room";

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 
+import videojs from "video.js";
 import YouTubePlayer from "youtube-player";
 import PlayerStates from "youtube-player/dist/constants/PlayerStates";
-import videojs from "video.js";
 
-import { ContentType, type ContentInfo } from "@/utils/content";
+import { type ContentInfo, ContentType } from "@/utils/content";
 import { delay } from "@/utils/delay";
 import type VideojsPlayer from "video.js/dist/types/player";
 

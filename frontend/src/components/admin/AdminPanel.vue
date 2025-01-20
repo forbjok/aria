@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import EmoteAdmin from "./EmoteAdmin.vue";
-import Tabs from "../common/Tabs.vue";
 import Tab from "../common/Tab.vue";
+import Tabs from "../common/Tabs.vue";
+import EmoteAdmin from "./EmoteAdmin.vue";
 </script>
 
 <template>

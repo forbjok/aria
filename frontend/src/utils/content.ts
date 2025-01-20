@@ -20,9 +20,9 @@ export interface ContentInfo {
   };
 }
 
-const RE_YOUTUBE_URL = new RegExp("https?://(?:www|m)\\.youtube\\.com/watch\\?v=([^&]+)");
-const RE_GDRIVE_URL = new RegExp("https?://drive\\.google\\.com/file/d/(.+)/view");
-const RE_TWITCH_URL = new RegExp("https?://(?:www\\.)?twitch\\.tv/([^#\\?]+)");
+const RE_YOUTUBE_URL = /https?:\/\/(?:www|m)\.youtube\.com\/watch\?v=([^&]+)/;
+const RE_GDRIVE_URL = /https?:\/\/drive\.google\.com\/file\/d\/(.+)\/view/;
+const RE_TWITCH_URL = /https?:\/\/(?:www\.)?twitch\.tv\/([^#\?]+)/;
 
 export function getContentInfo(url: string): ContentInfo {
   const youTubeMatch = url.match(RE_YOUTUBE_URL);

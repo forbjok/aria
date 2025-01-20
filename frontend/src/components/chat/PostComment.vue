@@ -1,6 +1,6 @@
 <script lang="ts">
-import { defineComponent, h, type VNodeArrayChildren } from "vue";
 import * as P from "parsimmon";
+import { type VNodeArrayChildren, defineComponent, h } from "vue";
 
 import ChatEmote from "./ChatEmote.vue";
 
@@ -63,7 +63,7 @@ export default defineComponent({
               class: "quotelink",
               href: `#p${text.substring(2)}`,
               onClick: () => {
-                ctx.emit("clickquotelink", parseInt(text.substring(2)));
+                ctx.emit("clickquotelink", Number.parseInt(text.substring(2)));
               },
             },
             text,

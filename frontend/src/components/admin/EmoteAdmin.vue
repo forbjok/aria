@@ -4,15 +4,15 @@ import { computed, ref } from "vue";
 import { filesize } from "filesize";
 
 import { useMainStore } from "@/stores/main";
-import { useRoomStore, type NewEmote } from "@/stores/room";
+import { type NewEmote, useRoomStore } from "@/stores/room";
 
 import type { Emote } from "@/models";
 
-import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
 import Button from "@/components/common/Button.vue";
+import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
 import Dialog from "@/components/common/Dialog.vue";
-import Toolbar from "@/components/common/Toolbar.vue";
 import Image from "@/components/common/Image.vue";
+import Toolbar from "@/components/common/Toolbar.vue";
 
 const UPLOADING_TEXT = "Uploading...";
 

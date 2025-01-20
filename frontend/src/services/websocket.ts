@@ -30,7 +30,7 @@ export class AriaWebSocket {
   }
 
   public remove_listener(listener: AriaWsListener) {
-    const ix = this.listeners.findIndex((l) => l == listener);
+    const ix = this.listeners.findIndex((l) => l === listener);
     if (!ix) {
       return;
     }

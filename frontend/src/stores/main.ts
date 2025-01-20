@@ -1,10 +1,10 @@
-import { defineStore } from "pinia";
-import { ref } from "vue";
 import { useStorage } from "@vueuse/core";
 import axios from "axios";
+import { defineStore } from "pinia";
+import { ref } from "vue";
 
-import { DEFAULT_SETTINGS, type Settings } from "@/settings";
 import type { SysConfig } from "@/models";
+import { DEFAULT_SETTINGS, type Settings } from "@/settings";
 
 interface NewUserResponse {
   user_id: number;
@@ -28,7 +28,7 @@ export const useMainStore = defineStore("main", () => {
       userToken = localStorage.getItem("aria_user");
       if (userToken) {
         try {
-          await axios.post<number>(`/api/user/verify`, null, {
+          await axios.post<number>("/api/user/verify", null, {
             headers: {
               "X-User": userToken,
             },
@@ -40,7 +40,7 @@ export const useMainStore = defineStore("main", () => {
 
       if (!userToken) {
         try {
-          const res = await axios.post<NewUserResponse>(`/api/user/new`);
+          const res = await axios.post<NewUserResponse>("/api/user/new");
 
           userToken = res.data.token;
           localStorage.setItem("aria_user", userToken);

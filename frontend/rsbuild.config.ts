@@ -1,7 +1,7 @@
 import { defineConfig } from "@rsbuild/core";
+import { pluginBasicSsl } from "@rsbuild/plugin-basic-ssl";
 import { pluginSass } from "@rsbuild/plugin-sass";
 import { pluginVue } from "@rsbuild/plugin-vue";
-import { pluginBasicSsl } from "@rsbuild/plugin-basic-ssl";
 
 export default defineConfig({
   plugins: [pluginSass(), pluginVue(), pluginBasicSsl()],
