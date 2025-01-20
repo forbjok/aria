@@ -92,6 +92,19 @@ impl IntoResponse for ApiError {
     }
 }
 
+impl FromRequestParts<Arc<AriaServer>> for Authorized {
+    type Rejection = AuthError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &Arc<AriaServer>) -> Result<Self, Self::Rejection> {
+        let authorized = Option::<Authorized>::from_request_parts(parts, state).await;
+
+        match authorized {
+            Ok(v) => v.ok_or(AuthError::InvalidToken),
+            Err(err) => Err(err),
+        }
+    }
+}
+
 impl OptionalFromRequestParts<Arc<AriaServer>> for Authorized {
     type Rejection = AuthError;
 

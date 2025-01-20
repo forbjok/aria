@@ -80,11 +80,7 @@ async fn claim(
 }
 
 #[axum::debug_handler(state = Arc<AriaServer>)]
-async fn logged_in(auth: Option<Authorized>, Path(room_id): Path<i32>) -> Result<(), ApiError> {
-    let Some(auth) = auth else {
-        return Err(ApiError::Unauthorized);
-    };
-
+async fn logged_in(auth: Authorized, Path(room_id): Path<i32>) -> Result<(), ApiError> {
     if auth.for_room(room_id) {
         return Ok(());
     }
@@ -94,15 +90,11 @@ async fn logged_in(auth: Option<Authorized>, Path(room_id): Path<i32>) -> Result
 
 #[axum::debug_handler(state = Arc<AriaServer>)]
 async fn set_content(
-    auth: Option<Authorized>,
+    auth: Authorized,
     State(server): State<Arc<AriaServer>>,
     Path(room_id): Path<i32>,
     Json(req): Json<SetContentRequest>,
 ) -> Result<(), ApiError> {
-    let Some(auth) = auth else {
-        return Err(ApiError::Unauthorized);
-    };
-
     if !auth.for_room(room_id) {
         return Err(ApiError::Unauthorized);
     }

@@ -129,15 +129,11 @@ async fn delete_post(
 
 #[axum::debug_handler(state = Arc<AriaServer>)]
 async fn create_emote(
-    auth: Option<Authorized>,
+    auth: Authorized,
     State(server): State<Arc<AriaServer>>,
     Path(room_id): Path<i32>,
     mut multipart: Multipart,
 ) -> Result<(StatusCode, ()), ApiError> {
-    let Some(auth) = auth else {
-        return Err(ApiError::Unauthorized);
-    };
-
     if !auth.for_room(room_id) {
         return Err(ApiError::Unauthorized);
     }
@@ -199,14 +195,10 @@ async fn create_emote(
 
 #[axum::debug_handler(state = Arc<AriaServer>)]
 async fn delete_emote(
-    auth: Option<Authorized>,
+    auth: Authorized,
     State(server): State<Arc<AriaServer>>,
     Path((room_id, emote_id)): Path<(i32, i32)>,
 ) -> Result<(), ApiError> {
-    let Some(auth) = auth else {
-        return Err(ApiError::Unauthorized);
-    };
-
     if !auth.for_room(room_id) {
         return Err(ApiError::Unauthorized);
     }
