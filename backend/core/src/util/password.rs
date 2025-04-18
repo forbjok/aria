@@ -1,4 +1,4 @@
-use rand::{thread_rng, Rng};
+use rand::{rng, Rng};
 
 pub struct PasswordRules {
     pub alphabet: Vec<char>,
@@ -11,12 +11,12 @@ impl PasswordRules {
         let alphabet_length = alphabet.len();
         let password_length = self.password_length;
 
-        let mut rng = thread_rng();
+        let mut rng = rng();
 
         let mut password_chars: Vec<&char> = Vec::with_capacity(password_length);
 
         for _ in 0..password_length {
-            let v: usize = rng.gen_range(0..alphabet_length);
+            let v: usize = rng.random_range(0..alphabet_length);
 
             password_chars.push(&alphabet[v]);
         }

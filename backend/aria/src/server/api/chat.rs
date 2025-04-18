@@ -10,7 +10,7 @@ use axum::{
 };
 
 use aria_models::local as lm;
-use axum_client_ip::SecureClientIp;
+use axum_client_ip::ClientIp;
 
 use crate::server::{
     api::{ApiError, Authorized, User},
@@ -36,7 +36,7 @@ async fn create_post(
     user: User,
     auth: Option<Authorized>,
     State(server): State<Arc<AriaServer>>,
-    SecureClientIp(ip): SecureClientIp,
+    ClientIp(ip): ClientIp,
     Path(room_id): Path<i32>,
     mut multipart: Multipart,
 ) -> Result<Json<i64>, ApiError> {

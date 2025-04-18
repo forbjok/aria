@@ -4,7 +4,7 @@ use std::{net::SocketAddr, sync::Arc};
 
 use aria_core::AriaCore;
 use axum::Router;
-use axum_client_ip::SecureClientIpSource;
+use axum_client_ip::ClientIpSource;
 use futures::Future;
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
@@ -46,7 +46,7 @@ impl AriaServer {
 
         let app = app
             .layer(tower_http::trace::TraceLayer::new_for_http())
-            .layer(SecureClientIpSource::RightmostXForwardedFor.into_extension())
+            .layer(ClientIpSource::RightmostXForwardedFor.into_extension())
             .with_state(server);
 
         let addr: SocketAddr = "[::]:3000".parse().unwrap();
