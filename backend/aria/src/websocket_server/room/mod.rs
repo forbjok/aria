@@ -12,14 +12,14 @@ use aria_core::AriaCore;
 use aria_models::api as am;
 use aria_models::local as lm;
 
-use self::handler::send_room_request;
 use self::handler::RoomRequest;
+use self::handler::send_room_request;
 pub use self::membership::RoomMembership;
 use self::state::RoomState;
 
-use super::lobby::LobbyRequest;
 use super::ConnectionId;
-use super::{send, Tx};
+use super::lobby::LobbyRequest;
+use super::{Tx, send};
 
 struct Member {
     user_id: i64,

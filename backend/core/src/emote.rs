@@ -5,17 +5,17 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 
 use aria_models::local as lm;
-use aria_store::{models as dbm, AriaStore};
+use aria_store::{AriaStore, models as dbm};
 
 use super::AriaCore;
 use crate::{
+    ANIM_IMAGE_EXT, FileKind, IMAGE_EXT, Notification, VIDEO_EXT,
     file::ProcessFileResult,
     transform::dbm_emote_to_lm,
     util::thumbnail::{
         AnimatedThumbnailGenerator, StaticThumbnailGenerator, ThumbnailGenerator, ThumbnailQuality,
         VideoPreviewGenerator,
     },
-    FileKind, Notification, ANIM_IMAGE_EXT, IMAGE_EXT, VIDEO_EXT,
 };
 
 const MAX_EMOTE_WIDTH: u32 = 350;

@@ -7,8 +7,8 @@ use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
 
 use crate::auth::{AuthClaims, JwtClaims};
-use crate::server::api::{ApiError, Authorized};
 use crate::server::AriaServer;
+use crate::server::api::{ApiError, Authorized};
 
 use super::auth::LoginResponse;
 

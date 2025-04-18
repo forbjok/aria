@@ -9,9 +9,9 @@ use tracing::{error, info, warn};
 
 use aria_core::{AriaCore, Notification};
 
-use super::room::RoomMembership;
 use super::ConnectionId;
-use super::{room::Room, Tx};
+use super::room::RoomMembership;
+use super::{Tx, room::Room};
 
 pub(super) struct Lobby {
     tx: UnboundedSender<LobbyRequest>,
@@ -176,15 +176,19 @@ async fn handle_join_room(
 ) -> Result<RoomMembership, anyhow::Error> {
     let room = if let Some(room) = state.rooms_by_name.get(&name) {
         room.clone()
-    } else { match Room::load(core, &name, lobby_request_tx.clone(), shutdown_rx, shutdown_complete_tx).await?
-    { Some(room) => {
-        state.rooms_by_id.insert(room.id, room.clone());
-        state.rooms_by_name.insert(name.clone(), room.clone());
+    } else {
+        match Room::load(core, &name, lobby_request_tx.clone(), shutdown_rx, shutdown_complete_tx).await? {
+            Some(room) => {
+                state.rooms_by_id.insert(room.id, room.clone());
+                state.rooms_by_name.insert(name.clone(), room.clone());
 
-        room
-    } _ => {
-        return Err(anyhow!("Room '{name}' does not exist"));
-    }}};
+                room
+            }
+            _ => {
+                return Err(anyhow!("Room '{name}' does not exist"));
+            }
+        }
+    };
 
     room.join(connection_id, member_tx, user_id).await
 }

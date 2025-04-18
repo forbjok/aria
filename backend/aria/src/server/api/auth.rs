@@ -7,8 +7,8 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::auth::{AuthClaims, JwtClaims};
-use crate::server::api::ApiError;
 use crate::server::AriaServer;
+use crate::server::api::ApiError;
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "level")]

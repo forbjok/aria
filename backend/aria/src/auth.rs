@@ -1,6 +1,6 @@
 use chrono::{Duration, Utc};
-use jsonwebtoken::{errors::ErrorKind, DecodingKey, EncodingKey, Header, Validation};
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, errors::ErrorKind};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
 pub struct AriaAuth {

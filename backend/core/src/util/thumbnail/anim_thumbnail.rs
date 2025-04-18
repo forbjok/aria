@@ -1,6 +1,6 @@
 use std::{path::Path, process::Command};
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 
 use super::{ThumbnailGenerator, ThumbnailQuality};
 

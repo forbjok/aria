@@ -4,7 +4,7 @@ use clap::Parser;
 use tracing::{debug, info};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
-use aria_core::{config::AriaConfig, AriaCore};
+use aria_core::{AriaCore, config::AriaConfig};
 
 mod auth;
 mod command;

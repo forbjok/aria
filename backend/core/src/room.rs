@@ -1,7 +1,7 @@
 use aria_models::local as lm;
 use aria_store::AriaStore;
 
-use crate::{transform::dbm_room_to_lm, util::password::generate_simple_password, Notification};
+use crate::{Notification, transform::dbm_room_to_lm, util::password::generate_simple_password};
 
 use super::AriaCore;
 

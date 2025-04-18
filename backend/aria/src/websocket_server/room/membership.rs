@@ -4,8 +4,8 @@ use aria_models::api as am;
 
 use crate::websocket_server::ConnectionId;
 
-use super::handler::send_room_request;
 use super::handler::RoomRequest;
+use super::handler::send_room_request;
 
 pub struct RoomMembership {
     pub connection_id: ConnectionId,

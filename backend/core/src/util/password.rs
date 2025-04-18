@@ -1,4 +1,4 @@
-use rand::{rng, Rng};
+use rand::{Rng, rng};
 
 pub struct PasswordRules {
     pub alphabet: Vec<char>,

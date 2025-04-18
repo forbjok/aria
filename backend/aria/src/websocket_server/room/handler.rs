@@ -13,11 +13,11 @@ use aria_core::AriaCore;
 use aria_models::api as am;
 use aria_models::local as lm;
 
-use crate::websocket_server::lobby::LobbyRequest;
 use crate::websocket_server::ConnectionId;
+use crate::websocket_server::lobby::LobbyRequest;
 
-use super::state::RoomState;
 use super::Tx;
+use super::state::RoomState;
 
 type RoomRequestTx<R> = oneshot::Sender<Result<R, anyhow::Error>>;
 

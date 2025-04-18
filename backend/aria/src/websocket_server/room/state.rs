@@ -14,13 +14,13 @@ use aria_core::AriaCore;
 use aria_models::api as am;
 use aria_models::local as lm;
 
-use crate::websocket_server::lobby::LobbyRequest;
 use crate::websocket_server::ConnectionId;
+use crate::websocket_server::lobby::LobbyRequest;
 
-use super::handler::handle_room_requests;
-use super::handler::RoomRequest;
 use super::Room;
-use super::{send, Member, Tx};
+use super::handler::RoomRequest;
+use super::handler::handle_room_requests;
+use super::{Member, Tx, send};
 
 const MAX_POSTS: usize = 50;
 

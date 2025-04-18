@@ -6,8 +6,8 @@ use axum::{Json, Router};
 use serde::Serialize;
 
 use crate::auth::{JwtClaims, UserClaims};
-use crate::server::api::{ApiError, User};
 use crate::server::AriaServer;
+use crate::server::api::{ApiError, User};
 
 #[derive(Debug, Serialize)]
 struct NewUserResponse {

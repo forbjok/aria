@@ -1,6 +1,6 @@
 use aria_models::local::RefreshRefreshTokenResult;
 use aria_store::AriaStore;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 use uuid::Uuid;
 
 use super::AriaCore;

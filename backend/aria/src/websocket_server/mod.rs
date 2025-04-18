@@ -5,7 +5,7 @@ mod room;
 use std::{net::SocketAddr, sync::Arc};
 
 use aria_core::AriaCore;
-use futures::{pin_mut, Future};
+use futures::{Future, pin_mut};
 use futures_channel::mpsc::UnboundedSender;
 use serde::Serialize;
 use tokio::{net::TcpListener, sync::broadcast};

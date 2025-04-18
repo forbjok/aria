@@ -2,14 +2,14 @@ use std::{borrow::Cow, path::Path};
 
 use anyhow::Context;
 use aria_models::local as lm;
-use aria_store::{models as dbm, AriaStore};
+use aria_store::{AriaStore, models as dbm};
 
 use super::AriaCore;
 use crate::{
+    ANIM_IMAGE_EXT, FileKind, IMAGE_EXT, Notification,
     file::ProcessFileResult,
     transform::dbm_post_to_lm,
     util::thumbnail::{AnimatedThumbnailGenerator, StaticThumbnailGenerator, ThumbnailGenerator, ThumbnailQuality},
-    FileKind, Notification, ANIM_IMAGE_EXT, IMAGE_EXT,
 };
 
 pub struct GeneratePostImageResult<'a> {

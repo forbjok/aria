@@ -6,8 +6,8 @@ use axum::{Json, Router};
 
 use aria_models::api as am;
 
-use crate::server::api::ApiError;
 use crate::server::AriaServer;
+use crate::server::api::ApiError;
 
 pub fn router() -> Router<Arc<AriaServer>> {
     Router::new().route("/config", get(get_config))

@@ -1,7 +1,7 @@
 use std::{net::SocketAddr, sync::Arc};
 
 use anyhow::Context;
-use futures::{pin_mut, StreamExt};
+use futures::{StreamExt, pin_mut};
 use futures_channel::mpsc::unbounded;
 use serde::Deserialize;
 use tokio::{
@@ -14,7 +14,7 @@ use aria_models::api as am;
 
 use crate::auth::{AuthClaims, UserClaims};
 
-use super::{room::RoomMembership, send_raw, ConnectionId, ServerState, Tx};
+use super::{ConnectionId, ServerState, Tx, room::RoomMembership, send_raw};
 
 struct ConnectionState {
     tx: Tx,

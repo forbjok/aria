@@ -2,19 +2,19 @@ use std::sync::Arc;
 
 use anyhow::Context;
 use axum::{
+    Json, Router,
     extract::{DefaultBodyLimit, Multipart, Path, State},
     handler::Handler,
     http::StatusCode,
     routing::{delete, post},
-    Json, Router,
 };
 
 use aria_models::local as lm;
 use axum_client_ip::ClientIp;
 
 use crate::server::{
-    api::{ApiError, Authorized, User},
     AriaServer,
+    api::{ApiError, Authorized, User},
 };
 
 pub fn router(sys_config: &lm::SysConfig) -> Router<Arc<AriaServer>> {

@@ -7,14 +7,14 @@ mod user;
 use std::sync::Arc;
 
 use axum::{
-    extract::{FromRequestParts, OptionalFromRequestParts},
-    http::{request::Parts, StatusCode},
-    response::{IntoResponse, Response},
     RequestPartsExt, Router,
+    extract::{FromRequestParts, OptionalFromRequestParts},
+    http::{StatusCode, request::Parts},
+    response::{IntoResponse, Response},
 };
 use axum_extra::{
-    headers::{authorization::Bearer, Authorization},
     TypedHeader,
+    headers::{Authorization, authorization::Bearer},
 };
 use thiserror::Error;
 use tracing::error;
